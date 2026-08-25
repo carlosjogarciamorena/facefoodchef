@@ -5,8 +5,9 @@ import streamlit.components.v1 as components
 from recipe_scrapers import scrape_me
 import json
 from io import BytesIO
+import time
 
-# --- SOLUCIÓN 2: Importaciones seguras para documentos opcionales ---
+# Importaciones seguras para documentos opcionales
 try:
     import docx
     HAS_DOCX = True
@@ -18,7 +19,6 @@ try:
     HAS_PPTX = True
 except ImportError:
     HAS_PPTX = False
-# -------------------------------------------------------------------
 
 st.set_page_config(page_title="FaceFoodChef Pro - Multimodal Culinary Engine", layout="centered", page_icon="🍳")
 
@@ -69,7 +69,7 @@ with tab2:
                 doc = docx.Document(BytesIO(archivo_doc.getvalue()))
                 receta_texto_input = "\n".join([p.text for p in doc.paragraphs if p.text.strip()])
             else:
-                st.error("⚠️ La librería 'python-docx' no está instalada en el entorno. Asegúrate de añadirla al requirements.txt.")
+                st.error("⚠️ La librería 'python-docx' no está instalada.")
         elif ext == "pptx":
             if HAS_PPTX:
                 prs = Presentation(BytesIO(archivo_doc.getvalue()))
@@ -81,7 +81,7 @@ with tab2:
                                 texto_slides.append(paragraph.text)
                 receta_texto_input = "\n".join(texto_slides)
             else:
-                st.error("⚠️ La librería 'python-pptx' no está instalada en el entorno. Asegúrate de añadirla al requirements.txt.")
+                st.error("⚠️ La librería 'python-pptx' no está instalada.")
         elif ext == "pdf":
             archivo_multimodal = archivo_doc.getvalue()
             tipo_multimodal = "application/pdf"
@@ -329,20 +329,36 @@ if procesar_accion and API_KEY:
         contents_payload = [prompt_sistema]
         if archivo_multimodal:
             contents_payload.append(types.Part.from_bytes(data=archivo_multimodal, mime_type=tipo_multimodal))
-            contents_payload.append("Analiza esta fuente adjunta (imagen o PDF) y extrae la receta completa.")
+            contents_payload.append("Analiza esta fuente adjunta (PDF o imagen) y extrae la receta completa.")
         else:
             contents_payload.append(f"Receta a procesar:\n{contenido_ia}")
 
-        with st.spinner("⚙️ Procesando con IA de Google Gemini 3.6 Flash y generando diagrama de bloques..."):
-            response = client.models.generate_content(
-                model='gemini-3.6-flash',
-                contents=contents_payload,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                    temperature=0.2
-                ),
-            )
-            
+        # --- SISTEMA DE REINTENTOS AUTOMÁTICOS PARA ERRORES 503 / UNAVAILABLE ---
+        response = None
+        max_intentos = 3
+        
+        for intento in range(max_intentos):
+            try:
+                with st.spinner(f"⚙️ Procesando con IA (Intento {intento+1}/{max_intentos})..."):
+                    response = client.models.generate_content(
+                        model='gemini-3.6-flash',
+                        contents=contents_payload,
+                        config=types.GenerateContentConfig(
+                            response_mime_type="application/json",
+                            temperature=0.2
+                        ),
+                    )
+                break  # Si la llamada es exitosa, salimos del bucle de reintentos
+            except Exception as api_err:
+                err_str = str(api_err)
+                if ("503" in err_str or "UNAVAILABLE" in err_str) and intento < max_intentos - 1:
+                    time.sleep(3 * (intento + 1))  # Espera progresiva: 3s, luego 6s...
+                    continue
+                else:
+                    raise api_err  # Si es otro error o se acabaron los intentos, propagamos la excepción
+        # -----------------------------------------------------------------------
+
+        if response:
             texto_respuesta = response.text.strip()
             if texto_respuesta.startswith("```json"):
                 texto_respuesta = texto_respuesta[7:]
@@ -373,3 +389,4 @@ elif not API_KEY:
     st.info("👈 Introduce tu API Key gratuita de Google AI Studio en la barra lateral para comenzar.")
 else:
     st.info("👆 Selecciona una de las pestañas superiores para introducir una URL, subir un documento (PDF, Word, PPT) o una foto de tu receta.")
+    
