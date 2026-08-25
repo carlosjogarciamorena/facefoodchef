@@ -1,5 +1,5 @@
 import streamlit as st
-from openai import OpenAI
+from groq import Groq
 import streamlit.components.v1 as components
 from recipe_scrapers import scrape_me
 import json
@@ -18,10 +18,10 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown("<h1 style='text-align: center; color: #f97316;'>🍳 FaceFoodChef Pro</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #9ca3af;'>Motor inteligente de conversión de recetas en diagramas de bloques.</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #9ca3af;'>Motor inteligente de conversión de recetas en diagramas de bloques (Gratuito con Groq).</p>", unsafe_allow_html=True)
 
 st.sidebar.header("⚙️ Panel de Control")
-API_KEY = st.sidebar.text_input("API Key de OpenAI:", type="password")
+API_KEY = st.sidebar.text_input("API Key de Groq:", type="password", help="Consíguela gratis en console.groq.com")
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 💎 Características\n- Interfaz Glassmorphism Dark.\n- Bloques en paralelo reales.\n- Sincronización y convergencia.\n- Asistente de voz integrado.")
 
@@ -181,48 +181,49 @@ if entrada_usuario and API_KEY:
         receta_texto = entrada_usuario
 
     if receta_texto:
-        client = OpenAI(api_key=API_KEY)
-        
-        prompt = f"""
-        Eres un chef ejecutivo e ingeniero de procesos culinarios. Analiza la receta y estructúrala detectando tareas secuenciales, en paralelo (columnas simultáneas) y convergencias finales.
-        
-        Devuélvela estrictamente en formato JSON con esta estructura exacta:
-        
-        REGLAS DE ORO:
-        1. 'ingredientes': Lista de ingredientes y cantidades exactas.
-        2. 'pasos_previos': Lista con la preparación previa (mise en place).
-        3. 'bloques_proceso': Una lista de objetos con los siguientes tipos:
-           - TIPO 1: {{"tipo": "secuencial", "accion": "...", "tiempo": "...", "temperatura": "..."}}
-           - TIPO 2: {{"tipo": "paralelo", "ramas": [{{"nombre": "...", "accion": "...", "tiempo": "...", "temperatura": "..."}}, {{"nombre": "...", "accion": "...", "tiempo": "...", "temperatura": "..."}}]}}
-           - TIPO 3: {{"tipo": "convergencia", "accion": "...", "tiempo": "...", "temperatura": "..."}}
-        4. 'texto_voz': Resumen estructurado para lectura por voz.
+        try:
+            # Inicializamos el cliente oficial de Groq
+            client = Groq(api_key=API_KEY)
+            
+            prompt = f"""
+            Eres un chef ejecutivo e ingeniero de procesos culinarios. Analiza la receta y estructúrala detectando tareas secuenciales, en paralelo (columnas simultáneas) y convergencias finales.
+            
+            Devuélvela estrictamente en formato JSON válido con esta estructura exacta:
+            
+            REGLAS DE ORO:
+            1. 'ingredientes': Lista de ingredientes y cantidades exactas.
+            2. 'pasos_previos': Lista con la preparación previa (mise en place).
+            3. 'bloques_proceso': Una lista de objetos con los siguientes tipos:
+               - TIPO 1: {{"tipo": "secuencial", "accion": "...", "tiempo": "...", "temperatura": "..."}}
+               - TIPO 2: {{"tipo": "paralelo", "ramas": [{{"nombre": "...", "accion": "...", "tiempo": "...", "temperatura": "..."}}, {{"nombre": "...", "accion": "...", "tiempo": "...", "temperatura": "..."}}]}}
+               - TIPO 3: {{"tipo": "convergencia", "accion": "...", "tiempo": "...", "temperatura": "..."}}
+            4. 'texto_voz': Resumen estructurado para lectura por voz.
 
-        Estructura JSON obligatoria:
-        {{
-          "ingredientes": ["..."],
-          "pasos_previos": ["..."],
-          "bloques_proceso": [
-            {{"tipo": "secuencial", "accion": "🔥 ...", "tiempo": "5 min", "temperatura": "Fuego medio"}},
+            Estructura JSON obligatoria:
             {{
-              "tipo": "paralelo",
-              "ramas": [
-                {{"nombre": "Rama 1", "accion": "...", "tiempo": "10 min", "temperatura": "65°C"}},
-                {{"nombre": "Rama 2", "accion": "...", "tiempo": "8 min", "temperatura": "Fuego bajo"}}
-              ]
-            }},
-            {{"tipo": "convergencia", "accion": "🔗 Juntar todo...", "tiempo": "2 min", "temperatura": "Fuego medio"}}
-          ],
-          "texto_voz": "..."
-        }}
-        
-        Receta a procesar:
-        {receta_texto}
-        """
-        
-        with st.spinner("⚙️ Renderizando diseño de alta gama y diagrama de bloques..."):
-            try:
+              "ingredientes": ["..."],
+              "pasos_previos": ["..."],
+              "bloques_proceso": [
+                {{"tipo": "secuencial", "accion": "🔥 ...", "tiempo": "5 min", "temperatura": "Fuego medio"}},
+                {{
+                  "tipo": "paralelo",
+                  "ramas": [
+                    {{"nombre": "Rama 1", "accion": "...", "tiempo": "10 min", "temperatura": "65°C"}},
+                    {{"nombre": "Rama 2", "accion": "...", "tiempo": "8 min", "temperatura": "Fuego bajo"}}
+                  ]
+                }},
+                {{"tipo": "convergencia", "accion": "🔗 Juntar todo...", "tiempo": "2 min", "temperatura": "Fuego medio"}}
+              ],
+              "texto_voz": "..."
+            }}
+            
+            Receta a procesar:
+            {receta_texto}
+            """
+            
+            with st.spinner("⚙️ Procesando con IA de Groq (Llama 3.3)..."):
                 response = client.chat.completions.create(
-                    model="gpt-4o-mini",
+                    model="llama-3.3-70b-versatile",
                     messages=[{"role": "user", "content": prompt}],
                     response_format={"type": "json_object"}
                 )
@@ -244,9 +245,9 @@ if entrada_usuario and API_KEY:
                 
                 components.html(html_final, height=900, scrolling=True)
                 
-            except Exception as e:
-                st.error(f"Error procesando con la IA: {e}")
+        except Exception as e:
+            st.error(f"Error procesando con la IA: {e}")
 elif not API_KEY:
-    st.info("👈 Introduce tu API Key de OpenAI en la barra lateral para activar la plataforma.")
+    st.info("👈 Introduce tu API Key gratuita de Groq en la barra lateral para comenzar.")
 else:
-    st.info("👆 Pega una receta de cocina compleja para experimentar el nuevo diseño de alta gama.")
+    st.info("👆 Pega una receta de cocina para transformarla en un diagrama de bloques.")
