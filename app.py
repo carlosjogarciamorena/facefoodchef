@@ -103,7 +103,7 @@
                                 "show_excerpt": "",
                                 "meta_separator": " - ",
                                 "text_color": "#FFFFFF"
-                                // **NOTA:** DEBES FILTRAR AQUÍ POR CATEGORÍA
+                                # **NOTA:** DEBES FILTRAR AQUÍ POR CATEGORÍA
                             }
                         }
                     ]
