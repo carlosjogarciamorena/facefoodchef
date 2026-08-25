@@ -5,8 +5,20 @@ import streamlit.components.v1 as components
 from recipe_scrapers import scrape_me
 import json
 from io import BytesIO
-import docx
-from pptx import Presentation
+
+# --- SOLUCIÓN 2: Importaciones seguras para documentos opcionales ---
+try:
+    import docx
+    HAS_DOCX = True
+except ImportError:
+    HAS_DOCX = False
+
+try:
+    from pptx import Presentation
+    HAS_PPTX = True
+except ImportError:
+    HAS_PPTX = False
+# -------------------------------------------------------------------
 
 st.set_page_config(page_title="FaceFoodChef Pro - Multimodal Culinary Engine", layout="centered", page_icon="🍳")
 
@@ -19,7 +31,6 @@ st.markdown("""
         border-radius: 16px; border: 1px solid #30363d; font-size: 15px;
     }
     h1, h2, h3 { color: #f0f6fc; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
-    .upload-box { background: #161b22; border: 2px dashed #30363d; border-radius: 16px; padding: 20px; text-align: center; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -31,7 +42,7 @@ API_KEY = st.sidebar.text_input("API Key de Google Gemini:", type="password", he
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 📂 Formatos Compatibles\n- **Web:** URLs de blogs de cocina.\n- **Documentos:** PDF, Word (.docx), PPT (.pptx).\n- **Imágenes:** JPG, PNG, WEBP.\n- **Texto:** Directo o apuntes.")
 
-# Opciones de entrada para el usuario
+# Pestañas de entrada para el usuario
 tab1, tab2, tab3 = st.tabs(["🌐 URL o Texto", "📁 Subir Archivo (PDF, Word, PPT)", "🖼️ Subir Imagen de Receta"])
 
 receta_texto_input = ""
@@ -54,19 +65,24 @@ with tab2:
         if ext == "txt":
             receta_texto_input = archivo_doc.getvalue().decode("utf-8")
         elif ext == "docx":
-            doc = docx.Document(BytesIO(archivo_doc.getvalue()))
-            receta_texto_input = "\n".join([p.text for p in doc.paragraphs if p.text.strip()])
+            if HAS_DOCX:
+                doc = docx.Document(BytesIO(archivo_doc.getvalue()))
+                receta_texto_input = "\n".join([p.text for p in doc.paragraphs if p.text.strip()])
+            else:
+                st.error("⚠️ La librería 'python-docx' no está instalada en el entorno. Asegúrate de añadirla al requirements.txt.")
         elif ext == "pptx":
-            prs = Presentation(BytesIO(archivo_doc.getvalue()))
-            texto_slides = []
-            for slide in prs.slides:
-                for shape in slide.shapes:
-                    if shape.has_text_frame:
-                        for paragraph in shape.text_frame.paragraphs:
-                            texto_slides.append(paragraph.text)
-            receta_texto_input = "\n".join(texto_slides)
+            if HAS_PPTX:
+                prs = Presentation(BytesIO(archivo_doc.getvalue()))
+                texto_slides = []
+                for slide in prs.slides:
+                    for shape in slide.shapes:
+                        if shape.has_text_frame:
+                            for paragraph in shape.text_frame.paragraphs:
+                                texto_slides.append(paragraph.text)
+                receta_texto_input = "\n".join(texto_slides)
+            else:
+                st.error("⚠️ La librería 'python-pptx' no está instalada en el entorno. Asegúrate de añadirla al requirements.txt.")
         elif ext == "pdf":
-            # Para PDF, pasamos el archivo binario directamente a Gemini Multimodal
             archivo_multimodal = archivo_doc.getvalue()
             tipo_multimodal = "application/pdf"
 
@@ -262,7 +278,7 @@ def generar_html_dashboard(ingredientes, pasos_previos, bloques_proceso, texto_v
     """
     return documento_completo
 
-# Procesamiento principal al pulsar generar
+# Procesamiento principal
 procesar_accion = False
 contenido_ia = None
 
@@ -310,7 +326,6 @@ if procesar_accion and API_KEY:
         }
         """
 
-        # Preparar contenido multimodal o texto
         contents_payload = [prompt_sistema]
         if archivo_multimodal:
             contents_payload.append(types.Part.from_bytes(data=archivo_multimodal, mime_type=tipo_multimodal))
