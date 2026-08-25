@@ -222,7 +222,7 @@ if entrada_usuario and API_KEY:
             
             with st.spinner("⚙️ Procesando con IA de Groq (Llama 3.1 8B)..."):
                 response = client.chat.completions.create(
-                    model="llama-3.1-8b-instant",  # <--- MODELO CAMBIADO A LLAMA 3.1 8B INSTANT
+                    model="mixtral-8x7b-32768",  # <--- MODELO CAMBIADO A mixtral-8x7b-32768
                     messages=[{"role": "user", "content": prompt}],
                     response_format={"type": "json_object"}
                 )
