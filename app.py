@@ -4,37 +4,79 @@ from google.genai import types
 import streamlit.components.v1 as components
 from recipe_scrapers import scrape_me
 import json
+from io import BytesIO
+import docx
+from pptx import Presentation
 
-st.set_page_config(page_title="FaceFoodChef Pro - Culinary Engine", layout="centered", page_icon="🍳")
+st.set_page_config(page_title="FaceFoodChef Pro - Multimodal Culinary Engine", layout="centered", page_icon="🍳")
 
-# Estilos generales en Streamlit
+# Estilos visuales Dark Glassmorphism Pro
 st.markdown("""
     <style>
     .main { background-color: #07090e; }
-    .stTextArea textarea {
+    .stTextArea textarea, .stFileUploader {
         background-color: #0d1117; color: #f0f6fc;
         border-radius: 16px; border: 1px solid #30363d; font-size: 15px;
     }
     h1, h2, h3 { color: #f0f6fc; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+    .upload-box { background: #161b22; border: 2px dashed #30363d; border-radius: 16px; padding: 20px; text-align: center; }
     </style>
 """, unsafe_allow_html=True)
 
-st.markdown("<h1 style='text-align: center; color: #ff7b72;'>🍳 FaceFoodChef Pro <span style='font-size: 16px; background: #238636; color: white; padding: 4px 10px; border-radius: 20px; vertical-align: middle;'>Interactive Hub</span></h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #8b949e;'>Ingeniería de procesos culinarios con temporizadores inteligentes y música integrada.</p>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: #ff7b72;'>🍳 FaceFoodChef Pro <span style='font-size: 16px; background: #1f6feb; color: white; padding: 4px 10px; border-radius: 20px; vertical-align: middle;'>Multimodal Hub</span></h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #8b949e;'>Ingeniería de procesos culinarios avanzada. Sube PDFs, Word, PPT, Imágenes o pega URLs y textos.</p>", unsafe_allow_html=True)
 
 st.sidebar.header("⚙️ Panel de Control")
 API_KEY = st.sidebar.text_input("API Key de Google Gemini:", type="password", help="Consíguela gratis en aistudio.google.com")
 st.sidebar.markdown("---")
-st.sidebar.markdown("### 🎵 Zona Musical (Spotify)\nPuedes reproducir tu música favorita abajo mientras cocinas usando el reproductor interactivo del panel.")
+st.sidebar.markdown("### 📂 Formatos Compatibles\n- **Web:** URLs de blogs de cocina.\n- **Documentos:** PDF, Word (.docx), PPT (.pptx).\n- **Imágenes:** JPG, PNG, WEBP.\n- **Texto:** Directo o apuntes.")
 
-entrada_usuario = st.text_area(
-    "📝 Pega la URL de una receta web o escribe los pasos (ej: Paella valenciana, carbonara...):", 
-    height=120, 
-    placeholder="Ej: https://www.receta.com/receta-magica o describe tu plato..."
-)
+# Opciones de entrada para el usuario
+tab1, tab2, tab3 = st.tabs(["🌐 URL o Texto", "📁 Subir Archivo (PDF, Word, PPT)", "🖼️ Subir Imagen de Receta"])
+
+receta_texto_input = ""
+archivo_multimodal = None
+tipo_multimodal = None
+
+with tab1:
+    entrada_usuario = st.text_area(
+        "📝 Pega la URL de una receta web o escribe los pasos manualmente:", 
+        height=100, 
+        placeholder="Ej: https://www.receta.com/paella o escribe tu receta..."
+    )
+    if entrada_usuario:
+        receta_texto_input = entrada_usuario
+
+with tab2:
+    archivo_doc = st.file_uploader("📂 Sube un documento con tu receta:", type=["pdf", "docx", "pptx", "txt"])
+    if archivo_doc:
+        ext = archivo_doc.name.split('.')[-1].lower()
+        if ext == "txt":
+            receta_texto_input = archivo_doc.getvalue().decode("utf-8")
+        elif ext == "docx":
+            doc = docx.Document(BytesIO(archivo_doc.getvalue()))
+            receta_texto_input = "\n".join([p.text for p in doc.paragraphs if p.text.strip()])
+        elif ext == "pptx":
+            prs = Presentation(BytesIO(archivo_doc.getvalue()))
+            texto_slides = []
+            for slide in prs.slides:
+                for shape in slide.shapes:
+                    if shape.has_text_frame:
+                        for paragraph in shape.text_frame.paragraphs:
+                            texto_slides.append(paragraph.text)
+            receta_texto_input = "\n".join(texto_slides)
+        elif ext == "pdf":
+            # Para PDF, pasamos el archivo binario directamente a Gemini Multimodal
+            archivo_multimodal = archivo_doc.getvalue()
+            tipo_multimodal = "application/pdf"
+
+with tab3:
+    archivo_img = st.file_uploader("📸 Sube una foto de receta o captura de pantalla:", type=["jpg", "jpeg", "png", "webp"])
+    if archivo_img:
+        archivo_multimodal = archivo_img.getvalue()
+        tipo_multimodal = archivo_img.type
 
 def generar_html_dashboard(ingredientes, pasos_previos, bloques_proceso, texto_voz):
-    # HTML para Ingredientes
     html_ing = """
     <div style="background: linear-gradient(135deg, #0d1117 0%, #161b22 100%); border: 1px solid #30363d; border-radius: 18px; padding: 22px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);">
         <h3 style="color: #ff7b72; margin-top: 0; font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
@@ -46,7 +88,6 @@ def generar_html_dashboard(ingredientes, pasos_previos, bloques_proceso, texto_v
         html_ing += f"<span style='background: #21262d; color: #c9d1d9; padding: 6px 14px; border-radius: 10px; font-size: 13px; border: 1px solid #30363d; font-weight: 500;'>{ing}</span>"
     html_ing += "</div></div>"
 
-    # HTML para Mise en Place
     html_prev = """
     <div style="background: linear-gradient(135deg, #0d1117 0%, #161b22 100%); border: 1px solid #30363d; border-radius: 18px; padding: 22px; margin-bottom: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);">
         <h3 style="color: #58a6ff; margin-top: 0; font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
@@ -58,7 +99,6 @@ def generar_html_dashboard(ingredientes, pasos_previos, bloques_proceso, texto_v
         html_prev += f"<li style='margin-bottom: 6px; color: #c9d1d9;'>{prep}</li>"
     html_prev += "</ul></div>"
 
-    # HTML para Bloques de Proceso con Temporizadores Interactivos
     html_diagrama = """
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 100%; margin: auto;">
         <h3 style="color: #3fb950; font-size: 18px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
@@ -68,7 +108,7 @@ def generar_html_dashboard(ingredientes, pasos_previos, bloques_proceso, texto_v
     
     for i, bloque in enumerate(bloques_proceso):
         tipo = bloque.get("tipo", "secuencial")
-        duracion_min = bloque.get("duracion_minutos", 5) # Default 5 min si no viene
+        duracion_min = bloque.get("duracion_minutos", 5)
         
         if tipo == "paralelo":
             ramas = bloque.get("ramas", [])
@@ -134,7 +174,6 @@ def generar_html_dashboard(ingredientes, pasos_previos, bloques_proceso, texto_v
     
     html_diagrama += "</div>"
 
-    # HTML Completo con Reproductor de Spotify Integrado y Motor de Timers en JS
     documento_completo = f"""
     <!DOCTYPE html>
     <html lang="es">
@@ -151,10 +190,9 @@ def generar_html_dashboard(ingredientes, pasos_previos, bloques_proceso, texto_v
     </head>
     <body>
         <div class="container-hub">
-            <!-- WIDGET DE SPOTIFY INTEGRADO -->
+            <!-- REPRODUCTOR SPOTIFY -->
             <div class="widget-box">
                 <p style="color: #8b949e; font-size: 13px; margin: 0 0 10px 0; font-weight: 600;">🎧 Tu Música Favorita para Cocinar (Spotify)</p>
-                <!-- Reproductor embed de Spotify predeterminado con lista de cocina/lo-fi -->
                 <iframe style="border-radius:12px" src="https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M?utm_source=generator&theme=0" width="100%" height="80" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
             </div>
 
@@ -171,7 +209,6 @@ def generar_html_dashboard(ingredientes, pasos_previos, bloques_proceso, texto_v
         </div>
 
         <script>
-            // Lógica del Asistente de Voz
             const textoVoz = "{texto_voz.replace('"', '').replace(chr(10), '. ')}";
             function reproducir() {{
                 if ('speechSynthesis' in window) {{
@@ -185,12 +222,10 @@ def generar_html_dashboard(ingredientes, pasos_previos, bloques_proceso, texto_v
                 if ('speechSynthesis' in window) {{ window.speechSynthesis.cancel(); }}
             }}
 
-            // Lógica de los Temporizadores Interactivos con Alerta Sonora
             function iniciarTemporizador(elementId, minutos) {{
                 const elemento = document.getElementById(elementId);
                 let segundosRestantes = minutos * 60;
                 
-                // Deshabilitar botón temporalmente o cambiar estado si se desea
                 if (window[elementId + "_interval"]) {{
                     clearInterval(window[elementId + "_interval"]);
                 }}
@@ -209,13 +244,12 @@ def generar_html_dashboard(ingredientes, pasos_previos, bloques_proceso, texto_v
                 }}, 1000);
             }}
 
-            // Generador de pitido acústico con Web Audio API al terminar el tiempo
             function sonarAlerta() {{
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 const oscillator = audioCtx.createOscillator();
                 const gainNode = audioCtx.createGain();
                 oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime); // Nota Re5
+                oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime);
                 gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
                 oscillator.connect(gainNode);
                 gainNode.connect(audioCtx.destination);
@@ -228,88 +262,99 @@ def generar_html_dashboard(ingredientes, pasos_previos, bloques_proceso, texto_v
     """
     return documento_completo
 
-if entrada_usuario and API_KEY:
-    receta_texto = ""
-    if entrada_usuario.strip().startswith("http://") or entrada_usuario.strip().startswith("https://"):
+# Procesamiento principal al pulsar generar
+procesar_accion = False
+contenido_ia = None
+
+if API_KEY:
+    if receta_texto_input.strip().startswith("http://") or receta_texto_input.strip().startswith("https://"):
         try:
             with st.spinner("🌐 Extrayendo datos de la web..."):
-                scraper = scrape_me(entrada_usuario.strip())
-                receta_texto = f"Receta: {scraper.title()}\nIngredientes: {', '.join(scraper.ingredients())}\nInstrucciones:\n{'\n'.join(scraper.instructions())}"
+                scraper = scrape_me(receta_texto_input.strip())
+                contenido_ia = f"Receta: {scraper.title()}\nIngredientes: {', '.join(scraper.ingredients())}\nInstrucciones:\n{'\n'.join(scraper.instructions())}"
+                procesar_accion = True
         except Exception as e:
             st.error(f"No se pudo extraer la URL: {e}")
-    else:
-        receta_texto = entrada_usuario
+    elif receta_texto_input.strip():
+        contenido_ia = receta_texto_input
+        procesar_accion = True
+    elif archivo_multimodal:
+        procesar_accion = True
 
-    if receta_texto:
-        try:
-            client = genai.Client(api_key=API_KEY)
-            
-            prompt = f"""
-            Eres un chef ejecutivo e ingeniero de procesos culinarios. Analiza la receta y estructúrala detectando tareas secuenciales, en paralelo y convergencias finales.
-            
-            Devuélvela estrictamente en formato JSON válido con esta estructura exacta, asegurándote de incluir el campo 'duracion_minutos' (número entero con los minutos estimados para cada tarea, necesario para los temporizadores):
-            
-            REGLAS DE ORO:
-            1. 'ingredientes': Lista de ingredientes con cantidades exactas.
-            2. 'pasos_previos': Lista con la preparación previa (mise en place).
-            3. 'bloques_proceso': Lista de objetos con los siguientes tipos:
-               - TIPO 1: {{"tipo": "secuencial", "accion": "...", "tiempo": "5 min", "duracion_minutos": 5, "temperatura": "..."}}
-               - TIPO 2: {{"tipo": "paralelo", "ramas": [{{"nombre": "...", "accion": "...", "tiempo": "10 min", "duracion_minutos": 10, "temperatura": "..."}}, {{"nombre": "...", "accion": "...", "tiempo": "8 min", "duracion_minutos": 8, "temperatura": "..."}}]}}
-               - TIPO 3: {{"tipo": "convergencia", "accion": "...", "tiempo": "2 min", "duracion_minutos": 2, "temperatura": "..."}}
-            4. 'texto_voz': Resumen estructurado para lectura por voz.
+if procesar_accion and API_KEY:
+    try:
+        client = genai.Client(api_key=API_KEY)
+        
+        prompt_sistema = """
+        Eres un chef ejecutivo e ingeniero de procesos culinarios. Analiza la receta aportada (ya sea texto, documento o imagen) y estructúrala detectando tareas secuenciales, en paralelo (columnas simultáneas) y convergencias finales.
+        
+        Devuélvela estrictamente en formato JSON válido con esta estructura exacta, asegurándote de incluir el campo 'duracion_minutos' (número entero con los minutos estimados para cada tarea, necesario para los temporizadores):
+        
+        REGLAS DE ORO:
+        1. 'ingredientes': Lista de ingredientes con cantidades exactas.
+        2. 'pasos_previos': Lista con la preparación previa (mise en place).
+        3. 'bloques_proceso': Lista de objetos con los siguientes tipos:
+           - TIPO 1: {"tipo": "secuencial", "accion": "...", "tiempo": "5 min", "duracion_minutos": 5, "temperatura": "..."}
+           - TIPO 2: {"tipo": "paralelo", "ramas": [{"nombre": "...", "accion": "...", "tiempo": "10 min", "duracion_minutos": 10, "temperatura": "..."}, {"nombre": "...", "accion": "...", "tiempo": "8 min", "duracion_minutos": 8, "temperatura": "..."}]}
+           - TIPO 3: {"tipo": "convergencia", "accion": "...", "tiempo": "2 min", "duracion_minutos": 2, "temperatura": "..."}
+        4. 'texto_voz': Resumen estructurado para lectura por voz.
 
-            Estructura JSON obligatoria:
-            {{
-              "ingredientes": ["..."],
-              "pasos_previos": ["..."],
-              "bloques_proceso": [
-                {{"tipo": "secuencial", "accion": "🔥 ...", "tiempo": "5 min", "duracion_minutos": 5, "temperatura": "Fuego medio"}}
-              ],
-              "texto_voz": "..."
-            }}
+        Estructura JSON obligatoria:
+        {
+          "ingredientes": ["..."],
+          "pasos_previos": ["..."],
+          "bloques_proceso": [
+            {"tipo": "secuencial", "accion": "🔥 ...", "tiempo": "5 min", "duracion_minutos": 5, "temperatura": "Fuego medio"}
+          ],
+          "texto_voz": "..."
+        }
+        """
+
+        # Preparar contenido multimodal o texto
+        contents_payload = [prompt_sistema]
+        if archivo_multimodal:
+            contents_payload.append(types.Part.from_bytes(data=archivo_multimodal, mime_type=tipo_multimodal))
+            contents_payload.append("Analiza esta fuente adjunta (imagen o PDF) y extrae la receta completa.")
+        else:
+            contents_payload.append(f"Receta a procesar:\n{contenido_ia}")
+
+        with st.spinner("⚙️ Procesando con IA de Google Gemini 3.6 Flash y generando diagrama de bloques..."):
+            response = client.models.generate_content(
+                model='gemini-3.6-flash',
+                contents=contents_payload,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    temperature=0.2
+                ),
+            )
             
-            Receta a procesar:
-            {receta_texto}
-            """
+            texto_respuesta = response.text.strip()
+            if texto_respuesta.startswith("```json"):
+                texto_respuesta = texto_respuesta[7:]
+            if texto_respuesta.endswith("```"):
+                texto_respuesta = texto_respuesta[:-3]
             
-            with st.spinner("⚙️ Procesando con IA de Google Gemini 3.6 Flash y generando interfaz interactiva..."):
-                response = client.models.generate_content(
-                    model='gemini-3.6-flash',
-                    contents=prompt,
-                    config=types.GenerateContentConfig(
-                        response_mime_type="application/json",
-                        temperature=0.2
-                    ),
-                )
-                
-                texto_respuesta = response.text.strip()
-                if texto_respuesta.startswith("```json"):
-                    texto_respuesta = texto_respuesta[7:]
-                if texto_respuesta.endswith("```"):
-                    texto_respuesta = texto_respuesta[:-3]
-                
-                datos = json.loads(texto_respuesta.strip())
-                
-                html_final = generar_html_dashboard(
-                    datos.get("ingredientes", []),
-                    datos.get("pasos_previos", []),
-                    datos.get("bloques_proceso", []),
-                    datos.get("texto_voz", "")
-                )
-                
-                st.download_button(
-                    label="📥 Descargar Dashboard Pro Completo (HTML)",
-                    data=html_final,
-                    file_name="facefoodchef_pro_hub.html",
-                    mime="text/html"
-                )
-                
-                # Renderizar con altura generosa para albergar la música y los bloques
-                components.html(html_final, height=1050, scrolling=True)
-                
-        except Exception as e:
-            st.error(f"Error procesando con la IA: {e}")
+            datos = json.loads(texto_respuesta.strip())
+            
+            html_final = generar_html_dashboard(
+                datos.get("ingredientes", []),
+                datos.get("pasos_previos", []),
+                datos.get("bloques_proceso", []),
+                datos.get("texto_voz", "")
+            )
+            
+            st.download_button(
+                label="📥 Descargar Dashboard Pro Completo (HTML)",
+                data=html_final,
+                file_name="facefoodchef_pro_hub.html",
+                mime="text/html"
+            )
+            
+            components.html(html_final, height=1050, scrolling=True)
+            
+    except Exception as e:
+        st.error(f"Error procesando con la IA: {e}")
 elif not API_KEY:
     st.info("👈 Introduce tu API Key gratuita de Google AI Studio en la barra lateral para comenzar.")
 else:
-    st.info("👆 Pega una receta de cocina para transformarla en un diagrama de bloques interactivo.")
+    st.info("👆 Selecciona una de las pestañas superiores para introducir una URL, subir un documento (PDF, Word, PPT) o una foto de tu receta.")
