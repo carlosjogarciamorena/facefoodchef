@@ -4,7 +4,6 @@ from google.genai import types
 import streamlit.components.v1 as components
 from recipe_scrapers import scrape_me
 import json
-import re
 
 st.set_page_config(page_title="FaceFoodChef - Executive Culinary Engine", layout="centered", page_icon="🍳")
 
@@ -20,7 +19,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown("<h1 style='text-align: center; color: #f97316;'>🍳 FaceFoodChef Pro</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #9ca3af;'>Motor inteligente de conversión de recetas en diagramas de bloques (Google Gemini Flash).</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #9ca3af;'>Motor inteligente de conversión de recetas en diagramas de bloques (Google Gemini 3.6 Flash).</p>", unsafe_allow_html=True)
 
 st.sidebar.header("⚙️ Panel de Control")
 API_KEY = st.sidebar.text_input("API Key de Google Gemini:", type="password", help="Consíguela gratis en aistudio.google.com")
@@ -184,7 +183,6 @@ if entrada_usuario and API_KEY:
 
     if receta_texto:
         try:
-            # Inicializamos el cliente oficial de Google Gemini
             client = genai.Client(api_key=API_KEY)
             
             prompt = f"""
@@ -223,9 +221,9 @@ if entrada_usuario and API_KEY:
             {receta_texto}
             """
             
-            with st.spinner("⚙️ Procesando con IA de Google Gemini 2.5 Flash..."):
+            with st.spinner("⚙️ Procesando con IA de Google Gemini 3.6 Flash..."):
                 response = client.models.generate_content(
-                    model='gemini-2.5-flash',
+                    model='gemini-3.6-flash',  # <--- MODELO ACTUALIZADO
                     contents=prompt,
                     config=types.GenerateContentConfig(
                         response_mime_type="application/json",
@@ -233,7 +231,6 @@ if entrada_usuario and API_KEY:
                     ),
                 )
                 
-                # Limpieza robusta del texto JSON devuelto
                 texto_respuesta = response.text.strip()
                 if texto_respuesta.startswith("```json"):
                     texto_respuesta = texto_respuesta[7:]
