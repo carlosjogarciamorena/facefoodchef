@@ -1,3 +1,2 @@
 streamlit
-groq
-recipe-scrapers
+google-genai
