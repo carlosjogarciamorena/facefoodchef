@@ -18,7 +18,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown("<h1 style='text-align: center; color: #f97316;'>🍳 FaceFoodChef Pro</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #9ca3af;'>Motor inteligente de conversión de recetas en diagramas de bloques (Gratuito con Groq).</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #9ca3af;'>Motor inteligente de conversión de recetas en diagramas de bloques (Groq Free).</p>", unsafe_allow_html=True)
 
 st.sidebar.header("⚙️ Panel de Control")
 API_KEY = st.sidebar.text_input("API Key de Groq:", type="password", help="Consíguela gratis en console.groq.com")
@@ -182,7 +182,6 @@ if entrada_usuario and API_KEY:
 
     if receta_texto:
         try:
-            # Inicializamos el cliente oficial de Groq
             client = Groq(api_key=API_KEY)
             
             prompt = f"""
@@ -221,9 +220,9 @@ if entrada_usuario and API_KEY:
             {receta_texto}
             """
             
-            with st.spinner("⚙️ Procesando con IA de Groq (Llama 3.3)..."):
+            with st.spinner("⚙️ Procesando con IA de Groq (Llama 3.1 8B)..."):
                 response = client.chat.completions.create(
-                    model="llama-3.3-70b-versatile",
+                    model="llama-3.1-8b-instant",  # <--- MODELO CAMBIADO A LLAMA 3.1 8B INSTANT
                     messages=[{"role": "user", "content": prompt}],
                     response_format={"type": "json_object"}
                 )
