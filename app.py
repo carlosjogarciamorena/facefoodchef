@@ -1,8 +1,10 @@
 import streamlit as st
-from groq import Groq
+from google import genai
+from google.genai import types
 import streamlit.components.v1 as components
 from recipe_scrapers import scrape_me
 import json
+import re
 
 st.set_page_config(page_title="FaceFoodChef - Executive Culinary Engine", layout="centered", page_icon="🍳")
 
@@ -18,10 +20,10 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown("<h1 style='text-align: center; color: #f97316;'>🍳 FaceFoodChef Pro</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #9ca3af;'>Motor inteligente de conversión de recetas en diagramas de bloques (Groq Free).</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #9ca3af;'>Motor inteligente de conversión de recetas en diagramas de bloques (Google Gemini Flash).</p>", unsafe_allow_html=True)
 
 st.sidebar.header("⚙️ Panel de Control")
-API_KEY = st.sidebar.text_input("API Key de Groq:", type="password", help="Consíguela gratis en console.groq.com")
+API_KEY = st.sidebar.text_input("API Key de Google Gemini:", type="password", help="Consíguela gratis en aistudio.google.com")
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 💎 Características\n- Interfaz Glassmorphism Dark.\n- Bloques en paralelo reales.\n- Sincronización y convergencia.\n- Asistente de voz integrado.")
 
@@ -182,7 +184,8 @@ if entrada_usuario and API_KEY:
 
     if receta_texto:
         try:
-            client = Groq(api_key=API_KEY)
+            # Inicializamos el cliente oficial de Google Gemini
+            client = genai.Client(api_key=API_KEY)
             
             prompt = f"""
             Eres un chef ejecutivo e ingeniero de procesos culinarios. Analiza la receta y estructúrala detectando tareas secuenciales, en paralelo (columnas simultáneas) y convergencias finales.
@@ -220,13 +223,24 @@ if entrada_usuario and API_KEY:
             {receta_texto}
             """
             
-            with st.spinner("⚙️ Procesando con IA de Groq (Llama 3.1 8B)..."):
-                response = client.chat.completions.create(
-                    model="mixtral-8x7b-32768",  # <--- MODELO CAMBIADO A mixtral-8x7b-32768
-                    messages=[{"role": "user", "content": prompt}],
-                    response_format={"type": "json_object"}
+            with st.spinner("⚙️ Procesando con IA de Google Gemini 2.5 Flash..."):
+                response = client.models.generate_content(
+                    model='gemini-2.5-flash',
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        temperature=0.2
+                    ),
                 )
-                datos = json.loads(response.choices[0].message.content)
+                
+                # Limpieza robusta del texto JSON devuelto
+                texto_respuesta = response.text.strip()
+                if texto_respuesta.startswith("```json"):
+                    texto_respuesta = texto_respuesta[7:]
+                if texto_respuesta.endswith("```"):
+                    texto_respuesta = texto_respuesta[:-3]
+                
+                datos = json.loads(texto_respuesta.strip())
                 
                 html_final = generar_html_diagrama(
                     datos.get("ingredientes", []),
@@ -247,6 +261,6 @@ if entrada_usuario and API_KEY:
         except Exception as e:
             st.error(f"Error procesando con la IA: {e}")
 elif not API_KEY:
-    st.info("👈 Introduce tu API Key gratuita de Groq en la barra lateral para comenzar.")
+    st.info("👈 Introduce tu API Key gratuita de Google AI Studio en la barra lateral para comenzar.")
 else:
     st.info("👆 Pega una receta de cocina para transformarla en un diagrama de bloques.")
