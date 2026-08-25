@@ -1,3 +1,5 @@
 streamlit
 google-genai
 recipe-scrapers
+python-docx
+python-pptx
