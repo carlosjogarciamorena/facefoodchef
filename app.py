@@ -1,40 +1,76 @@
 import streamlit as st
-import streamlit.components.v1 as components
+import re
+from io import BytesIO
+from gtts import gTTS
 
-# Configuración de la página de Streamlit
+# Configuración de la página
 st.set_page_config(
     page_title="Traductor de Recetas a Diagrama y Voz",
     page_icon="🍳",
     layout="wide"
 )
 
-st.title("🍳 Traductor de Recetas: Diagrama de Bloques y Asistente de Voz")
-st.markdown("Convierte cualquier receta de cocina en un flujo visual paso a paso con asistente de voz integrado.")
+st.title("🍳 Traductor de Recetas: Diagrama de Flujo y Asistente de Voz")
+st.caption("Convierte recetas en diagramas de bloques y escucha las instrucciones paso a paso.")
 
-# Código HTML, Tailwind CSS y JavaScript encapsulado para garantizar 
-# que la API de Voz del navegador (SpeechSynthesis) funcione correctamente sin bloqueos de iframe.
-recipe_app_html = """
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asistente de Recetas Pro</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-    <script>
-        mermaid.initialize({ startOnLoad: false, theme: 'neutral' });
-    </script>
-</head>
-<body class="bg-gray-50 text-gray-800 p-4 font-sans">
-    <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        <!-- Panel Izquierdo: Entrada de Texto -->
-        <div class="bg-white p-5 rounded-2xl shadow-lg lg:col-span-1 flex flex-col justify-between">
-            <div>
-                <h2 class="font-bold text-lg text-orange-600 mb-3">📝 Texto de la Receta</h2>
-                <textarea id="recipeInput" rows="10" class="w-full p-3 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-orange-500 focus:outline-none">Ejemplo: Tortilla de Patatas Tradicional
-Ingredientes:
+# Función para generar audio en memoria (evita guardar archivos en disco)
+def text_to_audio(text: str) -> BytesIO:
+    tts = gTTS(text=text, lang='es')
+    fp = BytesIO()
+    tts.write_to_fp(fp)
+    fp.seek(0)
+    return fp
+
+# Procesador de texto para separar ingredientes y pasos
+def parse_recipe(text: str):
+    lines = [line.strip() for line in text.split('\n') if line.strip()]
+    ingredients = []
+    steps = []
+    is_steps = False
+
+    for line in lines:
+        line_lower = line.lower()
+        if any(keyword in line_lower for keyword in ["paso", "pasos", "preparación", "elaboración"]):
+            is_steps = True
+            continue
+        elif "ingrediente" in line_lower:
+            is_steps = False
+            continue
+
+        clean_line = re.sub(r'^[0-9]+\.\s*|^[-\*]\s*', '', line)
+
+        if is_steps or re.match(r'^[0-9]+\.', line):
+            steps.append(clean_line)
+        else:
+            ingredients.append(clean_line)
+
+    if not steps:
+        steps = lines
+
+    return ingredients, steps
+
+# Generador de sintaxis Mermaid para el diagrama de bloques
+def generate_mermaid(steps: list) -> str:
+    mermaid_code = "graph TD\n"
+    mermaid_code += "    Start([🚀 Inicio: Preparación]) --> Ing[🛒 Ingredientes listos]\n"
+    
+    for idx, step in enumerate(steps):
+        safe_text = step.replace('"', "'").replace('[', '(').replace(']', ')')
+        short_text = safe_text[:40] + ("..." if len(safe_text) > 40 else "")
+        prev_node = "Ing" if idx == 0 else f"Step{idx}"
+        current_node = f"Step{idx + 1}"
+        mermaid_code += f'    {prev_node} --> {current_node}["Paso {idx + 1}: {short_text}"]\n'
+    
+    last_node = f"Step{len(steps)}" if steps else "Ing"
+    mermaid_code += f"    {last_node} --> End([🎉 ¡Plato listo!])\n"
+    return mermaid_code
+
+# Estado global de la sesión para la navegación
+if "current_step" not in st.session_state:
+    st.session_state.current_step = 0
+
+# Receta de ejemplo
+default_recipe = """Ingredientes:
 - 4 patatas grandes
 - 1 cebolla
 - 6 huevos
@@ -44,182 +80,61 @@ Pasos:
 1. Pelar y cortar las patatas en láminas finas y la cebolla en juliana.
 2. Freír las patatas y la cebolla en una sartén con abundante aceite a fuego medio hasta que estén tiernas.
 3. Batir los huevos en un bol grande con una pizca de sal.
-4. Escurrir el aceite, mezclar las patatas con el huevo y dejar reposar 5 minutos.
-5. Cuajar la mezcla en la sartén 3 minutos por cada lado hasta dorar.</textarea>
-                
-                <button onclick="processRecipe()" class="mt-4 w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-2.5 px-4 rounded-lg transition duration-200 shadow">
-                    ⚙️ Generar Diagrama y Asistente
-                </button>
-            </div>
+4. Escurrir bien el aceite de las patatas y cebolletas, y mezclarlas con los huevos batidos. Dejar reposar 5 minutos.
+5. Verter la mezcla en la sartén y cocinar a fuego medio durante 4 minutos por cada lado hasta dorar."""
 
-            <div class="mt-6 pt-4 border-t border-gray-200">
-                <span class="text-xs font-semibold text-gray-500 uppercase block mb-1">Estado de la Voz</span>
-                <div id="voiceStatus" class="flex items-center space-x-2 text-sm text-green-600 font-medium">
-                    <span class="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse"></span>
-                    <span id="voiceStatusText">Asistente de voz listo</span>
-                </div>
-            </div>
-        </div>
+# Disposición de la interfaz
+col_input, col_display = st.columns([1, 2])
 
-        <!-- Panel Derecho: Diagrama y Reproductor -->
-        <div class="lg:col-span-2 space-y-6">
-            <!-- Diagrama de Bloques -->
-            <div class="bg-white p-5 rounded-2xl shadow-lg">
-                <h2 class="font-bold text-lg text-gray-700 mb-3">📊 Diagrama de Flujo Lógico</h2>
-                <div id="diagramContainer" class="bg-gray-50 p-4 rounded-xl border border-gray-200 min-h-[200px] flex items-center justify-center overflow-x-auto">
-                    <p class="text-gray-400 italic text-sm">Generando diagrama...</p>
-                </div>
-            </div>
+with col_input:
+    st.subheader("📝 Entrada de la Receta")
+    recipe_text = st.text_area("Pega la receta aquí:", value=default_recipe, height=350)
+    
+    if st.button("⚙️ Generar Diagrama y Voz", type="primary", use_container_width=True):
+        st.session_state.current_step = 0
+        st.rerun()
 
-            <!-- Reproductor Guiado Paso a Paso -->
-            <div class="bg-white p-5 rounded-2xl shadow-lg">
-                <div class="flex justify-between items-center mb-3">
-                    <h2 class="font-bold text-lg text-orange-600">🎙️ Instrucciones de Cocina Guiadas</h2>
-                    <span id="stepCounter" class="bg-orange-100 text-orange-800 text-xs font-semibold px-2.5 py-1 rounded-full">Paso 0 de 0</span>
-                </div>
+ingredients, steps = parse_recipe(recipe_text)
 
-                <div id="currentStepCard" class="bg-orange-50 border-l-4 border-orange-500 p-4 rounded-r-lg mb-4 min-h-[80px] flex flex-col justify-center">
-                    <p id="currentStepText" class="text-gray-700 italic text-sm">Procesa una receta para comenzar...</p>
-                </div>
+with col_display:
+    tab1, tab2 = st.tabs(["📊 Diagrama de Bloques", "🎙️ Asistente de Voz Guiado"])
+    
+    with tab1:
+        st.subheader("Diagrama de Flujo del Proceso")
+        mermaid_syntax = generate_mermaid(steps)
+        st.markdown(f"```mermaid\n{mermaid_syntax}\n```")
 
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    <button onclick="prevStep()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-3 rounded-lg transition text-xs">⬅️ Anterior</button>
-                    <button onclick="speakCurrentStep()" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-3 rounded-lg transition shadow text-xs">🔊 Leer Paso</button>
-                    <button onclick="stopSpeech()" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-3 rounded-lg transition text-xs">⏹️ Detener</button>
-                    <button onclick="nextStep()" class="bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2 px-3 rounded-lg transition shadow text-xs">Siguiente ➡️</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        let synth = window.speechSynthesis;
-        let stepsList = [];
-        let currentStepIndex = 0;
-        let voices = [];
+    with tab2:
+        st.subheader("Instrucciones Paso a Paso")
         
-        function loadVoices() {
-            if (synth) voices = synth.getVoices();
-        }
-        loadVoices();
-        if (synth && synth.onvoiceschanged !== undefined) synth.onvoiceschanged = loadVoices;
-
-        function speakText(text) {
-            if (!synth) return;
-            synth.cancel();
-            if (!text) return;
+        if steps:
+            total_steps = len(steps)
+            current = st.session_state.current_step
             
-            let utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'es-ES';
-            utterance.rate = 0.95;
-            
-            let spanishVoice = voices.find(v => v.lang.startsWith('es') || v.lang.includes('ES'));
-            if (spanishVoice) utterance.voice = spanishVoice;
-            
-            utterance.onstart = () => {
-                document.getElementById('voiceStatusText').innerText = "Reproduciendo instrucciones...";
-            };
-            utterance.onend = () => {
-                document.getElementById('voiceStatusText').innerText = "Asistente de voz listo";
-            };
+            # Controles de navegación interactivos
+            c1, c2, c3 = st.columns([1, 2, 1])
+            with c1:
+                if st.button("⬅️ Anterior", disabled=(current == 0), use_container_width=True):
+                    st.session_state.current_step -= 1
+                    st.rerun()
+            with c2:
+                st.markdown(f"<h4 style='text-align: center;'>Paso {current + 1} de {total_steps}</h4>", unsafe_allow_html=True)
+                st.progress((current + 1) / total_steps)
+            with c3:
+                if st.button("Siguiente ➡️", disabled=(current == total_steps - 1), use_container_width=True):
+                    st.session_state.current_step += 1
+                    st.rerun()
 
-            window.persistentUtterance = utterance;
-            synth.speak(utterance);
-        }
+            # Texto de la instrucción actual
+            current_instruction = steps[current]
+            st.info(f"**Paso {current + 1}:** {current_instruction}")
 
-        function stopSpeech() {
-            if (synth) {
-                synth.cancel();
-                document.getElementById('voiceStatusText').innerText = "Asistente detenido";
-            }
-        }
-
-        function processRecipe() {
-            let text = document.getElementById('recipeInput').value;
-            let lines = text.split('\\n');
-            stepsList = [];
-            let ingredients = [];
-            let parsingSteps = false;
-
-            for (let l of lines) {
-                let t = l.trim();
-                if (!t) continue;
-                if (t.toLowerCase().includes('ingrediente')) {
-                    parsingSteps = false;
-                    continue;
-                }
-                if (t.toLowerCase().includes('paso') || t.toLowerCase().includes('preparacion') || /^[0-9]+\./.test(t)) {
-                    parsingSteps = true;
-                }
-                
-                if (parsingSteps || /^[0-9]+\./.test(t)) {
-                    let clean = t.replace(/^[0-9]+\.\s*/, '').replace(/^[-\*]\s*/, '');
-                    stepsList.push(clean);
-                } else {
-                    ingredients.push(t);
-                }
-            }
-
-            if (stepsList.length === 0) {
-                stepsList = lines.filter(l => l.trim().length > 0);
-            }
-
-            currentStepIndex = 0;
-            updateDisplay();
-            renderDiagram(stepsList);
-        }
-
-        function renderDiagram(steps) {
-            let container = document.getElementById('diagramContainer');
-            let code = "graph TD\\n";
-            code += "    Start([Inicio]) --> Ing[Ingredientes Listos]\\n";
-            
-            steps.forEach((s, i) => {
-                let prev = i === 0 ? "Ing" : `Step${i}`;
-                let safeText = s.replace(/"/g, "'").substring(0, 35) + (s.length > 35 ? "..." : "");
-                code += `    ${prev} --> Step${i+1}["Paso ${i+1}: ${safeText}"]\\n`;
-            });
-
-            if (steps.length > 0) {
-                code += `    Step${steps.length} --> End([¡Plato Listo! 🎉])\\n`;
-            } else {
-                code += `    Ing --> End([¡Plato Listo! 🎉])\\n`;
-            }
-
-            container.innerHTML = `<pre class="mermaid">${code}</pre>`;
-            mermaid.contentLoaded();
-        }
-
-        function updateDisplay() {
-            if (stepsList.length === 0) return;
-            document.getElementById('stepCounter').innerText = `Paso ${currentStepIndex + 1} de ${stepsList.length}`;
-            document.getElementById('currentStepText').innerText = stepsList[currentStepIndex];
-            speakText(`Paso ${currentStepIndex + 1}: ${stepsList[currentStepIndex]}`);
-        }
-
-        function nextStep() {
-            if (stepsList.length === 0) return;
-            if (currentStepIndex < stepsList.length - 1) {
-                currentStepIndex++;
-                updateDisplay();
-            } else {
-                speakText("¡Felicidades! Has completado todos los pasos.");
-            }
-        }
-
-        function prevStep() {
-            if (stepsList.length === 0) return;
-            if (currentStepIndex > 0) {
-                currentStepIndex--;
-                updateDisplay();
-            }
-        }
-
-        window.onload = processRecipe;
-    </script>
-</body>
-</html>
-"""
-
-# Renderizar el componente web en Streamlit con altura adaptada
-components.html(recipe_app_html, height=720, scrolling=True)
+            # Asistente de voz
+            st.subheader("🔊 Audio del Paso Actual")
+            try:
+                audio_file = text_to_audio(f"Paso {current + 1}: {current_instruction}")
+                st.audio(audio_file, format="audio/mp3", autoplay=True)
+            except Exception:
+                st.error("No se pudo conectar con el servidor de voz. Verifica tu conexión a internet.")
+        else:
+            st.warning("No se detectaron pasos claros en la receta. Revisa el texto formateado.")
