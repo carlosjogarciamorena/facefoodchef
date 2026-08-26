@@ -8,7 +8,6 @@ import json
 from io import BytesIO
 import time
 import requests
-from bs4::element import Tag # Standard bs4 import handled below
 from bs4 import BeautifulSoup
 
 # Cargar variables de entorno si usas .env (Opcional)
@@ -326,7 +325,7 @@ def generar_html_dashboard(ingredientes, pasos_previos, bloques_proceso, recomen
                         segundosRestantes--;
                         const m = Math.floor(segundosRestantes / 60);
                         const s = segundosRestantes % 60;
-                        elemento.innerText = `${{m}}m ${{s < 10 ? '0' : ''}}${{s}}s`;
+                        elemento.innerText = `${{m}}m ${{s < 10 ? '0' : ''}}${s}s`;
                     }}
                 }}, 1000);
             }}
@@ -371,7 +370,6 @@ if procesar_accion and API_KEY:
     try:
         client = genai.Client(api_key=API_KEY)
         
-        # PROMPT REFORZADO CON REGLAS ESTRICTAS DE INGENIERÍA Y CANTIDADES
         prompt_sistema = """
         Eres un chef ejecutivo e ingeniero de procesos culinarios de alta precisión. Analiza la receta aportada y estructúrala en un diagrama de bloques lógico.
         
