@@ -284,7 +284,7 @@ def generar_html_dashboard(ingredientes, pasos_previos, bloques_proceso, recomen
                 <iframe style="border-radius:12px" src="https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M?utm_source=generator&theme=0" width="100%" height="80" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
             </div>
 
-            <!-- ASISTENTE DE VOZ -->
+            <!-- ASISTENTE DE VOZ BLINDADO -->
             <div class="widget-box">
                 <p style="color: #8b949e; font-size: 13px; margin: 0 0 10px 0; font-weight: 600;">🎙️ Asistente de Voz Integrado</p>
                 <button class="btn-control" onclick="reproducir()">▶️ Escuchar Guía de Cocina</button>
@@ -298,16 +298,16 @@ def generar_html_dashboard(ingredientes, pasos_previos, bloques_proceso, recomen
         </div>
 
         <script>
-            // Inyección 100% segura mediante json.dumps
             const textoVoz = {texto_voz_seguro};
+            let currentUtterance = null; // Variable global para evitar garbage collection en navegadores
 
             function reproducir() {{
                 if ('speechSynthesis' in window) {{
                     window.speechSynthesis.cancel();
-                    const msg = new SpeechSynthesisUtterance(textoVoz);
-                    msg.lang = 'es-ES'; 
-                    msg.rate = 0.95;
-                    window.speechSynthesis.speak(msg);
+                    currentUtterance = new SpeechSynthesisUtterance(textoVoz);
+                    currentUtterance.lang = 'es-ES'; 
+                    currentUtterance.rate = 0.95;
+                    window.speechSynthesis.speak(currentUtterance);
                 }} else {{
                     alert("Tu navegador no soporta síntesis de voz.");
                 }}
@@ -388,30 +388,31 @@ if procesar_accion and API_KEY:
           "ingredientes": ["200g de harina de trigo", "3 gramos de sal fina"],
           "pasos_previos": ["Sacar los huevos 20 minutos antes."],
           "bloques_proceso": [
-            {"tipo": "secuencial", "accion": "Mezclar los ingredientes.", "utensilios": ["Bol de acero", "Varillas"], "tiempo": "5 min", "duracion_minutos": 5, "temperatura": "Ambiente"}
+            {"tipo": "secuencial", "accion": "Primer paso de la receta...", "utensilios": ["Bol de acero"], "tiempo": "5 min", "duracion_minutos": 5, "temperatura": "Ambiente"},
+            {"tipo": "secuencial", "accion": "Segundo paso de la receta...", "utensilios": ["Sartén"], "tiempo": "10 min", "duracion_minutos": 10, "temperatura": "Fuego medio"}
           ],
           "recomendaciones": [
             "Evita calentar demasiado rápido la mantequilla para que no se queme.",
             "Prueba el punto de sal antes de servir."
           ],
-          "texto_voz": "Resumen claro guiado por voz de la receta."
+          "texto_voz": "Resumen claro guiado por voz de la receta completa."
         }
         
         REGLAS DE ORO OBLIGATORIAS:
-        1. Devuelve ÚNICAMENTE un objeto JSON válido (que empiece con '{' y termine con '}'). No devuelvas una lista directa.
+        1. Devuelve ÚNICAMENTE un objeto JSON válido (que empiece con '{' y termine con '}').
         2. 'ingredientes': Lista detallada con CANTIDADES EXACTAS y métricas concretas (ej. '3 gramos de sal' o '15 mililitros de aceite de oliva').
         3. 'pasos_previos': Lista con la preparación previa (mise en place).
-        4. 'bloques_proceso': Lista de objetos conectados lógicamente (tipos: 'secuencial', 'paralelo', 'convergencia') indicando utensilios, tiempo y temperatura.
+        4. 'bloques_proceso': **OBLIGATORIO incluir TODOS los pasos de la receta de forma exhaustiva y secuencial.** PROHIBIDO omitir bloques intermedios. Cada instrucción de la receta original debe convertirse en un bloque ('secuencial', 'paralelo' o 'convergencia') indicando utensilios, tiempo y temperatura.
         5. 'recomendaciones': De 3 a 5 trucos de chef y aclaraciones.
-        6. 'texto_voz': Resumen claro para lectura en voz alta.
+        6. 'texto_voz': Resumen detallado de todos los pasos para lectura en voz alta.
         """
 
         contents_payload = [prompt_sistema]
         if archivo_multimodal:
             contents_payload.append(types.Part.from_bytes(data=archivo_multimodal, mime_type=tipo_multimodal))
-            contents_payload.append("Analiza esta fuente adjunta y extrae la receta completa bajo las reglas estrictas de cantidades exactas y utensilios.")
+            contents_payload.append("Analiza esta fuente adjunta y extrae la receta completa sin saltarte ningún paso intermedio bajo las reglas estrictas de cantidades exactas y utensilios.")
         else:
-            contents_payload.append(f"Información a procesar:\n{contenido_ia}")
+            contents_payload.append(f"Información a procesar (Asegúrate de incluir todos los pasos secuenciales sin saltarte ninguno):\n{contenido_ia}")
 
         # Sistema de reintentos automáticos para errores 503 / UNAVAILABLE
         response = None
@@ -419,7 +420,7 @@ if procesar_accion and API_KEY:
         
         for intento in range(max_intentos):
             try:
-                with st.spinner(f"⚙️ Generando diagrama de procesos con IA (Intento {intento+1}/{max_intentos})..."):
+                with st.spinner(f"⚙️ Generando diagrama de procesos completo con IA (Intento {intento+1}/{max_intentos})..."):
                     response = client.models.generate_content(
                         model='gemini-3.6-flash',
                         contents=contents_payload,
