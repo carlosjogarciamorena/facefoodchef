@@ -3,26 +3,27 @@ import re
 from io import BytesIO
 from gtts import gTTS
 
+# Configuración principal de la aplicación
 st.set_page_config(
     page_title="Traductor de Recetas a Diagrama y Voz",
     page_icon="🍳",
     layout="wide"
 )
 
-st.title("🍳 Traductor de Recetas: Diagrama de Flujo y Asistente de Voz")
-st.caption("Convierte recetas en diagramas de bloques y escucha las instrucciones paso a paso.")
+st.title("🍳 Generador de Diagramas de Recetas y Asistente de Voz")
+st.caption("Transforma el texto de cualquier receta en un diagrama de flujo y escucha la guía paso a paso.")
 
 @st.cache_data(show_spinner=False)
-def text_to_audio(text: str) -> BytesIO:
-    """Genera el audio en memoria mediante gTTS sin escribir en disco."""
-    tts = gTTS(text=text, lang='es')
+def generate_step_audio(text: str) -> BytesIO:
+    """Genera la síntesis de voz en memoria mediante gTTS garantizando compatibilidad."""
+    tts = gTTS(text=text, lang='es', slow=False)
     fp = BytesIO()
     tts.write_to_fp(fp)
     fp.seek(0)
     return fp
 
-def parse_recipe(text: str):
-    """Extrae ingredientes y pasos de forma estructurada a partir de texto plano."""
+def parse_recipe_text(text: str):
+    """Extrae secuencialmente los ingredientes y los pasos operativos de la receta."""
     lines = [line.strip() for line in text.split('\n') if line.strip()]
     ingredients = []
     steps = []
@@ -30,7 +31,7 @@ def parse_recipe(text: str):
 
     for line in lines:
         line_lower = line.lower()
-        if any(keyword in line_lower for keyword in ["paso", "pasos", "preparación", "elaboración", "instrucciones"]):
+        if any(kw in line_lower for kw in ["paso", "pasos", "preparación", "elaboración", "instrucciones"]):
             is_steps = True
             continue
         elif "ingrediente" in line_lower:
@@ -49,32 +50,25 @@ def parse_recipe(text: str):
 
     return ingredients, steps
 
-def generate_mermaid(ingredients: list, steps: list) -> str:
-    """Construye el diagrama de bloques en sintaxis Mermaid.js."""
-    mermaid_code = "graph TD\n"
-    mermaid_code += "    classDef startEnd fill:#d97706,stroke:#92400e,stroke-width:2px,color:#fff;\n"
-    mermaid_code += "    classDef ingNode fill:#0284c7,stroke:#075985,stroke-width:2px,color:#fff;\n"
-    mermaid_code += "    classDef stepNode fill:#374151,stroke:#4b5563,stroke-width:2px,color:#fff;\n\n"
-    
-    mermaid_code += "    Start([🚀 Inicio: Receta]) --> Ing[🛒 Preparar Ingredientes]\n"
-    mermaid_code += "    class Start startEnd;\n"
-    mermaid_code += "    class Ing ingNode;\n\n"
+def create_mermaid_diagram(steps: list) -> str:
+    """Construye la representación lógica del diagrama de bloques en sintaxis Mermaid."""
+    diagram = ["graph TD"]
+    diagram.append("    Start([🚀 Inicio: Receta]) --> Ing[🛒 Ingredientes Listos]")
     
     for idx, step in enumerate(steps):
-        safe_text = step.replace('"', "'").replace('[', '(').replace(']', ')').replace('\n', ' ')
-        short_text = safe_text[:45] + ("..." if len(safe_text) > 45 else "")
+        # Sanitización de caracteres especiales para sintaxis Mermaid
+        safe_step = step.replace('"', "'").replace('[', '(').replace(']', ')').replace('(', '').replace(')', '')
+        short_text = safe_step[:42] + ("..." if len(safe_step) > 42 else "")
         prev_node = "Ing" if idx == 0 else f"Step{idx}"
-        current_node = f"Step{idx + 1}"
-        
-        mermaid_code += f'    {prev_node} --> {current_node}["Paso {idx + 1}: {short_text}"]\n'
-        mermaid_code += f'    class {current_node} stepNode;\n'
+        curr_node = f"Step{idx + 1}"
+        diagram.append(f'    {prev_node} --> {curr_node}["Paso {idx + 1}: {short_text}"]')
     
     last_node = f"Step{len(steps)}" if steps else "Ing"
-    mermaid_code += f"    {last_node} --> End([🎉 ¡Plato Listo!])\n"
-    mermaid_code += "    class End startEnd;\n"
+    diagram.append(f"    {last_node} --> End([🎉 ¡Plato Finalizado!])")
     
-    return mermaid_code
+    return "\n".join(diagram)
 
+# Estado global para mantener el control de navegación interactivo
 if "current_step" not in st.session_state:
     st.session_state.current_step = 0
 
@@ -91,54 +85,60 @@ Pasos:
 4. Escurrir bien el aceite de las patatas y cebolletas, y mezclarlas con los huevos batidos. Dejar reposar 5 minutos.
 5. Verter la mezcla en la sartén y cocinar a fuego medio durante 4 minutos por cada lado hasta dorar."""
 
-col_input, col_display = st.columns([1, 2])
+# Disposición de la interfaz (2 columnas)
+col_input, col_view = st.columns([1, 2])
 
 with col_input:
-    st.subheader("📝 Entrada de la Receta")
-    recipe_text = st.text_area("Pega tu receta aquí:", value=default_recipe, height=350)
+    st.subheader("📝 Receta de Cocina")
+    recipe_input = st.text_area("Introduce el texto de la receta:", value=default_recipe, height=360)
     
-    if st.button("⚙️ Generar Diagrama y Voz", type="primary", use_container_width=True):
+    if st.button("⚙️ Generar Diagrama y Asistente", type="primary", use_container_width=True):
         st.session_state.current_step = 0
         st.rerun()
 
-ingredients, steps = parse_recipe(recipe_text)
+ingredients, steps = parse_recipe_text(recipe_input)
 
-with col_display:
-    tab1, tab2 = st.tabs(["📊 Diagrama de Bloques", "🎙️ Asistente de Voz Guiado"])
+with col_view:
+    tab_flow, tab_audio = st.tabs(["📊 Diagrama de Bloques", "🎙️ Asistente de Voz Paso a Paso"])
     
-    with tab1:
+    with tab_flow:
         st.subheader("Diagrama de Flujo del Proceso")
-        mermaid_syntax = generate_mermaid(ingredients, steps)
-        st.markdown(f"```mermaid\n{mermaid_syntax}\n```")
+        if steps:
+            mermaid_code = create_mermaid_diagram(steps)
+            st.markdown(f"```mermaid\n{mermaid_code}\n```")
+        else:
+            st.warning("No se han detectado pasos para construir el diagrama.")
 
-    with tab2:
-        st.subheader("Instrucciones Paso a Paso")
-        
+    with tab_audio:
+        st.subheader("Instrucciones Auditivas")
         if steps:
             total_steps = len(steps)
             current = st.session_state.current_step
             
-            c1, c2, c3 = st.columns([1, 2, 1])
-            with c1:
+            # Botones de control de pasos
+            c_prev, c_info, c_next = st.columns([1, 2, 1])
+            with c_prev:
                 if st.button("⬅️ Anterior", disabled=(current == 0), use_container_width=True):
                     st.session_state.current_step -= 1
                     st.rerun()
-            with c2:
-                st.markdown(f"<h4 style='text-align: center;'>Paso {current + 1} de {total_steps}</h4>", unsafe_allow_html=True)
+            with c_info:
+                st.markdown(f"<h4 style='text-align: center; margin: 0;'>Paso {current + 1} de {total_steps}</h4>", unsafe_allow_html=True)
                 st.progress((current + 1) / total_steps)
-            with c3:
+            with c_next:
                 if st.button("Siguiente ➡️", disabled=(current == total_steps - 1), use_container_width=True):
                     st.session_state.current_step += 1
                     st.rerun()
 
+            # Cuadro con la instrucción actual
             current_instruction = steps[current]
             st.info(f"**Paso {current + 1}:** {current_instruction}")
 
+            # Reproductor de voz integrado
             st.subheader("🔊 Audio del Paso Actual")
             try:
-                audio_file = text_to_audio(f"Paso {current + 1}: {current_instruction}")
-                st.audio(audio_file, format="audio/mp3", autoplay=True)
+                audio_bytes = generate_step_audio(f"Paso {current + 1}: {current_instruction}")
+                st.audio(audio_bytes, format="audio/mp3", autoplay=True)
             except Exception:
-                st.error("Error al generar el audio. Revisa tu conexión de red.")
+                st.error("No se pudo generar el audio. Comprueba tu conexión a Internet.")
         else:
-            st.warning("No se detectaron pasos claros en la receta.")
+            st.warning("Escribe o pega una receta válida en el panel izquierdo.")
