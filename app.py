@@ -1,14 +1,14 @@
 import os
-import streamlit as st
-from google import genai
-from google.genai import types
-import streamlit.components.v1 as components
-from recipe_scrapers import scrape_me
 import json
-from io import BytesIO
 import time
+from io import BytesIO
 import requests
 from bs4 import BeautifulSoup
+import streamlit as st
+import streamlit.components.v1 as components
+from recipe_scrapers import scrape_me
+from google import genai
+from google.genai import types
 
 # Cargar variables de entorno si usas .env
 try:
@@ -34,7 +34,6 @@ st.set_page_config(page_title="FaceFoodChef Pro - Motor de Diagramas Culinarios"
 
 # --- SISTEMA DE CARGA AUTOMÁTICA DE API KEY ---
 API_KEY = None
-
 if "GEMINI_API_KEY" in st.secrets:
     API_KEY = st.secrets["GEMINI_API_KEY"]
 elif os.getenv("GEMINI_API_KEY"):
@@ -138,7 +137,6 @@ def extraer_texto_de_url(url):
             raise Exception(f"No se pudo leer la URL. Comprueba que sea accesible. Detalle: {e_general}")
 
 def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_previos, bloques_proceso, recomendaciones, texto_voz):
-    # Cabecera
     html_header = f"""
     <div style="background: linear-gradient(135deg, #1f242d 0%, #111418 100%); border: 1px solid #30363d; border-bottom: 4px solid #ff7b72; border-radius: 20px; padding: 28px; text-align: center; margin-bottom: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
         <span style="font-size: 12px; font-weight: 800; color: #ff7b72; text-transform: uppercase; letter-spacing: 1.5px; background: rgba(255,123,114,0.15); padding: 6px 14px; border-radius: 20px;">📜 Receta Magistral</span>
@@ -147,7 +145,6 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
     </div>
     """
 
-    # 1. Despensa e Ingredientes Exactos
     html_ing = """
     <div style="background: linear-gradient(135deg, #0d1117 0%, #161b22 100%); border: 1px solid #30363d; border-radius: 18px; padding: 22px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);">
         <h3 style="color: #ff7b72; margin-top: 0; font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
@@ -159,7 +156,6 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
         html_ing += f"<span style='background: #21262d; color: #c9d1d9; padding: 6px 14px; border-radius: 10px; font-size: 13px; border: 1px solid #30363d; font-weight: 500;'>⚖️ {ing}</span>"
     html_ing += "</div></div>"
 
-    # 2. Mise en Place
     html_prev = """
     <div style="background: linear-gradient(135deg, #0d1117 0%, #161b22 100%); border: 1px solid #30363d; border-radius: 18px; padding: 22px; margin-bottom: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);">
         <h3 style="color: #58a6ff; margin-top: 0; font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
@@ -171,7 +167,6 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
         html_prev += f"<li style='margin-bottom: 6px; color: #c9d1d9;'>{prep}</li>"
     html_prev += "</ul></div>"
 
-    # 3. Diagrama de Flujo Lógico
     html_diagrama = """
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 100%; margin: auto;">
         <h3 style="color: #3fb950; font-size: 18px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
@@ -256,7 +251,6 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
     
     html_diagrama += "</div>"
 
-    # 4. Recomendaciones
     html_recom = """
     <div style="background: linear-gradient(135deg, #1f1f11 0%, #12120a 100%); border: 1px solid #d29922; border-radius: 18px; padding: 22px; margin-top: 24px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);">
         <h3 style="color: #e3b341; margin-top: 0; font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
@@ -268,7 +262,6 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
         html_recom += f"<li style='margin-bottom: 6px;'>{rec}</li>"
     html_recom += "</ul></div>"
 
-    # Pie de página
     html_footer = f"""
     <div style="text-align: center; color: #8b949e; font-size: 13px; margin-top: 35px; border-top: 1px solid #30363d; padding-top: 20px;">
         🌍 <b>Origen de la Receta:</b> {origen_receta} | Creado con FaceFoodChef Pro Diagram Engine
@@ -295,13 +288,11 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
         <div class="container-hub">
             {html_header}
 
-            <!-- REPRODUCTOR SPOTIFY -->
             <div class="widget-box">
                 <p style="color: #8b949e; font-size: 13px; margin: 0 0 10px 0; font-weight: 600;">🎧 Tu Música Favorita para Cocinar (Spotify)</p>
                 <iframe style="border-radius:12px" src="https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M?utm_source=generator&theme=0" width="100%" height="80" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
             </div>
 
-            <!-- ASISTENTE DE VOZ OPTIMIZADO PARA IFRAMES -->
             <div class="widget-box">
                 <p style="color: #8b949e; font-size: 13px; margin: 0 0 10px 0; font-weight: 600;">🎙️ Asistente de Voz Integrado</p>
                 <button id="btnVoz" class="btn-control" onclick="reproducir(this)">▶️ Escuchar Guía de Cocina</button>
@@ -366,7 +357,6 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
 
                 window.speechSynthesis.speak(currentUtterance);
 
-                // Parche esencial para evitar bloqueos de reproducción en Chromium
                 if (window.speechSynthesis.paused) {{
                     window.speechSynthesis.resume();
                 }}
@@ -397,7 +387,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
                         segundosRestantes--;
                         const m = Math.floor(segundosRestantes / 60);
                         const s = segundosRestantes % 60;
-                        elemento.innerText = `${{{{m}}}}m ${{{{s < 10 ? '0' : ''}}}}{{{{s}}}}s`;
+                        elemento.innerText = `${{m}}m ${{s < 10 ? '0' : ''}}${{s}}s`;
                     }}
                 }}, 1000);
             }}
