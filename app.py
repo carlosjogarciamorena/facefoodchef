@@ -10,14 +10,14 @@ from recipe_scrapers import scrape_me
 from google import genai
 from google.genai import types
 
-# Cargar variables de entorno si usas .env
+# Cargar variables de entorno si existe .env
 try:
     from dotenv import load_dotenv
     load_dotenv()
 except ImportError:
     pass
 
-# Importaciones seguras para documentos opcionales
+# Importaciones opcionales para documentos Word y PPT
 try:
     import docx
     HAS_DOCX = True
@@ -30,7 +30,7 @@ try:
 except ImportError:
     HAS_PPTX = False
 
-st.set_page_config(page_title="FaceFoodChef Pro - Motor de Diagramas Culinarios", layout="centered", page_icon="🍳")
+st.set_page_config(page_title="FaceFoodChef Pro - Motor de Diagramas Culinarios", layout="wide", page_icon="🍳")
 
 # --- SISTEMA DE CARGA AUTOMÁTICA DE API KEY ---
 API_KEY = None
@@ -51,38 +51,45 @@ else:
     )
 
 st.sidebar.markdown("---")
-st.sidebar.markdown("### 📂 Formatos Compatibles\n- **Web:** Cualquier URL (Blogs, Periódicos, etc.).\n- **Documentos:** PDF, Word (.docx), PPT (.pptx).\n- **Imágenes:** JPG, PNG, WEBP.\n- **Texto:** Directo o apuntes.")
+st.sidebar.markdown("### 📂 Formatos Compatibles\n- **Web:** Cualquier URL de recetas.\n- **Documentos:** PDF, Word (.docx), PPT (.pptx).\n- **Imágenes:** JPG, PNG, WEBP.\n- **Texto:** Pegado directo.")
 
 # Estilos visuales Dark Glassmorphism Pro
 st.markdown("""
     <style>
     .main { background-color: #07090e; }
-    .stTextArea textarea, .stFileUploader {
+    .stTextArea textarea, .stFileUploader, .stTextInput input {
         background-color: #0d1117; color: #f0f6fc;
-        border-radius: 16px; border: 1px solid #30363d; font-size: 15px;
+        border-radius: 12px; border: 1px solid #30363d; font-size: 14px;
     }
     h1, h2, h3 { color: #f0f6fc; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
     </style>
 """, unsafe_allow_html=True)
 
 st.markdown("<h1 style='text-align: center; color: #ff7b72;'>🍳 FaceFoodChef Pro <span style='font-size: 16px; background: #1f6feb; color: white; padding: 4px 10px; border-radius: 20px; vertical-align: middle;'>Diagram Engine</span></h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #8b949e;'>Transforma recetas en diagramas de flujo lógicos con cantidades exactas, utensilios y temporizadores.</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #8b949e;'>Transforma recetas en diagramas de flujo lógicos con tiempos, utensilios y atribución de derechos de autor.</p>", unsafe_allow_html=True)
 
 # Pestañas de entrada para el usuario
 tab1, tab2, tab3 = st.tabs(["🌐 URL o Texto", "📁 Subir Archivo (PDF, Word, PPT)", "🖼️ Subir Imagen de Receta"])
 
 receta_texto_input = ""
+url_origen_detectada = ""
 archivo_multimodal = None
 tipo_multimodal = None
 
 with tab1:
     entrada_usuario = st.text_area(
-        "📝 Pega la URL de una receta web o escribe los pasos manualmente:", 
-        height=100, 
-        placeholder="Ej: https://misrecetas.com/paella o escribe tu receta..."
+        "📝 Pega la URL de una receta web o escribe el texto manualmente:", 
+        height=120, 
+        placeholder="Ej: https://www.directoalpaladar.com/receta-ejemplo o pega el texto..."
+    )
+    url_manual = st.text_input(
+        "🔗 URL de origen manual (opcional, para respetar derechos de autor si pegas texto):",
+        placeholder="https://sitio-web-original.com/receta"
     )
     if entrada_usuario:
         receta_texto_input = entrada_usuario
+    if url_manual:
+        url_origen_detectada = url_manual.strip()
 
 with tab2:
     archivo_doc = st.file_uploader("📂 Sube un documento con tu receta:", type=["pdf", "docx", "pptx", "txt"])
@@ -122,7 +129,8 @@ def extraer_texto_de_url(url):
     url = url.strip()
     try:
         scraper = scrape_me(url)
-        return f"Receta extraída de {url}:\nIngredientes: {', '.join(scraper.ingredients())}\nInstrucciones:\n{'\n'.join(scraper.instructions())}"
+        texto = f"Receta extraída de {url}:\nIngredientes: {', '.join(scraper.ingredients())}\nInstrucciones:\n{'\n'.join(scraper.instructions())}"
+        return texto, url
     except Exception:
         try:
             headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
@@ -132,7 +140,7 @@ def extraer_texto_de_url(url):
             for element in soup(["script", "style", "nav", "footer", "header", "aside"]):
                 element.decompose()
             texto_limpio = soup.get_text(separator='\n', strip=True)
-            return f"Contenido extraído de la URL ({url}):\n{texto_limpio}"
+            return f"Contenido extraído de la URL ({url}):\n{texto_limpio}", url
         except Exception as e_general:
             raise Exception(f"No se pudo leer la URL. Comprueba que sea accesible. Detalle: {e_general}")
 
@@ -262,9 +270,15 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
         html_recom += f"<li style='margin-bottom: 6px;'>{rec}</li>"
     html_recom += "</ul></div>"
 
+    # Formatear la fuente / derechos de autor como enlace hipervínculo si es una URL
+    if origen_receta.startswith("http://") or origen_receta.startswith("https://"):
+        origen_html = f'<a href="{origen_receta}" target="_blank" style="color: #58a6ff; text-decoration: underline; font-weight: 600;">{origen_receta}</a>'
+    else:
+        origen_html = f'<span style="color: #c9d1d9;">{origen_receta}</span>'
+
     html_footer = f"""
     <div style="text-align: center; color: #8b949e; font-size: 13px; margin-top: 35px; border-top: 1px solid #30363d; padding-top: 20px;">
-        🌍 <b>Origen de la Receta:</b> {origen_receta} | Creado con FaceFoodChef Pro Diagram Engine
+        🌍 <b>Fuente original / Derechos de autor:</b> {origen_html} | Creado con FaceFoodChef Pro Diagram Engine
     </div>
     """
 
@@ -417,8 +431,8 @@ contenido_ia = None
 if API_KEY:
     if receta_texto_input.strip().startswith("http://") or receta_texto_input.strip().startswith("https://"):
         try:
-            with st.spinner("🌐 Extrayendo datos de la web..."):
-                contenido_ia = extraer_texto_de_url(receta_texto_input.strip())
+            with st.spinner("🌐 Extrayendo datos de la web original..."):
+                contenido_ia, url_origen_detectada = extraer_texto_de_url(receta_texto_input.strip())
                 procesar_accion = True
         except Exception as e:
             st.error(f"{e}")
@@ -432,36 +446,36 @@ if procesar_accion and API_KEY:
     try:
         client = genai.Client(api_key=API_KEY)
         
-        prompt_sistema = """
+        prompt_sistema = f"""
         Eres un chef ejecutivo e ingeniero de procesos culinarios de alta precisión. Analiza la receta aportada y estructúrala en un objeto JSON con la siguiente estructura exacta:
         
-        {
+        {{
           "nombre_receta": "Nombre oficial o comercial de la receta",
-          "origen_receta": "Tradicional de España / México / Italia, o fuente cultural estimada",
+          "origen_receta": "{url_origen_detectada if url_origen_detectada else 'Tradicional / Texto aportado por usuario'}",
           "ingredientes": ["200g de harina de trigo", "3 gramos de sal fina"],
           "pasos_previos": ["Sacar los huevos 20 minutos antes."],
           "bloques_proceso": [
-            {"tipo": "secuencial", "accion": "Primer paso secuencial...", "utensilios": ["Bol de acero"], "tiempo": "5 min", "duracion_minutos": 5, "temperatura": "Ambiente"},
-            {
+            {{"tipo": "secuencial", "accion": "Primer paso secuencial...", "utensilios": ["Bol de acero"], "tiempo": "5 min", "duracion_minutos": 5, "temperatura": "Ambiente"}},
+            {{
               "tipo": "paralelo",
               "ramas": [
-                {"nombre": "Sartén A", "accion": "Sofreír las verduras simultáneamente...", "utensilios": ["Sartén"], "tiempo": "10 min", "duracion_minutos": 10, "temperatura": "Fuego medio"},
-                {"nombre": "Olla B", "accion": "Cocer la pasta simultáneamente...", "utensilios": ["Olla"], "tiempo": "8 min", "duracion_minutos": 8, "temperatura": "Fuego alto"}
+                {{"nombre": "Sartén A", "accion": "Sofreír las verduras simultáneamente...", "utensilios": ["Sartén"], "tiempo": "10 min", "duracion_minutos": 10, "temperatura": "Fuego medio"}},
+                {{"nombre": "Olla B", "accion": "Cocer la pasta simultáneamente...", "utensilios": ["Olla"], "tiempo": "8 min", "duracion_minutos": 8, "temperatura": "Fuego alto"}}
               ]
-            },
-            {"tipo": "convergencia", "accion": "Unir las dos preparaciones anteriores y mezclar...", "utensilios": ["Sartén grande", "Espátula"], "tiempo": "2 min", "duracion_minutos": 2, "temperatura": "Fuego bajo"}
+            }},
+            {{"tipo": "convergencia", "accion": "Unir las dos preparaciones anteriores y mezclar...", "utensilios": ["Sartén grande", "Espátula"], "tiempo": "2 min", "duracion_minutos": 2, "temperatura": "Fuego bajo"}}
           ],
           "recomendaciones": [
             "Evita calentar demasiado rápido la mantequilla para que no se queme.",
             "Prueba el punto de sal antes de servir."
           ],
           "texto_voz": "Resumen claro guiado por voz de la receta completa."
-        }
+        }}
         
         REGLAS DE ORO OBLIGATORIAS:
-        1. Devuelve ÚNICAMENTE un objeto JSON válido (que empiece con '{' y termine con '}').
+        1. Devuelve ÚNICAMENTE un objeto JSON válido (que empiece con '{{' y termine con '}}').
         2. 'nombre_receta': Extrae el nombre más adecuado de la receta.
-        3. 'origen_receta': Identifica la región, país o tipo de tradición culinaria de la receta.
+        3. 'origen_receta': Conserva exactamente la URL de origen dada ({url_origen_detectada}) o especifica el origen si no hay URL.
         4. 'ingredientes': Lista detallada con CANTIDADES EXACTAS y métricas concretas (ej. '3 gramos de sal').
         5. 'pasos_previos': Lista con la preparación previa (mise en place).
         6. 'bloques_proceso': OBLIGATORIO modelar el flujo de forma inteligente. Si la receta realiza dos acciones al mismo tiempo, debes usar obligatoriamente un bloque de tipo "paralelo" con sus respectivas ramas y luego un bloque de tipo "convergencia" cuando se unan.
@@ -472,16 +486,16 @@ if procesar_accion and API_KEY:
         contents_payload = [prompt_sistema]
         if archivo_multimodal:
             contents_payload.append(types.Part.from_bytes(data=archivo_multimodal, mime_type=tipo_multimodal))
-            contents_payload.append("Analiza esta fuente adjunta y extrae la receta completa detectando paralelismos y convergencias, capturando su nombre y origen exacto.")
+            contents_payload.append("Analiza esta fuente adjunta y extrae la receta completa detectando paralelismos y convergencias.")
         else:
-            contents_payload.append(f"Información a procesar (Aplica bloques paralelos y de convergencia si la receta realiza tareas simultáneas):\n{contenido_ia}")
+            contents_payload.append(f"Información a procesar:\n{contenido_ia}")
 
         response = None
         max_intentos = 3
         
         for intento in range(max_intentos):
             try:
-                with st.spinner(f"⚙️ Generando diagrama lógico completo con IA (Intento {intento+1}/{max_intentos})..."):
+                with st.spinner(f"⚙️ Generando diagrama lógico completo con gemini-3.6-flash (Intento {intento+1}/{max_intentos})..."):
                     response = client.models.generate_content(
                         model='gemini-3.6-flash',
                         contents=contents_payload,
@@ -511,7 +525,7 @@ if procesar_accion and API_KEY:
             if isinstance(datos, list):
                 datos = {
                     "nombre_receta": "Receta Culinaria",
-                    "origen_receta": "Desconocido",
+                    "origen_receta": url_origen_detectada if url_origen_detectada else "Desconocido",
                     "ingredientes": ["Revisar texto original"],
                     "pasos_previos": ["Preparación general"],
                     "bloques_proceso": datos,
@@ -521,9 +535,12 @@ if procesar_accion and API_KEY:
             elif not isinstance(datos, dict):
                 datos = {}
             
+            # Garantizar la URL de origen para derechos de autor
+            origen_final = url_origen_detectada if url_origen_detectada else datos.get("origen_receta", "Texto aportado por el usuario")
+
             html_final = generar_html_dashboard(
                 datos.get("nombre_receta", "Receta Culinaria Pro"),
-                datos.get("origen_receta", "Cocina Tradicional"),
+                origen_final,
                 datos.get("ingredientes", []),
                 datos.get("pasos_previos", []),
                 datos.get("bloques_proceso", []),
