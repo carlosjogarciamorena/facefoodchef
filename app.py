@@ -10,7 +10,7 @@ from recipe_scrapers import scrape_me
 from google import genai
 from google.genai import types
 
-# Cargar variables de entorno si existe archivo .env
+# Cargar variables de entorno
 try:
     from dotenv import load_dotenv
     load_dotenv()
@@ -51,7 +51,7 @@ else:
     )
 
 st.sidebar.markdown("---")
-st.sidebar.markdown("### 📌 Normas del Sistema\n- **Medidas:** Estrictamente en gramos (g), mililitros (ml) o unidades (ud).\n- **Temperaturas:** Siempre en grados Celsius (°C).\n- **Flujo:** Detección de tareas simultáneas (paralelo) y uniones (convergencia).")
+st.sidebar.markdown("### 📌 Normas del Sistema\n- **Modelo Activo:** `gemini-3.6-flash`\n- **Medidas:** Estrictamente en gramos (g), mililitros (ml) o unidades (ud).\n- **Temperaturas:** Siempre en grados Celsius (°C).\n- **Flujo:** Detección de tareas simultáneas (paralelo) y uniones (convergencia).")
 
 # Estilos visuales Dark Glassmorphism Pro
 st.markdown("""
@@ -68,7 +68,7 @@ st.markdown("""
 st.markdown("<h1 style='text-align: center; color: #ff7b72;'>🍳 FaceFoodChef Pro <span style='font-size: 16px; background: #1f6feb; color: white; padding: 4px 10px; border-radius: 20px; vertical-align: middle;'>Diagram Engine</span></h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; color: #8b949e;'>Transforma recetas en diagramas de flujo lógicos con medidas métricas exactas (g, ml), temperaturas en °C y temporizadores integrados.</p>", unsafe_allow_html=True)
 
-# ENTRADA ÚNICA SIMPLIFICADA (Sin buscadores ni entradas duplicadas)
+# ENTRADA ÚNICA SIMPLIFICADA
 st.subheader("📥 Entrada de Receta")
 entrada_principal = st.text_area(
     "Pega la URL web o el texto completo de la receta:", 
@@ -233,7 +233,6 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
         html_recom += f"<li style='margin-bottom: 6px;'>{rec}</li>"
     html_recom += "</ul></div>"
 
-    # Pie de página ajustado estrictamente a "Fuente de Origen"
     if origen_receta.startswith("http://") or origen_receta.startswith("https://"):
         origen_html = f'<a href="{origen_receta}" target="_blank" style="color: #58a6ff; text-decoration: underline;">{origen_receta}</a>'
     else:
@@ -398,9 +397,9 @@ if procesar_accion and API_KEY:
         else:
             contents_payload.append(f"Receta a procesar:\n{contenido_ia}")
 
-        with st.spinner("⚙️ Diseñando diagrama de flujo en formato métrico..."):
+        with st.spinner("⚙️ Diseñando diagrama de flujo en formato métrico con gemini-3.6-flash..."):
             response = client.models.generate_content(
-                model='gemini-2.5-flash',
+                model='gemini-3.6-flash',
                 contents=contents_payload,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
