@@ -382,19 +382,8 @@ if procesar_accion and API_KEY:
         client = genai.Client(api_key=API_KEY)
         
         prompt_sistema = """
-        Eres un chef ejecutivo e ingeniero de procesos culinarios de alta precisión. Analiza la receta aportada y estructúrala en un diagrama de bloques lógico.
+        Eres un chef ejecutivo e ingeniero de procesos culinarios de alta precisión. Analiza la receta aportada y estructúrala en un objeto JSON con la siguiente estructura exacta:
         
-        REGLAS DE ORO OBLIGATORIAS:
-        1. 'ingredientes': Lista detallada con CANTIDADES EXACTAS y métricas concretas para cada uno (PROHIBIDO usar términos vagos como 'sal al gusto' o 'un chorrito'; conviértelo siempre en cantidades métricas estimadas y exactas, ej. '3 gramos de sal' o '15 mililitros de aceite de oliva').
-        2. 'pasos_previos': Lista con la preparación previa (mise en place).
-        3. 'bloques_proceso': Lista de objetos conectados lógicamente en orden de ejecución, indicando obligatoriamente los utensilios utilizados en cada paso:
-           - TIPO 1: {"tipo": "secuencial", "accion": "...", "utensilios": ["Sartén", "Espátula"], "tiempo": "5 min", "duracion_minutos": 5, "temperatura": "Fuego medio"}
-           - TIPO 2: {"tipo": "paralelo", "ramas": [{"nombre": "Salsa", "accion": "...", "utensilios": ["Cazo"], "tiempo": "10 min", "duracion_minutos": 10, "temperatura": "..."}, {"nombre": "Pasta", "accion": "...", "utensilios": ["Olla"], "tiempo": "8 min", "duracion_minutos": 8, "temperatura": "..."}]}
-           - TIPO 3: {"tipo": "convergencia", "accion": "...", "utensilios": ["Sartén grande"], "tiempo": "2 min", "duracion_minutos": 2, "temperatura": "Fuego alto"}
-        4. 'recomendaciones': Lista de 3 a 5 trucos de chef, aclaraciones y advertencias de errores comunes para asegurar que el plato salga perfecto.
-        5. 'texto_voz': Resumen claro guiado por voz.
-
-        Estructura JSON obligatoria (estrictamente JSON válido):
         {
           "ingredientes": ["200g de harina de trigo", "3 gramos de sal fina"],
           "pasos_previos": ["Sacar los huevos 20 minutos antes."],
@@ -405,8 +394,16 @@ if procesar_accion and API_KEY:
             "Evita calentar demasiado rápido la mantequilla para que no se queme.",
             "Prueba el punto de sal antes de servir."
           ],
-          "texto_voz": "Resumen para voz..."
+          "texto_voz": "Resumen claro guiado por voz de la receta."
         }
+        
+        REGLAS DE ORO OBLIGATORIAS:
+        1. Devuelve ÚNICAMENTE un objeto JSON válido (que empiece con '{' y termine con '}'). No devuelvas una lista directa.
+        2. 'ingredientes': Lista detallada con CANTIDADES EXACTAS y métricas concretas (ej. '3 gramos de sal' o '15 mililitros de aceite de oliva').
+        3. 'pasos_previos': Lista con la preparación previa (mise en place).
+        4. 'bloques_proceso': Lista de objetos conectados lógicamente (tipos: 'secuencial', 'paralelo', 'convergencia') indicando utensilios, tiempo y temperatura.
+        5. 'recomendaciones': De 3 a 5 trucos de chef y aclaraciones.
+        6. 'texto_voz': Resumen claro para lectura en voz alta.
         """
 
         contents_payload = [prompt_sistema]
@@ -424,7 +421,7 @@ if procesar_accion and API_KEY:
             try:
                 with st.spinner(f"⚙️ Generando diagrama de procesos con IA (Intento {intento+1}/{max_intentos})..."):
                     response = client.models.generate_content(
-                        model='gemini-3.6-flash',  # <-- MODELO ACTUALIZADO CORRECTAMENTE
+                        model='gemini-3.6-flash',
                         contents=contents_payload,
                         config=types.GenerateContentConfig(
                             response_mime_type="application/json",
@@ -447,7 +444,19 @@ if procesar_accion and API_KEY:
             if texto_respuesta.endswith("```"):
                 texto_respuesta = texto_respuesta[:-3]
             
+            # Carga del JSON y blindaje contra respuestas en formato lista
             datos = json.loads(texto_respuesta.strip())
+            
+            if isinstance(datos, list):
+                datos = {
+                    "ingredientes": ["Revisar texto original"],
+                    "pasos_previos": ["Preparación general"],
+                    "bloques_proceso": datos,
+                    "recomendaciones": ["Sigue los bloques secuencialmente."],
+                    "texto_voz": "Aquí tienes tu guía de cocina generada por bloques."
+                }
+            elif not isinstance(datos, dict):
+                datos = {}
             
             html_final = generar_html_dashboard(
                 datos.get("ingredientes", []),
