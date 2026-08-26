@@ -259,6 +259,9 @@ def generar_html_dashboard(ingredientes, pasos_previos, bloques_proceso, recomen
         html_recom += f"<li style='margin-bottom: 6px;'>{rec}</li>"
     html_recom += "</ul></div>"
 
+    # Conversión segura mediante json.dumps para el asistente de voz
+    texto_voz_seguro = json.dumps(texto_voz)
+
     documento_completo = f"""
     <!DOCTYPE html>
     <html lang="es">
@@ -295,17 +298,25 @@ def generar_html_dashboard(ingredientes, pasos_previos, bloques_proceso, recomen
         </div>
 
         <script>
-            const textoVoz = "{texto_voz.replace('"', '').replace(chr(10), '. ')}";
+            // Inyección 100% segura mediante json.dumps
+            const textoVoz = {texto_voz_seguro};
+
             function reproducir() {{
                 if ('speechSynthesis' in window) {{
                     window.speechSynthesis.cancel();
                     const msg = new SpeechSynthesisUtterance(textoVoz);
-                    msg.lang = 'es-ES'; msg.rate = 0.95;
+                    msg.lang = 'es-ES'; 
+                    msg.rate = 0.95;
                     window.speechSynthesis.speak(msg);
+                }} else {{
+                    alert("Tu navegador no soporta síntesis de voz.");
                 }}
             }}
+            
             function detener() {{
-                if ('speechSynthesis' in window) {{ window.speechSynthesis.cancel(); }}
+                if ('speechSynthesis' in window) {{ 
+                    window.speechSynthesis.cancel(); 
+                }}
             }}
 
             function iniciarTemporizador(elementId, minutos) {{
@@ -413,7 +424,7 @@ if procesar_accion and API_KEY:
             try:
                 with st.spinner(f"⚙️ Generando diagrama de procesos con IA (Intento {intento+1}/{max_intentos})..."):
                     response = client.models.generate_content(
-                        model='gemini-3.6-flash',
+                        model='gemini-2.5-flash',
                         contents=contents_payload,
                         config=types.GenerateContentConfig(
                             response_mime_type="application/json",
