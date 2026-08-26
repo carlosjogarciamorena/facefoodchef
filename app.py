@@ -10,7 +10,7 @@ import time
 import requests
 from bs4 import BeautifulSoup
 
-# Cargar variables de entorno si usas .env (Opcional)
+# Cargar variables de entorno si usas .env
 try:
     from dotenv import load_dotenv
     load_dotenv()
@@ -138,7 +138,7 @@ def extraer_texto_de_url(url):
             raise Exception(f"No se pudo leer la URL. Comprueba que sea accesible. Detalle: {e_general}")
 
 def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_previos, bloques_proceso, recomendaciones, texto_voz):
-    # Cabecera Vistosa con el Nombre de la Receta
+    # Cabecera
     html_header = f"""
     <div style="background: linear-gradient(135deg, #1f242d 0%, #111418 100%); border: 1px solid #30363d; border-bottom: 4px solid #ff7b72; border-radius: 20px; padding: 28px; text-align: center; margin-bottom: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
         <span style="font-size: 12px; font-weight: 800; color: #ff7b72; text-transform: uppercase; letter-spacing: 1.5px; background: rgba(255,123,114,0.15); padding: 6px 14px; border-radius: 20px;">📜 Receta Magistral</span>
@@ -171,7 +171,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
         html_prev += f"<li style='margin-bottom: 6px; color: #c9d1d9;'>{prep}</li>"
     html_prev += "</ul></div>"
 
-    # 3. Diagrama de Flujo Lógico con Utensilios y Flechas (Soporte Paralelo, Convergencia y Secuencial)
+    # 3. Diagrama de Flujo Lógico
     html_diagrama = """
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 100%; margin: auto;">
         <h3 style="color: #3fb950; font-size: 18px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
@@ -256,7 +256,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
     
     html_diagrama += "</div>"
 
-    # 4. Apartado de Recomendaciones y Aclaraciones
+    # 4. Recomendaciones
     html_recom = """
     <div style="background: linear-gradient(135deg, #1f1f11 0%, #12120a 100%); border: 1px solid #d29922; border-radius: 18px; padding: 22px; margin-top: 24px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);">
         <h3 style="color: #e3b341; margin-top: 0; font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
@@ -268,7 +268,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
         html_recom += f"<li style='margin-bottom: 6px;'>{rec}</li>"
     html_recom += "</ul></div>"
 
-    # Pie de página con el Origen de la Receta
+    # Pie de página
     html_footer = f"""
     <div style="text-align: center; color: #8b949e; font-size: 13px; margin-top: 35px; border-top: 1px solid #30363d; padding-top: 20px;">
         🌍 <b>Origen de la Receta:</b> {origen_receta} | Creado con FaceFoodChef Pro Diagram Engine
@@ -301,7 +301,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
                 <iframe style="border-radius:12px" src="https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M?utm_source=generator&theme=0" width="100%" height="80" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
             </div>
 
-            <!-- ASISTENTE DE VOZ BLINDADO CON FEEDBACK VISUAL Y GESTIÓN DE EVENTOS -->
+            <!-- ASISTENTE DE VOZ OPTIMIZADO PARA IFRAMES -->
             <div class="widget-box">
                 <p style="color: #8b949e; font-size: 13px; margin: 0 0 10px 0; font-weight: 600;">🎙️ Asistente de Voz Integrado</p>
                 <button id="btnVoz" class="btn-control" onclick="reproducir(this)">▶️ Escuchar Guía de Cocina</button>
@@ -318,31 +318,60 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
         <script>
             const textoVoz = {texto_voz_seguro};
             let currentUtterance = null;
+            let vocesDisponibles = [];
 
-            function reproducir(btn) {{
+            function cargarVoces() {{
                 if ('speechSynthesis' in window) {{
-                    window.speechSynthesis.cancel();
-                    
-                    currentUtterance = new SpeechSynthesisUtterance(textoVoz);
-                    currentUtterance.lang = 'es-ES'; 
-                    currentUtterance.rate = 0.95;
-                    
-                    btn.innerText = "🔊 Reproduciendo...";
-                    
-                    currentUtterance.onend = function() {{
-                        btn.innerText = "▶️ Escuchar Guía de Cocina";
-                    }};
-                    
-                    currentUtterance.onerror = function() {{
-                        btn.innerText = "▶️ Escuchar Guía de Cocina";
-                    }};
-
-                    window.speechSynthesis.speak(currentUtterance);
-                }} else {{
-                    alert("Tu navegador no soporta síntesis de voz.");
+                    vocesDisponibles = window.speechSynthesis.getVoices();
                 }}
             }}
-            
+
+            if ('speechSynthesis' in window) {{
+                cargarVoces();
+                if (window.speechSynthesis.onvoiceschanged !== undefined) {{
+                    window.speechSynthesis.onvoiceschanged = cargarVoces;
+                }}
+            }}
+
+            function reproducir(btn) {{
+                if (!('speechSynthesis' in window)) {{
+                    alert("Tu navegador no soporta síntesis de voz.");
+                    return;
+                }}
+
+                window.speechSynthesis.cancel();
+                
+                currentUtterance = new SpeechSynthesisUtterance(textoVoz);
+                currentUtterance.lang = 'es-ES'; 
+                currentUtterance.rate = 0.95;
+
+                if (vocesDisponibles.length === 0) {{
+                    vocesDisponibles = window.speechSynthesis.getVoices();
+                }}
+                
+                const vozSpanish = vocesDisponibles.find(v => v.lang.startsWith('es') || v.lang.includes('es'));
+                if (vozSpanish) {{
+                    currentUtterance.voice = vozSpanish;
+                }}
+
+                btn.innerText = "🔊 Reproduciendo...";
+
+                currentUtterance.onend = function() {{
+                    btn.innerText = "▶️ Escuchar Guía de Cocina";
+                }};
+
+                currentUtterance.onerror = function() {{
+                    btn.innerText = "▶️ Escuchar Guía de Cocina";
+                }};
+
+                window.speechSynthesis.speak(currentUtterance);
+
+                // Parche esencial para evitar bloqueos de reproducción en Chromium
+                if (window.speechSynthesis.paused) {{
+                    window.speechSynthesis.resume();
+                }}
+            }}
+
             function detener() {{
                 if ('speechSynthesis' in window) {{ 
                     window.speechSynthesis.cancel(); 
@@ -445,7 +474,7 @@ if procesar_accion and API_KEY:
         3. 'origen_receta': Identifica la región, país o tipo de tradición culinaria de la receta.
         4. 'ingredientes': Lista detallada con CANTIDADES EXACTAS y métricas concretas (ej. '3 gramos de sal').
         5. 'pasos_previos': Lista con la preparación previa (mise en place).
-        6. 'bloques_proceso': **OBLIGATORIO modelar el flujo de forma inteligente.** Si la receta realiza dos acciones al mismo tiempo (ej. cocinar por un lado y hervir por otro), **debes usar obligatoriamente un bloque de tipo "paralelo"** con sus respectivas ramas y luego un bloque de tipo **"convergencia"** cuando se unan. No reduzcas todo a un esquema lineal plano si hay multitarea. No omitas ningún paso intermedio.
+        6. 'bloques_proceso': OBLIGATORIO modelar el flujo de forma inteligente. Si la receta realiza dos acciones al mismo tiempo, debes usar obligatoriamente un bloque de tipo "paralelo" con sus respectivas ramas y luego un bloque de tipo "convergencia" cuando se unan.
         7. 'recomendaciones': De 3 a 5 trucos de chef.
         8. 'texto_voz': Resumen detallado para lectura en voz alta.
         """
@@ -457,7 +486,6 @@ if procesar_accion and API_KEY:
         else:
             contents_payload.append(f"Información a procesar (Aplica bloques paralelos y de convergencia si la receta realiza tareas simultáneas):\n{contenido_ia}")
 
-        # Sistema de reintentos automáticos para errores 503 / UNAVAILABLE
         response = None
         max_intentos = 3
         
@@ -465,7 +493,7 @@ if procesar_accion and API_KEY:
             try:
                 with st.spinner(f"⚙️ Generando diagrama lógico completo con IA (Intento {intento+1}/{max_intentos})..."):
                     response = client.models.generate_content(
-                        model='gemini-3.6-flash',
+                        model='gemini-2.5-flash',
                         contents=contents_payload,
                         config=types.GenerateContentConfig(
                             response_mime_type="application/json",
@@ -488,7 +516,6 @@ if procesar_accion and API_KEY:
             if texto_respuesta.endswith("```"):
                 texto_respuesta = texto_respuesta[:-3]
             
-            # Carga del JSON y blindaje contra respuestas en formato lista
             datos = json.loads(texto_respuesta.strip())
             
             if isinstance(datos, list):
