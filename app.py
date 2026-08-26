@@ -137,7 +137,16 @@ def extraer_texto_de_url(url):
         except Exception as e_general:
             raise Exception(f"No se pudo leer la URL. Comprueba que sea accesible. Detalle: {e_general}")
 
-def generar_html_dashboard(ingredientes, pasos_previos, bloques_proceso, recomendaciones, texto_voz):
+def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_previos, bloques_proceso, recomendaciones, texto_voz):
+    # Cabecera Vistosa con el Nombre de la Receta
+    html_header = f"""
+    <div style="background: linear-gradient(135deg, #1f242d 0%, #111418 100%); border: 1px solid #30363d; border-bottom: 4px solid #ff7b72; border-radius: 20px; padding: 28px; text-align: center; margin-bottom: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+        <span style="font-size: 12px; font-weight: 800; color: #ff7b72; text-transform: uppercase; letter-spacing: 1.5px; background: rgba(255,123,114,0.15); padding: 6px 14px; border-radius: 20px;">📜 Receta Magistral</span>
+        <h1 style="color: #f0f6fc; font-size: 28px; margin: 16px 0 8px 0; font-weight: 800; letter-spacing: -0.5px;">{nombre_receta}</h1>
+        <p style="color: #8b949e; font-size: 14px; margin: 0;">Diagrama de ejecución paso a paso para un cocinado perfecto</p>
+    </div>
+    """
+
     # 1. Despensa e Ingredientes Exactos
     html_ing = """
     <div style="background: linear-gradient(135deg, #0d1117 0%, #161b22 100%); border: 1px solid #30363d; border-radius: 18px; padding: 22px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);">
@@ -259,7 +268,13 @@ def generar_html_dashboard(ingredientes, pasos_previos, bloques_proceso, recomen
         html_recom += f"<li style='margin-bottom: 6px;'>{rec}</li>"
     html_recom += "</ul></div>"
 
-    # Conversión segura mediante json.dumps para el asistente de voz
+    # Pie de página con el Origen de la Receta
+    html_footer = f"""
+    <div style="text-align: center; color: #8b949e; font-size: 13px; margin-top: 35px; border-top: 1px solid #30363d; padding-top: 20px;">
+        🌍 <b>Origen de la Receta:</b> {origen_receta} | Creado con FaceFoodChef Pro Diagram Engine
+    </div>
+    """
+
     texto_voz_seguro = json.dumps(texto_voz)
 
     documento_completo = f"""
@@ -278,13 +293,15 @@ def generar_html_dashboard(ingredientes, pasos_previos, bloques_proceso, recomen
     </head>
     <body>
         <div class="container-hub">
+            {html_header}
+
             <!-- REPRODUCTOR SPOTIFY -->
             <div class="widget-box">
                 <p style="color: #8b949e; font-size: 13px; margin: 0 0 10px 0; font-weight: 600;">🎧 Tu Música Favorita para Cocinar (Spotify)</p>
                 <iframe style="border-radius:12px" src="https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M?utm_source=generator&theme=0" width="100%" height="80" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
             </div>
 
-            <!-- ASISTENTE DE VOZ BLINDADO -->
+            <!-- ASISTENTE DE VOZ BLINDADO CON PRECARGA DE VOCES -->
             <div class="widget-box">
                 <p style="color: #8b949e; font-size: 13px; margin: 0 0 10px 0; font-weight: 600;">🎙️ Asistente de Voz Integrado</p>
                 <button class="btn-control" onclick="reproducir()">▶️ Escuchar Guía de Cocina</button>
@@ -295,11 +312,25 @@ def generar_html_dashboard(ingredientes, pasos_previos, bloques_proceso, recomen
             {html_prev}
             {html_diagrama}
             {html_recom}
+            {html_footer}
         </div>
 
         <script>
             const textoVoz = {texto_voz_seguro};
-            let currentUtterance = null; // Variable global para evitar garbage collection en navegadores
+            let currentUtterance = null;
+            let vocesDisponibles = [];
+
+            // Carga asíncrona de voces para compatibilidad total con navegadores modernos
+            function cargarVoces() {{
+                if ('speechSynthesis' in window) {{
+                    vocesDisponibles = window.speechSynthesis.getVoices();
+                }}
+            }}
+
+            if ('speechSynthesis' in window) {{
+                window.speechSynthesis.onvoiceschanged = cargarVoces;
+                cargarVoces();
+            }}
 
             function reproducir() {{
                 if ('speechSynthesis' in window) {{
@@ -307,6 +338,15 @@ def generar_html_dashboard(ingredientes, pasos_previos, bloques_proceso, recomen
                     currentUtterance = new SpeechSynthesisUtterance(textoVoz);
                     currentUtterance.lang = 'es-ES'; 
                     currentUtterance.rate = 0.95;
+                    
+                    // Asignar voz en español si está disponible en el entorno
+                    if (vocesDisponibles.length > 0) {{
+                        const vozEs = vocesDisponibles.find(v => v.lang.startsWith('es'));
+                        if (vozEs) {{
+                            currentUtterance.voice = vozEs;
+                        }}
+                    }}
+
                     window.speechSynthesis.speak(currentUtterance);
                 }} else {{
                     alert("Tu navegador no soporta síntesis de voz.");
@@ -385,11 +425,13 @@ if procesar_accion and API_KEY:
         Eres un chef ejecutivo e ingeniero de procesos culinarios de alta precisión. Analiza la receta aportada y estructúrala en un objeto JSON con la siguiente estructura exacta:
         
         {
+          "nombre_receta": "Nombre oficial o comercial de la receta",
+          "origen_receta": "Tradicional de España / México / Italia, o fuente cultural estimada",
           "ingredientes": ["200g de harina de trigo", "3 gramos de sal fina"],
           "pasos_previos": ["Sacar los huevos 20 minutos antes."],
           "bloques_proceso": [
-            {"tipo": "secuencial", "accion": "Primer paso de la receta...", "utensilios": ["Bol de acero"], "tiempo": "5 min", "duracion_minutos": 5, "temperatura": "Ambiente"},
-            {"tipo": "secuencial", "accion": "Segundo paso de la receta...", "utensilios": ["Sartén"], "tiempo": "10 min", "duracion_minutos": 10, "temperatura": "Fuego medio"}
+            {"tipo": "secuencial", "accion": "Primer paso detallado...", "utensilios": ["Bol de acero"], "tiempo": "5 min", "duracion_minutos": 5, "temperatura": "Ambiente"},
+            {"tipo": "secuencial", "accion": "Segundo paso detallado...", "utensilios": ["Sartén"], "tiempo": "10 min", "duracion_minutos": 10, "temperatura": "Fuego medio"}
           ],
           "recomendaciones": [
             "Evita calentar demasiado rápido la mantequilla para que no se queme.",
@@ -400,19 +442,21 @@ if procesar_accion and API_KEY:
         
         REGLAS DE ORO OBLIGATORIAS:
         1. Devuelve ÚNICAMENTE un objeto JSON válido (que empiece con '{' y termine con '}').
-        2. 'ingredientes': Lista detallada con CANTIDADES EXACTAS y métricas concretas (ej. '3 gramos de sal' o '15 mililitros de aceite de oliva').
-        3. 'pasos_previos': Lista con la preparación previa (mise en place).
-        4. 'bloques_proceso': **OBLIGATORIO incluir TODOS los pasos de la receta de forma exhaustiva y secuencial.** PROHIBIDO omitir bloques intermedios. Cada instrucción de la receta original debe convertirse en un bloque ('secuencial', 'paralelo' o 'convergencia') indicando utensilios, tiempo y temperatura.
-        5. 'recomendaciones': De 3 a 5 trucos de chef y aclaraciones.
-        6. 'texto_voz': Resumen detallado de todos los pasos para lectura en voz alta.
+        2. 'nombre_receta': Extrae el nombre más adecuado de la receta.
+        3. 'origen_receta': Identifica la región, país o tipo de tradición culinaria de la receta.
+        4. 'ingredientes': Lista detallada con CANTIDADES EXACTAS y métricas concretas (ej. '3 gramos de sal').
+        5. 'pasos_previos': Lista con la preparación previa (mise en place).
+        6. 'bloques_proceso': **OBLIGATORIO incluir ABSOLUTAMENTE TODOS los pasos de la receta de forma exhaustiva y secuencial.** PROHIBIDO omitir pasos intermedios (como el bloque secuencial 2). Cada instrucción debe convertirse en su bloque correspondiente.
+        7. 'recomendaciones': De 3 a 5 trucos de chef.
+        8. 'texto_voz': Resumen detallado para lectura en voz alta.
         """
 
         contents_payload = [prompt_sistema]
         if archivo_multimodal:
             contents_payload.append(types.Part.from_bytes(data=archivo_multimodal, mime_type=tipo_multimodal))
-            contents_payload.append("Analiza esta fuente adjunta y extrae la receta completa sin saltarte ningún paso intermedio bajo las reglas estrictas de cantidades exactas y utensilios.")
+            contents_payload.append("Analiza esta fuente adjunta y extrae la receta completa sin saltarte ningún paso intermedio, capturando su nombre y origen exacto.")
         else:
-            contents_payload.append(f"Información a procesar (Asegúrate de incluir todos los pasos secuenciales sin saltarte ninguno):\n{contenido_ia}")
+            contents_payload.append(f"Información a procesar (Asegúrate de no omitir ningún paso intermedio y extrae nombre y origen):\n{contenido_ia}")
 
         # Sistema de reintentos automáticos para errores 503 / UNAVAILABLE
         response = None
@@ -420,7 +464,7 @@ if procesar_accion and API_KEY:
         
         for intento in range(max_intentos):
             try:
-                with st.spinner(f"⚙️ Generando diagrama de procesos completo con IA (Intento {intento+1}/{max_intentos})..."):
+                with st.spinner(f"⚙️ Generando diagrama completo con IA (Intento {intento+1}/{max_intentos})..."):
                     response = client.models.generate_content(
                         model='gemini-3.6-flash',
                         contents=contents_payload,
@@ -450,6 +494,8 @@ if procesar_accion and API_KEY:
             
             if isinstance(datos, list):
                 datos = {
+                    "nombre_receta": "Receta Culinaria",
+                    "origen_receta": "Desconocido",
                     "ingredientes": ["Revisar texto original"],
                     "pasos_previos": ["Preparación general"],
                     "bloques_proceso": datos,
@@ -460,6 +506,8 @@ if procesar_accion and API_KEY:
                 datos = {}
             
             html_final = generar_html_dashboard(
+                datos.get("nombre_receta", "Receta Culinaria Pro"),
+                datos.get("origen_receta", "Cocina Tradicional"),
                 datos.get("ingredientes", []),
                 datos.get("pasos_previos", []),
                 datos.get("bloques_proceso", []),
@@ -474,7 +522,7 @@ if procesar_accion and API_KEY:
                 mime="text/html"
             )
             
-            components.html(html_final, height=1250, scrolling=True)
+            components.html(html_final, height=1300, scrolling=True)
             
     except Exception as e:
         st.error(f"Error procesando con la IA: {e}")
