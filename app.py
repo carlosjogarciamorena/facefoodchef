@@ -6,6 +6,8 @@ from recipe_scrapers import scrape_me
 import json
 from io import BytesIO
 import time
+import requests
+from bs4 import BeautifulSoup
 
 # Importaciones seguras para documentos opcionales
 try:
@@ -40,7 +42,7 @@ st.markdown("<p style='text-align: center; color: #8b949e;'>Ingeniería de proce
 st.sidebar.header("⚙️ Panel de Control")
 API_KEY = st.sidebar.text_input("API Key de Google Gemini:", type="password", help="Consíguela gratis en aistudio.google.com")
 st.sidebar.markdown("---")
-st.sidebar.markdown("### 📂 Formatos Compatibles\n- **Web:** URLs de blogs de cocina.\n- **Documentos:** PDF, Word (.docx), PPT (.pptx).\n- **Imágenes:** JPG, PNG, WEBP.\n- **Texto:** Directo o apuntes.")
+st.sidebar.markdown("### 📂 Formatos Compatibles\n- **Web:** Cualquier URL (Blogs, Periódicos, etc.).\n- **Documentos:** PDF, Word (.docx), PPT (.pptx).\n- **Imágenes:** JPG, PNG, WEBP.\n- **Texto:** Directo o apuntes.")
 
 # Pestañas de entrada para el usuario
 tab1, tab2, tab3 = st.tabs(["🌐 URL o Texto", "📁 Subir Archivo (PDF, Word, PPT)", "🖼️ Subir Imagen de Receta"])
@@ -53,7 +55,7 @@ with tab1:
     entrada_usuario = st.text_area(
         "📝 Pega la URL de una receta web o escribe los pasos manualmente:", 
         height=100, 
-        placeholder="Ej: https://www.receta.com/paella o escribe tu receta..."
+        placeholder="Ej: https://okdiario.com/... o escribe tu receta..."
     )
     if entrada_usuario:
         receta_texto_input = entrada_usuario
@@ -91,6 +93,30 @@ with tab3:
     if archivo_img:
         archivo_multimodal = archivo_img.getvalue()
         tipo_multimodal = archivo_img.type
+
+def extraer_texto_de_url(url):
+    """Función híbrida: Intenta recipe-scrapers y si no está soportada, usa BeautifulSoup para extraer todo el texto."""
+    url = url.strip()
+    try:
+        # Intento 1: Usar scraper especializado
+        scraper = scrape_me(url)
+        return f"Receta extraída de {url}:\nIngredientes: {', '.join(scraper.ingredients())}\nInstrucciones:\n{'\n'.join(scraper.instructions())}"
+    except Exception:
+        # Intento 2 (Fallback Universal): Extraer contenido web general con requests y BeautifulSoup
+        try:
+            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
+            response = requests.get(url, headers=headers, timeout=10)
+            response.raise_for_status()
+            
+            soup = BeautifulSoup(response.text, 'html.parser')
+            # Limpiar elementos irrelevantes de la página web
+            for element in soup(["script", "style", "nav", "footer", "header", "aside"]):
+                element.decompose()
+                
+            texto_limpio = soup.get_text(separator='\n', strip=True)
+            return f"Contenido extraído de la URL ({url}):\n{texto_limpio}"
+        except Exception as e_general:
+            raise Exception(f"No se pudo leer la URL. Comprueba que sea accesible. Detalle: {e_general}")
 
 def generar_html_dashboard(ingredientes, pasos_previos, bloques_proceso, texto_voz):
     html_ing = """
@@ -285,12 +311,11 @@ contenido_ia = None
 if API_KEY:
     if receta_texto_input.strip().startswith("http://") or receta_texto_input.strip().startswith("https://"):
         try:
-            with st.spinner("🌐 Extrayendo datos de la web..."):
-                scraper = scrape_me(receta_texto_input.strip())
-                contenido_ia = f"Receta: {scraper.title()}\nIngredientes: {', '.join(scraper.ingredients())}\nInstrucciones:\n{'\n'.join(scraper.instructions())}"
+            with st.spinner("🌐 Extrayendo datos de la web (con fallback universal)..."):
+                contenido_ia = extraer_texto_de_url(receta_texto_input.strip())
                 procesar_accion = True
         except Exception as e:
-            st.error(f"No se pudo extraer la URL: {e}")
+            st.error(f"{e}")
     elif receta_texto_input.strip():
         contenido_ia = receta_texto_input
         procesar_accion = True
@@ -302,7 +327,7 @@ if procesar_accion and API_KEY:
         client = genai.Client(api_key=API_KEY)
         
         prompt_sistema = """
-        Eres un chef ejecutivo e ingeniero de procesos culinarios. Analiza la receta aportada (ya sea texto, documento o imagen) y estructúrala detectando tareas secuenciales, en paralelo (columnas simultáneas) y convergencias finales.
+        Eres un chef ejecutivo e ingeniero de procesos culinarios. Analiza la fuente aportada (texto plano, artículo web extraído, documento o imagen) y estructúrala detectando tareas secuenciales, en paralelo (columnas simultáneas) y convergencias finales.
         
         Devuélvela estrictamente en formato JSON válido con esta estructura exacta, asegurándote de incluir el campo 'duracion_minutos' (número entero con los minutos estimados para cada tarea, necesario para los temporizadores):
         
@@ -329,11 +354,11 @@ if procesar_accion and API_KEY:
         contents_payload = [prompt_sistema]
         if archivo_multimodal:
             contents_payload.append(types.Part.from_bytes(data=archivo_multimodal, mime_type=tipo_multimodal))
-            contents_payload.append("Analiza esta fuente adjunta (PDF o imagen) y extrae la receta completa.")
+            contents_payload.append("Analiza esta fuente adjunta y extrae la receta completa.")
         else:
-            contents_payload.append(f"Receta a procesar:\n{contenido_ia}")
+            contents_payload.append(f"Información a procesar:\n{contenido_ia}")
 
-        # --- SISTEMA DE REINTENTOS AUTOMÁTICOS PARA ERRORES 503 / UNAVAILABLE ---
+        # Sistema de reintentos automáticos para errores 503 / UNAVAILABLE
         response = None
         max_intentos = 3
         
@@ -348,15 +373,14 @@ if procesar_accion and API_KEY:
                             temperature=0.2
                         ),
                     )
-                break  # Si la llamada es exitosa, salimos del bucle de reintentos
+                break
             except Exception as api_err:
                 err_str = str(api_err)
                 if ("503" in err_str or "UNAVAILABLE" in err_str) and intento < max_intentos - 1:
-                    time.sleep(3 * (intento + 1))  # Espera progresiva: 3s, luego 6s...
+                    time.sleep(3 * (intento + 1))
                     continue
                 else:
-                    raise api_err  # Si es otro error o se acabaron los intentos, propagamos la excepción
-        # -----------------------------------------------------------------------
+                    raise api_err
 
         if response:
             texto_respuesta = response.text.strip()
@@ -389,4 +413,3 @@ elif not API_KEY:
     st.info("👈 Introduce tu API Key gratuita de Google AI Studio en la barra lateral para comenzar.")
 else:
     st.info("👆 Selecciona una de las pestañas superiores para introducir una URL, subir un documento (PDF, Word, PPT) o una foto de tu receta.")
-    
