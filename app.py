@@ -325,7 +325,7 @@ def generar_html_dashboard(ingredientes, pasos_previos, bloques_proceso, recomen
                         segundosRestantes--;
                         const m = Math.floor(segundosRestantes / 60);
                         const s = segundosRestantes % 60;
-                        elemento.innerText = `${{m}}m ${{s < 10 ? '0' : ''}}${s}s`;
+                        elemento.innerText = `${{{{m}}}}m ${{{{s < 10 ? '0' : ''}}}}{{{{s}}}}s`;
                     }}
                 }}, 1000);
             }}
