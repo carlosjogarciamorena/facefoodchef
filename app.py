@@ -171,7 +171,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
         html_prev += f"<li style='margin-bottom: 6px; color: #c9d1d9;'>{prep}</li>"
     html_prev += "</ul></div>"
 
-    # 3. Diagrama de Flujo Lógico con Utensilios y Flechas
+    # 3. Diagrama de Flujo Lógico con Utensilios y Flechas (Soporte Paralelo, Convergencia y Secuencial)
     html_diagrama = """
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 100%; margin: auto;">
         <h3 style="color: #3fb950; font-size: 18px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
@@ -301,10 +301,10 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
                 <iframe style="border-radius:12px" src="https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M?utm_source=generator&theme=0" width="100%" height="80" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
             </div>
 
-            <!-- ASISTENTE DE VOZ BLINDADO CON PRECARGA DE VOCES -->
+            <!-- ASISTENTE DE VOZ BLINDADO CON FEEDBACK VISUAL Y GESTIÓN DE EVENTOS -->
             <div class="widget-box">
                 <p style="color: #8b949e; font-size: 13px; margin: 0 0 10px 0; font-weight: 600;">🎙️ Asistente de Voz Integrado</p>
-                <button class="btn-control" onclick="reproducir()">▶️ Escuchar Guía de Cocina</button>
+                <button id="btnVoz" class="btn-control" onclick="reproducir(this)">▶️ Escuchar Guía de Cocina</button>
                 <button class="btn-control btn-stop" onclick="detener()">⏹️ Silenciar</button>
             </div>
 
@@ -318,34 +318,24 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
         <script>
             const textoVoz = {texto_voz_seguro};
             let currentUtterance = null;
-            let vocesDisponibles = [];
 
-            // Carga asíncrona de voces para compatibilidad total con navegadores modernos
-            function cargarVoces() {{
-                if ('speechSynthesis' in window) {{
-                    vocesDisponibles = window.speechSynthesis.getVoices();
-                }}
-            }}
-
-            if ('speechSynthesis' in window) {{
-                window.speechSynthesis.onvoiceschanged = cargarVoces;
-                cargarVoces();
-            }}
-
-            function reproducir() {{
+            function reproducir(btn) {{
                 if ('speechSynthesis' in window) {{
                     window.speechSynthesis.cancel();
+                    
                     currentUtterance = new SpeechSynthesisUtterance(textoVoz);
                     currentUtterance.lang = 'es-ES'; 
                     currentUtterance.rate = 0.95;
                     
-                    // Asignar voz en español si está disponible en el entorno
-                    if (vocesDisponibles.length > 0) {{
-                        const vozEs = vocesDisponibles.find(v => v.lang.startsWith('es'));
-                        if (vozEs) {{
-                            currentUtterance.voice = vozEs;
-                        }}
-                    }}
+                    btn.innerText = "🔊 Reproduciendo...";
+                    
+                    currentUtterance.onend = function() {{
+                        btn.innerText = "▶️ Escuchar Guía de Cocina";
+                    }};
+                    
+                    currentUtterance.onerror = function() {{
+                        btn.innerText = "▶️ Escuchar Guía de Cocina";
+                    }};
 
                     window.speechSynthesis.speak(currentUtterance);
                 }} else {{
@@ -356,6 +346,8 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
             function detener() {{
                 if ('speechSynthesis' in window) {{ 
                     window.speechSynthesis.cancel(); 
+                    const btn = document.getElementById('btnVoz');
+                    if (btn) btn.innerText = "▶️ Escuchar Guía de Cocina";
                 }}
             }}
 
@@ -430,8 +422,15 @@ if procesar_accion and API_KEY:
           "ingredientes": ["200g de harina de trigo", "3 gramos de sal fina"],
           "pasos_previos": ["Sacar los huevos 20 minutos antes."],
           "bloques_proceso": [
-            {"tipo": "secuencial", "accion": "Primer paso detallado...", "utensilios": ["Bol de acero"], "tiempo": "5 min", "duracion_minutos": 5, "temperatura": "Ambiente"},
-            {"tipo": "secuencial", "accion": "Segundo paso detallado...", "utensilios": ["Sartén"], "tiempo": "10 min", "duracion_minutos": 10, "temperatura": "Fuego medio"}
+            {"tipo": "secuencial", "accion": "Primer paso secuencial...", "utensilios": ["Bol de acero"], "tiempo": "5 min", "duracion_minutos": 5, "temperatura": "Ambiente"},
+            {
+              "tipo": "paralelo",
+              "ramas": [
+                {"nombre": "Sartén A", "accion": "Sofreír las verduras simultáneamente...", "utensilios": ["Sartén"], "tiempo": "10 min", "duracion_minutos": 10, "temperatura": "Fuego medio"},
+                {"nombre": "Olla B", "accion": "Cocer la pasta simultáneamente...", "utensilios": ["Olla"], "tiempo": "8 min", "duracion_minutos": 8, "temperatura": "Fuego alto"}
+              ]
+            },
+            {"tipo": "convergencia", "accion": "Unir las dos preparaciones anteriores y mezclar...", "utensilios": ["Sartén grande", "Espátula"], "tiempo": "2 min", "duracion_minutos": 2, "temperatura": "Fuego bajo"}
           ],
           "recomendaciones": [
             "Evita calentar demasiado rápido la mantequilla para que no se queme.",
@@ -446,7 +445,7 @@ if procesar_accion and API_KEY:
         3. 'origen_receta': Identifica la región, país o tipo de tradición culinaria de la receta.
         4. 'ingredientes': Lista detallada con CANTIDADES EXACTAS y métricas concretas (ej. '3 gramos de sal').
         5. 'pasos_previos': Lista con la preparación previa (mise en place).
-        6. 'bloques_proceso': **OBLIGATORIO incluir ABSOLUTAMENTE TODOS los pasos de la receta de forma exhaustiva y secuencial.** PROHIBIDO omitir pasos intermedios (como el bloque secuencial 2). Cada instrucción debe convertirse en su bloque correspondiente.
+        6. 'bloques_proceso': **OBLIGATORIO modelar el flujo de forma inteligente.** Si la receta realiza dos acciones al mismo tiempo (ej. cocinar por un lado y hervir por otro), **debes usar obligatoriamente un bloque de tipo "paralelo"** con sus respectivas ramas y luego un bloque de tipo **"convergencia"** cuando se unan. No reduzcas todo a un esquema lineal plano si hay multitarea. No omitas ningún paso intermedio.
         7. 'recomendaciones': De 3 a 5 trucos de chef.
         8. 'texto_voz': Resumen detallado para lectura en voz alta.
         """
@@ -454,9 +453,9 @@ if procesar_accion and API_KEY:
         contents_payload = [prompt_sistema]
         if archivo_multimodal:
             contents_payload.append(types.Part.from_bytes(data=archivo_multimodal, mime_type=tipo_multimodal))
-            contents_payload.append("Analiza esta fuente adjunta y extrae la receta completa sin saltarte ningún paso intermedio, capturando su nombre y origen exacto.")
+            contents_payload.append("Analiza esta fuente adjunta y extrae la receta completa detectando paralelismos y convergencias, capturando su nombre y origen exacto.")
         else:
-            contents_payload.append(f"Información a procesar (Asegúrate de no omitir ningún paso intermedio y extrae nombre y origen):\n{contenido_ia}")
+            contents_payload.append(f"Información a procesar (Aplica bloques paralelos y de convergencia si la receta realiza tareas simultáneas):\n{contenido_ia}")
 
         # Sistema de reintentos automáticos para errores 503 / UNAVAILABLE
         response = None
@@ -464,7 +463,7 @@ if procesar_accion and API_KEY:
         
         for intento in range(max_intentos):
             try:
-                with st.spinner(f"⚙️ Generando diagrama completo con IA (Intento {intento+1}/{max_intentos})..."):
+                with st.spinner(f"⚙️ Generando diagrama lógico completo con IA (Intento {intento+1}/{max_intentos})..."):
                     response = client.models.generate_content(
                         model='gemini-3.6-flash',
                         contents=contents_payload,
@@ -522,7 +521,7 @@ if procesar_accion and API_KEY:
                 mime="text/html"
             )
             
-            components.html(html_final, height=1300, scrolling=True)
+            components.html(html_final, height=1350, scrolling=True)
             
     except Exception as e:
         st.error(f"Error procesando con la IA: {e}")
