@@ -483,7 +483,7 @@ if procesar_accion and API_KEY:
             try:
                 with st.spinner(f"⚙️ Generando diagrama lógico completo con IA (Intento {intento+1}/{max_intentos})..."):
                     response = client.models.generate_content(
-                        model='gemini-2.5-flash',
+                        model='gemini-3.6-flash',
                         contents=contents_payload,
                         config=types.GenerateContentConfig(
                             response_mime_type="application/json",
