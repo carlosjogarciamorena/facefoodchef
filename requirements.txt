@@ -3,3 +3,6 @@ google-genai
 recipe-scrapers
 python-docx
 python-pptx
+beautifulsoup4
+requests
+python-dotenv
