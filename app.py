@@ -121,7 +121,7 @@ else:
 # Selección de modelo actualizado
 modelo_seleccionado = st.sidebar.selectbox(
     "Modelo Gemini:",
-    options=["gemini-3.6-flash", "gemini-1.5-flash"],
+    options=["gemini-2.5-flash", "gemini-1.5-flash"],
     index=0
 )
 
@@ -131,7 +131,7 @@ st.sidebar.markdown("""
 - **Estética:** Fondo Gris Metálico (`#2C2F33`)
 - **Métricas:** Decimales métricos (g, ml, ud)
 - **Temperatura:** Escala °C
-- **Estructura:** Bloques paralelos, secuenciales y convergentes
+- **Estructura:** Bloques unificados con identificación por borde lateral
 """)
 
 st.markdown("<h1 style='text-align: center; color: #EF4444; font-weight: 800; letter-spacing: -1px; margin-bottom: 0;'>FACEFOODCHEF <span style='font-size: 16px; background: #36393F; color: #fff; padding: 4px 10px; border-radius: 4px; vertical-align: middle; border: 1px solid #4F545C;'>PRO</span></h1>", unsafe_allow_html=True)
@@ -225,6 +225,10 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
         <h3 style="color: #ffffff; font-size: 20px; font-weight: 800; margin-bottom: 22px;">📊 3. Diagrama de Ejecución</h3>
     """
     
+    # Constantes visuales unificadas
+    BG_BLOQUE = "#36393F"
+    BORDER_BLOQUE = "#4F545C"
+    
     for i, bloque in enumerate(bloques_proceso):
         tipo = bloque.get("tipo", "secuencial")
         duracion_min = bloque.get("duracion_minutos", 5)
@@ -243,10 +247,12 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
                 dur_rama = rama.get("duracion_minutos", 5)
                 timer_id = f"timer_par_{i}_{idx}"
                 
-                # Color sólido para etiquetas en paralelo
+                # Bloque en paralelo: mismo fondo oscuro, franja izquierda Naranja
+                color_franja_paralelo = "#F59E0B"
+                
                 html_diagrama += f"""
-                <div style="flex: 1; min-width: 280px; background-color: #2B1519; border: 1px solid #7F1D1D; border-left: 6px solid #EF4444; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-                    <div style="margin-bottom: 12px;"><span style="font-size: 11px; font-weight: 800; color: #FFFFFF; background-color: #DC2626; padding: 5px 12px; border-radius: 4px; display: inline-block; text-transform: uppercase;">🔀 PARALELO: {nombre_rama}</span></div>
+                <div style="flex: 1; min-width: 280px; background-color: {BG_BLOQUE}; border: 1px solid {BORDER_BLOQUE}; border-left: 6px solid {color_franja_paralelo}; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                    <div style="margin-bottom: 12px;"><span style="font-size: 11px; font-weight: 800; color: #FFFFFF; background-color: {color_franja_paralelo}; padding: 5px 12px; border-radius: 4px; display: inline-block; text-transform: uppercase;">🔀 PARALELO: {nombre_rama}</span></div>
                     <div style="font-size: 15px; font-weight: 600; color: #ffffff; margin: 12px 0;">{accion}</div>
                     <div style="font-size: 12px; color: #A0AEC0; margin-bottom: 14px; background: rgba(0,0,0,0.3); padding: 6px 10px; border-radius: 4px;">🛠️ <b>Utensilios:</b> {utensilios_rama}</div>
                     <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.4); padding: 10px 14px; border-radius: 6px;">
@@ -258,16 +264,14 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
             html_diagrama += '</div>'
         else:
             es_convergencia = tipo == "convergencia"
-            bg = "#11241C" if es_convergencia else "#36393F"
-            border_color = "#065F46" if es_convergencia else "#4F545C"
-            left_border = "#34D399" if es_convergencia else "#EF4444"
-            badge_bg = "#059669" if es_convergencia else "#EF4444"
+            # Asignación de franjas de color manteniendo el fondo unificado #36393F
+            left_border = "#10B981" if es_convergencia else "#EF4444"
+            badge_bg = "#10B981" if es_convergencia else "#EF4444"
             etiqueta = "CONVERGENCIA / UNIÓN" if es_convergencia else f"PASO {i+1}"
             timer_id = f"timer_seq_{i}"
 
-            # Color sólido para etiquetas secuenciales y de convergencia
             html_diagrama += f"""
-            <div style="background-color: {bg}; border: 1px solid {border_color}; border-left: 6px solid {left_border}; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+            <div style="background-color: {BG_BLOQUE}; border: 1px solid {BORDER_BLOQUE}; border-left: 6px solid {left_border}; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
                 <div style="margin-bottom: 12px;"><span style="font-size: 11px; font-weight: 800; color: #FFFFFF; background-color: {badge_bg}; padding: 5px 12px; border-radius: 4px; display: inline-block; text-transform: uppercase;">{etiqueta}</span></div>
                 <div style="font-size: 15px; font-weight: 600; color: #ffffff; margin: 12px 0;">{bloque.get('accion')}</div>
                 <div style="font-size: 12px; color: #A0AEC0; margin-bottom: 14px; background: rgba(0,0,0,0.3); padding: 6px 10px; border-radius: 4px;">🛠️ <b>Utensilios:</b> {utensilios_str}</div>
@@ -291,9 +295,9 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
     html_diagrama += "</div>"
 
     html_recom = """
-    <div style="background-color: #241D12; border: 1px solid #78350F; border-radius: 8px; padding: 22px; margin-top: 24px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+    <div style="background-color: #36393F; border: 1px solid #4F545C; border-left: 6px solid #FBBF24; border-radius: 8px; padding: 22px; margin-top: 24px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
         <h3 style="color: #FBBF24; margin-top: 0; font-size: 18px; font-weight: 700;">💡 4. Recomendaciones del Chef & Maridaje</h3>
-        <ul style='margin: 12px 0 0 0; padding-left: 20px; color: #FDE68A; font-size: 14px; line-height: 1.8;'>
+        <ul style='margin: 12px 0 0 0; padding-left: 20px; color: #CBD5E0; font-size: 14px; line-height: 1.8;'>
     """
     for rec in recomendaciones:
         html_recom += f"<li>{rec}</li>"
