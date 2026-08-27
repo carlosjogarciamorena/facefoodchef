@@ -37,14 +37,26 @@ Reglas:
 
 def generar_diagrama(receta: str, api_key: str) -> str:
     genai.configure(api_key=api_key)
-    # Usamos el modelo más rápido y estable actualmente disponible
-    modelo = genai.GenerativeModel("gemini-1.5-flash") 
-    respuesta = modelo.generate_content(f"{PROMPT_SISTEMA}\n\nRECETA:\n{receta}", generation_config={"temperature": 0.1})
     
-    codigo = respuesta.text.strip()
-    if "```" in codigo:
-        codigo = "\n".join([linea for linea in codigo.split("\n") if not linea.strip().startswith("```")])
-    return codigo.strip()
+    # Actualizado a la versión requerida por la API actual
+    nombre_modelo = "models/gemini-3.6-flash" 
+    
+    try:
+        modelo = genai.GenerativeModel(nombre_modelo) 
+        respuesta = modelo.generate_content(
+            f"{PROMPT_SISTEMA}\n\nRECETA:\n{receta}", 
+            generation_config={"temperature": 0.1}
+        )
+        
+        codigo = respuesta.text.strip()
+        if "```" in codigo:
+            codigo = "\n".join([linea for linea in codigo.split("\n") if not linea.strip().startswith("```")])
+        return codigo.strip()
+        
+    except Exception as e:
+        # Si falla, listamos los modelos disponibles para diagnóstico
+        modelos_disponibles = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+        raise ValueError(f"Error con el modelo {nombre_modelo}. Modelos soportados por tu API Key:\n" + "\n".join(modelos_disponibles))
 
 # 3. LÓGICA DE RENDERIZADO VISUAL
 def mostrar_diagrama(codigo_mermaid: str):
@@ -94,7 +106,7 @@ with col_der:
                     codigo = generar_diagrama(receta_texto, api_key_input)
                     st.session_state["diagrama"] = codigo
                 except Exception as e:
-                    st.error(f"Error de conexión: {e}")
+                    st.error(f"Error en la API: {e}")
 
     # Mostrar diagrama si ya existe en la sesión
     if "diagrama" in st.session_state:
