@@ -325,7 +325,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
             {html_header}
             <div class="widget-box">
                 <p style="color: #A0AEC0; font-size: 13px; margin: 0 0 12px 0; font-weight: 600;">🎙️ Asistente de Voz de Cocina</p>
-                <button id="btnVoz" class="btn-control" onclick="reproducir(this)">▶️ Escuchar Guía Completa</button>
+                <button id="btnVoz" class="btn-control" onclick="reproducir(this)">🎧 Asistente Manos Libres</button>
                 <button class="btn-control btn-stop" onclick="detener()">⏹️ Silenciar</button>
             </div>
             {html_ing}
