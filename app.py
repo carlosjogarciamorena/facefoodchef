@@ -118,10 +118,10 @@ else:
         help="Introduce la clave manualmente o configúrala en secretos."
     )
 
-# Selección de modelo actualizado (Corregido a un modelo activo y disponible)
+# Selección de modelo actualizado con gemini-3.6-flash como opción principal
 modelo_seleccionado = st.sidebar.selectbox(
     "Modelo Gemini:",
-    options=["gemini-2.5-flash", "gemini-1.5-flash", "gemini-2.5-pro"],
+    options=["gemini-3.6-flash", "gemini-1.5-flash"],
     index=0
 )
 
@@ -492,7 +492,7 @@ if st.button("🎬 GENERAR DIAGRAMA DE COCINA"):
                     label="📥 Descargar Diagrama HTML Autónomo",
                     data=html_final,
                     file_name="diagrama_facefoodchef.html",
-                    mime="html"
+                    mime="text/html"
                 )
                 
                 components.html(html_final, height=1350, scrolling=True)
