@@ -118,10 +118,10 @@ else:
         help="Introduce la clave manualmente o configúrala en secretos."
     )
 
-# Selección de modelo actualizado
+# Selección de modelo actualizado (Corregido a un modelo activo y disponible)
 modelo_seleccionado = st.sidebar.selectbox(
     "Modelo Gemini:",
-    options=["gemini-2.5-flash", "gemini-1.5-flash"],
+    options=["gemini-2.5-flash", "gemini-1.5-flash", "gemini-2.5-pro"],
     index=0
 )
 
@@ -277,7 +277,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
             </div>
             """
             
-        # Conectores técnicos: Flechas blancas, gruesas y de alto relieve visual sobre gris metálico
+        # Conectores técnicos
         if i < len(bloques_proceso) - 1:
             html_diagrama += """
             <div style="display: flex; flex-direction: column; align-items: center; margin: 6px 0 20px 0;">
@@ -492,7 +492,7 @@ if st.button("🎬 GENERAR DIAGRAMA DE COCINA"):
                     label="📥 Descargar Diagrama HTML Autónomo",
                     data=html_final,
                     file_name="diagrama_facefoodchef.html",
-                    mime="text/html"
+                    mime="html"
                 )
                 
                 components.html(html_final, height=1350, scrolling=True)
