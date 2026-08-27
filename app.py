@@ -118,7 +118,7 @@ else:
         help="Introduce la clave manualmente o configúrala en secretos."
     )
 
-# Selección de modelo actualizado (Obligatorio gemini-3.6-flash vigente)
+# Selección de modelo actualizado
 modelo_seleccionado = st.sidebar.selectbox(
     "Modelo Gemini:",
     options=["gemini-3.6-flash", "gemini-1.5-flash"],
@@ -277,8 +277,15 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
             </div>
             """
             
+        # MEJORA DE DISEÑO: Conector de flujo limpio e industrial (sin emojis con fondo de color)
         if i < len(bloques_proceso) - 1:
-            html_diagrama += '<div style="text-align: center; color: #E50914; font-size: 22px; margin: -6px 0 10px 0; font-weight: bold;">⬇️</div>'
+            html_diagrama += """
+            <div style="display: flex; flex-direction: column; align-items: center; margin: 4px 0 16px 0;">
+                <div style="width: 2px; height: 12px; background: #333333;"></div>
+                <div style="background-color: #1a1a1a; color: #E50914; border: 1px solid #333333; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; box-shadow: 0 2px 6px rgba(0,0,0,0.5);">↓</div>
+                <div style="width: 2px; height: 12px; background: #333333;"></div>
+            </div>
+            """
     
     html_diagrama += "</div>"
 
