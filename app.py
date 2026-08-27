@@ -118,10 +118,10 @@ else:
         help="Introduce la clave manualmente o configúrala en secretos."
     )
 
-# Selección de modelo actualizado
+# CORRECCIÓN: Selección de modelo actualizado a la versión recomendada (3.6-flash)
 modelo_seleccionado = st.sidebar.selectbox(
     "Modelo Gemini:",
-    options=["gemini-2.5-flash", "gemini-1.5-flash"],
+    options=["gemini-3.6-flash", "gemini-1.5-flash"],
     index=0
 )
 
