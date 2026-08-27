@@ -122,7 +122,7 @@ else:
 # Selección de modelo actualizado
 modelo_seleccionado = st.sidebar.selectbox(
     "Modelo Gemini:",
-    options=["gemini-2.5-flash", "gemini-1.5-flash", "gemini-3.6-flash"],
+    options=["gemini-3.6-flash", "gemini-1.5-flash"],
     index=0
 )
 
