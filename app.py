@@ -37,33 +37,33 @@ st.set_page_config(
     page_icon="🍳"
 )
 
-# ESTILOS VISUALES - OPCIÓN 3: MODO OSCURO CINEMATOGRÁFICO / DARK UI PRO
+# ESTILOS VISUALES - FONDO GRIS CLARO TÉCNICO Y ALTO CONTRASTE
 st.markdown("""
     <style>
-    /* Fondo general oscuro grafito profesional */
+    /* Fondo general gris claro profesional */
     .stApp, .block-container, [data-testid="stSidebar"] {
-        background-color: #121214 !important;
-        color: #E4E4E7 !important;
+        background-color: #f4f5f7 !important;
+        color: #1f2937 !important;
         font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     }
     header, footer { visibility: hidden; }
     
     /* Controles de entrada de texto */
     .stTextArea textarea, .stTextInput input, .stSelectbox select {
-        background-color: #1E1E24 !important;
-        color: #ffffff !important;
-        border: 2px solid #2E2E38 !important;
+        background-color: #ffffff !important;
+        color: #1f2937 !important;
+        border: 2px solid #cbd5e1 !important;
         border-radius: 6px !important;
         font-size: 16px !important;
     }
     .stTextArea textarea:focus, .stTextInput input:focus {
-        border-color: #EF4444 !important;
-        box-shadow: 0 0 10px rgba(239, 68, 68, 0.4) !important;
+        border-color: #E50914 !important;
+        box-shadow: 0 0 10px rgba(229, 9, 20, 0.2) !important;
     }
 
     /* Botón principal de acción */
     .stButton > button {
-        background-color: #EF4444 !important;
+        background-color: #E50914 !important;
         color: #ffffff !important;
         font-weight: 800 !important;
         font-size: 17px !important;
@@ -71,31 +71,31 @@ st.markdown("""
         border-radius: 6px !important;
         padding: 14px 28px !important;
         width: 100%;
-        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        box-shadow: 0 4px 12px rgba(229, 9, 20, 0.25);
     }
     .stButton > button:hover {
-        background-color: #dc2626 !important;
+        background-color: #cc0812 !important;
     }
 
     .stDownloadButton > button {
-        background-color: #1E1E24 !important;
-        color: #ffffff !important;
-        border: 1px solid #EF4444 !important;
+        background-color: #ffffff !important;
+        color: #1f2937 !important;
+        border: 1px solid #E50914 !important;
         font-weight: 600 !important;
         border-radius: 6px !important;
         width: 100%;
         padding: 10px;
     }
     .stDownloadButton > button:hover {
-        background-color: #EF4444 !important;
+        background-color: #E50914 !important;
         color: #ffffff !important;
     }
 
     .streamlit-expanderHeader {
-        background-color: #1E1E24 !important;
-        color: #ffffff !important;
+        background-color: #ffffff !important;
+        color: #1f2937 !important;
         border-radius: 6px !important;
-        border: 1px solid #2E2E38 !important;
+        border: 1px solid #cbd5e1 !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -128,14 +128,14 @@ modelo_seleccionado = st.sidebar.selectbox(
 st.sidebar.markdown("---")
 st.sidebar.markdown("""
 ### 🎬 FaceFoodChef.com
-- **Estética:** Dark UI Pro (`#121214`)
+- **Estética:** Fondo Gris Claro Técnico (`#f4f5f7`)
 - **Métricas:** Decimales métricos (g, ml, ud)
 - **Temperatura:** Escala °C
 - **Estructura:** Bloques paralelos, secuenciales y convergentes
 """)
 
-st.markdown("<h1 style='text-align: center; color: #EF4444; font-weight: 800; letter-spacing: -1px; margin-bottom: 0;'>FACEFOODCHEF <span style='font-size: 16px; background: #1E1E24; color: #fff; padding: 4px 10px; border-radius: 4px; vertical-align: middle; border: 1px solid #2E2E38;'>PRO</span></h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #A1A1AA; font-size: 15px; margin-bottom: 30px;'>Generador interactivo de diagramas ejecutables de cocina</p>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: #E50914; font-weight: 800; letter-spacing: -1px; margin-bottom: 0;'>FACEFOODCHEF <span style='font-size: 16px; background: #e5e7eb; color: #1f2937; padding: 4px 10px; border-radius: 4px; vertical-align: middle; border: 1px solid #d1d5db;'>PRO</span></h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #4b5563; font-size: 15px; margin-bottom: 30px;'>Generador interactivo de diagramas ejecutables de cocina</p>", unsafe_allow_html=True)
 
 # Entrada de Datos
 st.subheader("📥 Entrada de Receta")
@@ -195,26 +195,26 @@ def extraer_texto_de_url(url):
 def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_previos, bloques_proceso, recomendaciones, texto_voz):
     
     html_header = f"""
-    <div style="background: linear-gradient(180deg, #1E1E24 0%, #16161A 100%); border-radius: 8px; padding: 30px; text-align: center; margin-bottom: 24px; border-left: 6px solid #EF4444; border: 1px solid #2E2E38; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-        <span style="font-size: 11px; font-weight: 800; color: #EF4444; text-transform: uppercase; letter-spacing: 2px; background: rgba(239, 68, 68, 0.15); padding: 5px 12px; border-radius: 4px;">🎬 Diagrama de Producción Culinaria</span>
-        <h1 style="color: #ffffff; font-size: 30px; margin: 16px 0 8px 0; font-weight: 800;">{nombre_receta}</h1>
-        <p style="color: #A1A1AA; font-size: 14px; margin: 0;">Flujo ejecutable paso a paso optimizado para alta visibilidad</p>
+    <div style="background: linear-gradient(180deg, #ffffff 0%, #f9fafb 100%); border-radius: 8px; padding: 30px; text-align: center; margin-bottom: 24px; border-left: 6px solid #E50914; border: 1px solid #e5e7eb; box-shadow: 0 2px 4px rgba(0,0,0,0.04);">
+        <span style="font-size: 11px; font-weight: 800; color: #E50914; text-transform: uppercase; letter-spacing: 2px; background: rgba(229, 9, 20, 0.1); padding: 5px 12px; border-radius: 4px;">🎬 Diagrama de Producción Culinaria</span>
+        <h1 style="color: #111827; font-size: 30px; margin: 16px 0 8px 0; font-weight: 800;">{nombre_receta}</h1>
+        <p style="color: #4b5563; font-size: 14px; margin: 0;">Flujo ejecutable paso a paso optimizado para alta visibilidad</p>
     </div>
     """
 
     html_ing = """
-    <div style="background-color: #1E1E24; border: 1px solid #2E2E38; border-radius: 8px; padding: 22px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
-        <h3 style="color: #EF4444; margin-top: 0; font-size: 18px; font-weight: 700;">🛒 1. Ingredientes (Sistema Métrico Exacto)</h3>
+    <div style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 22px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.04);">
+        <h3 style="color: #E50914; margin-top: 0; font-size: 18px; font-weight: 700;">🛒 1. Ingredientes (Sistema Métrico Exacto)</h3>
         <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px;">
     """
     for ing in ingredientes:
-        html_ing += f"<span style='background-color: #2A2A35; color: #E4E4E7; padding: 8px 16px; border-radius: 20px; font-size: 13px; border: 1px solid #3F3F46; font-weight: 500;'>⚖️ {ing}</span>"
+        html_ing += f"<span style='background-color: #f3f4f6; color: #1f2937; padding: 8px 16px; border-radius: 20px; font-size: 13px; border: 1px solid #d1d5db; font-weight: 500;'>⚖️ {ing}</span>"
     html_ing += "</div></div>"
 
     html_prev = """
-    <div style="background-color: #1E1E24; border: 1px solid #2E2E38; border-radius: 8px; padding: 22px; margin-bottom: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
-        <h3 style="color: #FBBF24; margin-top: 0; font-size: 18px; font-weight: 700;">🔪 2. Mise en Place (Preparación Previa)</h3>
-        <ul style='margin: 12px 0 0 0; padding-left: 20px; color: #D4D4D8; font-size: 14px; line-height: 1.8;'>
+    <div style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 22px; margin-bottom: 24px; box-shadow: 0 2px 4px rgba(0,0,0,0.04);">
+        <h3 style="color: #d97706; margin-top: 0; font-size: 18px; font-weight: 700;">🔪 2. Mise en Place (Preparación Previa)</h3>
+        <ul style='margin: 12px 0 0 0; padding-left: 20px; color: #374151; font-size: 14px; line-height: 1.8;'>
     """
     for prep in pasos_previos:
         html_prev += f"<li>{prep}</li>"
@@ -222,7 +222,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
 
     html_diagrama = """
     <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-        <h3 style="color: #ffffff; font-size: 20px; font-weight: 800; margin-bottom: 22px;">📊 3. Diagrama de Ejecución</h3>
+        <h3 style="color: #111827; font-size: 20px; font-weight: 800; margin-bottom: 22px;">📊 3. Diagrama de Ejecución</h3>
     """
     
     for i, bloque in enumerate(bloques_proceso):
@@ -244,61 +244,61 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
                 timer_id = f"timer_par_{i}_{idx}"
                 
                 html_diagrama += f"""
-                <div style="flex: 1; min-width: 280px; background-color: #2B1519; border: 1px solid #7F1D1D; border-left: 6px solid #EF4444; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-                    <span style="font-size: 11px; font-weight: 800; color: #F87171; background: rgba(239,68,68,0.2); padding: 4px 10px; border-radius: 4px;">🔀 PARALELO: {nombre_rama}</span>
-                    <div style="font-size: 15px; font-weight: 600; color: #ffffff; margin: 12px 0;">{accion}</div>
-                    <div style="font-size: 12px; color: #A1A1AA; margin-bottom: 14px; background: rgba(0,0,0,0.3); padding: 6px 10px; border-radius: 4px;">🛠️ <b>Utensilios:</b> {utensilios_rama}</div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.4); padding: 10px 14px; border-radius: 6px;">
-                        <div style="font-size: 13px; color: #ffffff;">⏱️ <span id="{timer_id}" style="font-weight: bold; color: #FBBF24;">{tiempo}</span> | 🌡️ {temp}</div>
-                        <button onclick="iniciarTemporizador('{timer_id}', {dur_rama})" style="background-color: #EF4444; color: white; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 700;">▶️ Iniciar</button>
+                <div style="flex: 1; min-width: 280px; background-color: #fff5f5; border: 1px solid #fecaca; border-left: 6px solid #E50914; border-radius: 8px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.04);">
+                    <span style="font-size: 11px; font-weight: 800; color: #b91c1c; background: rgba(229,9,20,0.1); padding: 4px 10px; border-radius: 4px;">🔀 PARALELO: {nombre_rama}</span>
+                    <div style="font-size: 15px; font-weight: 600; color: #111827; margin: 12px 0;">{accion}</div>
+                    <div style="font-size: 12px; color: #4b5563; margin-bottom: 14px; background: rgba(0,0,0,0.03); padding: 6px 10px; border-radius: 4px;">🛠️ <b>Utensilios:</b> {utensilios_rama}</div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.04); padding: 10px 14px; border-radius: 6px;">
+                        <div style="font-size: 13px; color: #1f2937;">⏱️ <span id="{timer_id}" style="font-weight: bold; color: #d97706;">{tiempo}</span> | 🌡️ {temp}</div>
+                        <button onclick="iniciarTemporizador('{timer_id}', {dur_rama})" style="background-color: #E50914; color: white; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 700;">▶️ Iniciar</button>
                     </div>
                 </div>
                 """
             html_diagrama += '</div>'
         else:
             es_convergencia = tipo == "convergencia"
-            bg = "#11241C" if es_convergencia else "#1E1E24"
-            border_color = "#065F46" if es_convergencia else "#2E2E38"
-            left_border = "#34D399" if es_convergencia else "#EF4444"
-            badge_color = "#34D399" if es_convergencia else "#F87171"
-            badge_bg = "rgba(52,211,153,0.15)" if es_convergencia else "rgba(239,68,68,0.15)"
+            bg = "#f0fdf4" if es_convergencia else "#ffffff"
+            border_color = "#bbf7d0" if es_convergencia else "#e5e7eb"
+            left_border = "#16a34a" if es_convergencia else "#E50914"
+            badge_color = "#15803d" if es_convergencia else "#b91c1c"
+            badge_bg = "rgba(22,163,74,0.1)" if es_convergencia else "rgba(229,9,20,0.1)"
             etiqueta = "CONVERGENCIA / UNIÓN" if es_convergencia else f"PASO {i+1}"
             timer_id = f"timer_seq_{i}"
 
             html_diagrama += f"""
-            <div style="background-color: {bg}; border: 1px solid {border_color}; border-left: 6px solid {left_border}; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+            <div style="background-color: {bg}; border: 1px solid {border_color}; border-left: 6px solid {left_border}; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.04);">
                 <span style="font-size: 11px; font-weight: 800; color: {badge_color}; background: {badge_bg}; padding: 4px 10px; border-radius: 4px;">{etiqueta}</span>
-                <div style="font-size: 15px; font-weight: 600; color: #ffffff; margin: 12px 0;">{bloque.get('accion')}</div>
-                <div style="font-size: 12px; color: #A1A1AA; margin-bottom: 14px; background: rgba(0,0,0,0.3); padding: 6px 10px; border-radius: 4px;">🛠️ <b>Utensilios:</b> {utensilios_str}</div>
-                <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.4); padding: 10px 14px; border-radius: 6px;">
-                    <div style="font-size: 13px; color: #ffffff;">⏱️ <span id="{timer_id}" style="font-weight: bold; color: #FBBF24;">{bloque.get('tiempo')}</span> | 🌡️ {bloque.get('temperatura')}</div>
-                    <button onclick="iniciarTemporizador('{timer_id}', {duracion_min})" style="background-color: #EF4444; color: white; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 700;">▶️ Iniciar Timer</button>
+                <div style="font-size: 15px; font-weight: 600; color: #111827; margin: 12px 0;">{bloque.get('accion')}</div>
+                <div style="font-size: 12px; color: #4b5563; margin-bottom: 14px; background: rgba(0,0,0,0.03); padding: 6px 10px; border-radius: 4px;">🛠️ <b>Utensilios:</b> {utensilios_str}</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.04); padding: 10px 14px; border-radius: 6px;">
+                    <div style="font-size: 13px; color: #1f2937;">⏱️ <span id="{timer_id}" style="font-weight: bold; color: #d97706;">{bloque.get('tiempo')}</span> | 🌡️ {bloque.get('temperatura')}</div>
+                    <button onclick="iniciarTemporizador('{timer_id}', {duracion_min})" style="background-color: #E50914; color: white; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 700;">▶️ Iniciar Timer</button>
                 </div>
             </div>
             """
             
-        # Conectores técnicos mejorados: Flechas blancas, gruesas y de alto brillo visual
+        # Conectores técnicos limpios acordes al tema gris claro
         if i < len(bloques_proceso) - 1:
             html_diagrama += """
-            <div style="display: flex; flex-direction: column; align-items: center; margin: 6px 0 20px 0;">
-                <div style="width: 4px; height: 16px; background: #ffffff; box-shadow: 0 0 8px rgba(255,255,255,0.6);"></div>
-                <div style="background-color: #ffffff; color: #121214; border: 2px solid #ffffff; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 900; box-shadow: 0 0 12px rgba(255,255,255,0.8);">↓</div>
-                <div style="width: 4px; height: 16px; background: #ffffff; box-shadow: 0 0 8px rgba(255,255,255,0.6);"></div>
+            <div style="display: flex; flex-direction: column; align-items: center; margin: 4px 0 16px 0;">
+                <div style="width: 2px; height: 12px; background: #cbd5e1;"></div>
+                <div style="background-color: #ffffff; color: #E50914; border: 1px solid #cbd5e1; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.06);">↓</div>
+                <div style="width: 2px; height: 12px; background: #cbd5e1;"></div>
             </div>
             """
     
     html_diagrama += "</div>"
 
     html_recom = """
-    <div style="background-color: #241D12; border: 1px solid #78350F; border-radius: 8px; padding: 22px; margin-top: 24px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-        <h3 style="color: #FBBF24; margin-top: 0; font-size: 18px; font-weight: 700;">💡 4. Recomendaciones del Chef & Maridaje</h3>
-        <ul style='margin: 12px 0 0 0; padding-left: 20px; color: #FDE68A; font-size: 14px; line-height: 1.8;'>
+    <div style="background-color: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 22px; margin-top: 24px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.04);">
+        <h3 style="color: #b45309; margin-top: 0; font-size: 18px; font-weight: 700;">💡 4. Recomendaciones del Chef & Maridaje</h3>
+        <ul style='margin: 12px 0 0 0; padding-left: 20px; color: #78350f; font-size: 14px; line-height: 1.8;'>
     """
     for rec in recomendaciones:
         html_recom += f"<li>{rec}</li>"
     html_recom += "</ul></div>"
 
-    origen_html = f'<a href="{origen_receta}" target="_blank" style="color: #EF4444; text-decoration: underline;">{origen_receta}</a>' if origen_receta.startswith("http") else f'<span style="color: #A1A1AA;">{origen_receta}</span>'
+    origen_html = f'<a href="{origen_receta}" target="_blank" style="color: #E50914; text-decoration: underline;">{origen_receta}</a>' if origen_receta.startswith("http") else f'<span style="color: #4b5563;">{origen_receta}</span>'
 
     texto_voz_seguro = json.dumps(texto_voz)
 
@@ -308,18 +308,18 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
     <head>
         <meta charset="utf-8">
         <style>
-            body {{ background-color: #121214; color: #E4E4E7; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 16px; margin: 0; }}
+            body {{ background-color: #f4f5f7; color: #1f2937; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 16px; margin: 0; }}
             .container-hub {{ max-width: 900px; margin: auto; }}
-            .widget-box {{ background-color: #1E1E24; border: 1px solid #2E2E38; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }}
-            .btn-control {{ background-color: #EF4444; color: white; border: none; padding: 10px 22px; font-size: 13px; font-weight: 700; border-radius: 4px; cursor: pointer; margin: 4px; }}
-            .btn-stop {{ background-color: #2E2E38; color: #ffffff; }}
+            .widget-box {{ background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); }}
+            .btn-control {{ background-color: #E50914; color: white; border: none; padding: 10px 22px; font-size: 13px; font-weight: 700; border-radius: 4px; cursor: pointer; margin: 4px; }}
+            .btn-stop {{ background-color: #e5e7eb; color: #1f2937; }}
         </style>
     </head>
     <body>
         <div class="container-hub">
             {html_header}
             <div class="widget-box">
-                <p style="color: #A1A1AA; font-size: 13px; margin: 0 0 12px 0; font-weight: 600;">🎙️ Asistente de Voz de Cocina</p>
+                <p style="color: #4b5563; font-size: 13px; margin: 0 0 12px 0; font-weight: 600;">🎙️ Asistente de Voz de Cocina</p>
                 <button id="btnVoz" class="btn-control" onclick="reproducir(this)">▶️ Escuchar Guía Completa</button>
                 <button class="btn-control btn-stop" onclick="detener()">⏹️ Silenciar</button>
             </div>
@@ -327,7 +327,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
             {html_prev}
             {html_diagrama}
             {html_recom}
-            <div style="text-align: center; color: #71717A; font-size: 13px; margin-top: 35px; border-top: 1px solid #2E2E38; padding-top: 20px;">
+            <div style="text-align: center; color: #6b7280; font-size: 13px; margin-top: 35px; border-top: 1px solid #e5e7eb; padding-top: 20px;">
                 🎬 <b>FaceFoodChef.com</b> | Fuente: {origen_html}
             </div>
         </div>
