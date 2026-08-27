@@ -37,19 +37,20 @@ st.set_page_config(
     page_icon="🍳"
 )
 
-# MEJORA 1: Estilos visuales optimizados para "Modo Cocina" (Alta visibilidad y contraste)
+# ESTILOS VISUALES REFORZADOS - MODO COCINA ALTO CONTRASTE
 st.markdown("""
     <style>
-    .stApp {
+    /* Forzar fondo oscuro absoluto en toda la aplicación de Streamlit */
+    .stApp, .block-container, [data-testid="stSidebar"] {
         background-color: #0d0d0d !important;
         color: #f0f0f0 !important;
         font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     }
     header, footer { visibility: hidden; }
     
-    /* Controles de formulario con contraste ultra-alto para cocina */
+    /* Controles de entrada de texto */
     .stTextArea textarea, .stTextInput input, .stSelectbox select {
-        background-color: #1a1a1a !important;
+        background-color: #161616 !important;
         color: #ffffff !important;
         border: 2px solid #333333 !important;
         border-radius: 6px !important;
@@ -60,7 +61,7 @@ st.markdown("""
         box-shadow: 0 0 10px rgba(229, 9, 20, 0.8) !important;
     }
 
-    /* Botón principal de acción - Grande y fácil de pulsar */
+    /* Botón principal de acción */
     .stButton > button {
         background-color: #E50914 !important;
         color: #ffffff !important;
@@ -69,17 +70,15 @@ st.markdown("""
         border: none !important;
         border-radius: 6px !important;
         padding: 14px 28px !important;
-        transition: transform 0.1s ease, background-color 0.1s ease !important;
         width: 100%;
         box-shadow: 0 4px 12px rgba(229, 9, 20, 0.4);
     }
     .stButton > button:hover {
         background-color: #ff1e2a !important;
-        transform: scale(1.01);
     }
 
     .stDownloadButton > button {
-        background-color: #1a1a1a !important;
+        background-color: #161616 !important;
         color: #ffffff !important;
         border: 1px solid #E50914 !important;
         font-weight: 600 !important;
@@ -93,7 +92,7 @@ st.markdown("""
     }
 
     .streamlit-expanderHeader {
-        background-color: #1a1a1a !important;
+        background-color: #161616 !important;
         color: #ffffff !important;
         border-radius: 6px !important;
         border: 1px solid #333333 !important;
@@ -119,7 +118,7 @@ else:
         help="Introduce la clave manualmente o configúrala en secretos."
     )
 
-# Selección de modelo actualizado
+# Selección de modelo actualizado (Obligatorio gemini-3.6-flash vigente)
 modelo_seleccionado = st.sidebar.selectbox(
     "Modelo Gemini:",
     options=["gemini-3.6-flash", "gemini-1.5-flash"],
@@ -244,7 +243,6 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
                 dur_rama = rama.get("duracion_minutos", 5)
                 timer_id = f"timer_par_{i}_{idx}"
                 
-                # Bloque paralelo con borde lateral rosa brillante para alta visibilidad
                 html_diagrama += f"""
                 <div style="flex: 1; min-width: 280px; background-color: #1f1116; border: 1px solid #5a121e; border-left: 6px solid #ff3b47; border-radius: 8px; padding: 20px;">
                     <span style="font-size: 11px; font-weight: 800; color: #ff8087; background: rgba(255,59,71,0.2); padding: 4px 10px; border-radius: 4px;">🔀 PARALELO: {nombre_rama}</span>
