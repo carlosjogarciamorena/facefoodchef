@@ -196,7 +196,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
     
     html_header = f"""
     <div style="background: linear-gradient(180deg, #36393F 0%, #2F3136 100%); border-radius: 8px; padding: 30px; text-align: center; margin-bottom: 24px; border-left: 6px solid #EF4444; border: 1px solid #4F545C; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-        <span style="font-size: 11px; font-weight: 800; color: #FFFFFF; text-transform: uppercase; letter-spacing: 2px; background: #EF4444; padding: 6px 14px; border-radius: 4px; display: inline-block;">🎬 Diagrama de Producción Culinaria</span>
+        <span style="font-size: 11px; font-weight: 800; color: #FFFFFF; text-transform: uppercase; letter-spacing: 2px; background: #EF4444; padding: 6px 14px; border-radius: 4px; display: inline-block;">Diagrama de Producción Culinaria</span>
         <h1 style="color: #ffffff; font-size: 30px; margin: 16px 0 8px 0; font-weight: 800;">{nombre_receta}</h1>
         <p style="color: #A0AEC0; font-size: 14px; margin: 0;">Flujo ejecutable paso a paso optimizado para alta visibilidad</p>
     </div>
@@ -252,12 +252,12 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
                 
                 html_diagrama += f"""
                 <div style="flex: 1; min-width: 280px; background-color: {BG_BLOQUE}; border: 1px solid {BORDER_BLOQUE}; border-left: 6px solid {color_franja_paralelo}; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-                    <div style="margin-bottom: 12px;"><span style="font-size: 11px; font-weight: 800; color: #FFFFFF; background-color: {color_franja_paralelo}; padding: 5px 12px; border-radius: 4px; display: inline-block; text-transform: uppercase;">🔀 PARALELO: {nombre_rama}</span></div>
+                    <div style="margin-bottom: 12px;"><span style="font-size: 11px; font-weight: 800; color: #FFFFFF; background-color: {color_franja_paralelo}; padding: 5px 12px; border-radius: 4px; display: inline-block; text-transform: uppercase;">⚙️ PARALELO: {nombre_rama}</span></div>
                     <div style="font-size: 15px; font-weight: 600; color: #ffffff; margin: 12px 0;">{accion}</div>
                     <div style="font-size: 12px; color: #A0AEC0; margin-bottom: 14px; background: rgba(0,0,0,0.3); padding: 6px 10px; border-radius: 4px;">🛠️ <b>Utensilios:</b> {utensilios_rama}</div>
                     <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.4); padding: 10px 14px; border-radius: 6px;">
                         <div style="font-size: 13px; color: #ffffff;">⏱️ <span id="{timer_id}" style="font-weight: bold; color: #FBBF24;">{tiempo}</span> | 🌡️ {temp}</div>
-                        <button onclick="iniciarTemporizador('{timer_id}', {dur_rama})" style="background-color: #EF4444; color: white; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 700;">▶️ Iniciar</button>
+                        <button onclick="iniciarTemporizador('{timer_id}', {dur_rama})" style="background-color: #EF4444; color: white; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 700;">⏳ Iniciar</button>
                     </div>
                 </div>
                 """
@@ -277,7 +277,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
                 <div style="font-size: 12px; color: #A0AEC0; margin-bottom: 14px; background: rgba(0,0,0,0.3); padding: 6px 10px; border-radius: 4px;">🛠️ <b>Utensilios:</b> {utensilios_str}</div>
                 <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.4); padding: 10px 14px; border-radius: 6px;">
                     <div style="font-size: 13px; color: #ffffff;">⏱️ <span id="{timer_id}" style="font-weight: bold; color: #FBBF24;">{bloque.get('tiempo')}</span> | 🌡️ {bloque.get('temperatura')}</div>
-                    <button onclick="iniciarTemporizador('{timer_id}', {duracion_min})" style="background-color: #EF4444; color: white; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 700;">▶️ Iniciar Timer</button>
+                    <button onclick="iniciarTemporizador('{timer_id}', {duracion_min})" style="background-color: #EF4444; color: white; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 700;">⏳ Iniciar</button>
                 </div>
             </div>
             """
@@ -287,7 +287,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
             html_diagrama += """
             <div style="display: flex; flex-direction: column; align-items: center; margin: 6px 0 20px 0;">
                 <div style="width: 4px; height: 16px; background: #ffffff; box-shadow: 0 0 8px rgba(255,255,255,0.6);"></div>
-                <div style="background-color: #ffffff; color: #2C2F33; border: 2px solid #ffffff; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 900; box-shadow: 0 0 12px rgba(255,255,255,0.8);">↓</div>
+                <div style="background-color: #ffffff; color: #2C2F33; border: 2px solid #ffffff; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 900; box-shadow: 0 0 12px rgba(255,255,255,0.8);">👇</div>
                 <div style="width: 4px; height: 16px; background: #ffffff; box-shadow: 0 0 8px rgba(255,255,255,0.6);"></div>
             </div>
             """
@@ -347,8 +347,8 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
                 currentUtterance.lang = 'es-ES';
                 currentUtterance.rate = 0.95;
                 btn.innerText = "🔊 Reproduciendo Guía...";
-                currentUtterance.onend = () => btn.innerText = "▶️ Escuchar Guía Completa";
-                currentUtterance.onerror = () => btn.innerText = "▶️ Escuchar Guía Completa";
+                currentUtterance.onend = () => btn.innerText = "🎧 Asistente Manos Libres";
+                currentUtterance.onerror = () => btn.innerText = "🎧 Asistente Manos Libres";
                 window.speechSynthesis.speak(currentUtterance);
             }}
 
@@ -356,7 +356,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
                 if ('speechSynthesis' in window) {{
                     window.speechSynthesis.cancel();
                     const btn = document.getElementById('btnVoz');
-                    if (btn) btn.innerText = "▶️ Escuchar Guía Completa";
+                    if (btn) btn.innerText = "🎧 Asistente Manos Libres";
                 }}
             }}
 
@@ -368,7 +368,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
                 window[elementId + "_interval"] = setInterval(() => {{
                     if (segundosRestantes <= 0) {{
                         clearInterval(window[elementId + "_interval"]);
-                        elemento.innerText = "¡TIEMPO CUMPLIDO! 🎉";
+                        elemento.innerText = "¡TIEMPO CUMPLIDO! ⏰";
                         sonarAlerta();
                     }} else {{
                         segundosRestantes--;
