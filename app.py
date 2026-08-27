@@ -208,7 +208,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
         <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px;">
     """
     for ing in ingredientes:
-        html_ing += f"<span style='background-color: #2F3136; color: #E2E8F0; padding: 8px 16px; border-radius: 20px; font-size: 13px; border: 1px solid #5C626B; font-weight: 500;'>⚖️ {ing}</span>"
+        html_ing += f"<span style='background-color: #2F3136; color: #E2E8F0; padding: 8px 16px; border-radius: 20px; font-size: 13px; border: 1px solid #5C626B; font-weight: 500;'> {ing}</span>"
     html_ing += "</div></div>"
 
     html_prev = """
@@ -222,7 +222,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
 
     html_diagrama = """
     <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-        <h3 style="color: #ffffff; font-size: 20px; font-weight: 800; margin-bottom: 22px;">📊 3. Diagrama de Ejecución</h3>
+        <h3 style="color: #ffffff; font-size: 20px; font-weight: 800; margin-bottom: 22px;">3. Diagrama de Ejecución</h3>
     """
     
     # Constantes visuales unificadas
@@ -324,9 +324,9 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
         <div class="container-hub">
             {html_header}
             <div class="widget-box">
-                <p style="color: #A0AEC0; font-size: 13px; margin: 0 0 12px 0; font-weight: 600;">🎙️ Asistente de Voz de Cocina</p>
+                <p style="color: #A0AEC0; font-size: 13px; margin: 0 0 12px 0; font-weight: 600;">👨‍🍳💬 Asistente de Voz de Cocina</p>
                 <button id="btnVoz" class="btn-control" onclick="reproducir(this)">🎧 Asistente Manos Libres</button>
-                <button class="btn-control btn-stop" onclick="detener()">⏹️ Silenciar</button>
+                <button class="btn-control btn-stop" onclick="detener()">🔇 Oído Cocina (Silenciar)</button>
             </div>
             {html_ing}
             {html_prev}
