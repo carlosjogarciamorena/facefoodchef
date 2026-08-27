@@ -37,51 +37,55 @@ st.set_page_config(
     page_icon="🍳"
 )
 
-# Estilos visuales estilo Netflix Dark UI
+# MEJORA 1: Estilos visuales optimizados para "Modo Cocina" (Alta visibilidad y contraste)
 st.markdown("""
     <style>
     .stApp {
-        background-color: #141414 !important;
-        color: #ffffff !important;
+        background-color: #0d0d0d !important;
+        color: #f0f0f0 !important;
         font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     }
     header, footer { visibility: hidden; }
     
+    /* Controles de formulario con contraste ultra-alto para cocina */
     .stTextArea textarea, .stTextInput input, .stSelectbox select {
-        background-color: #181818 !important;
+        background-color: #1a1a1a !important;
         color: #ffffff !important;
-        border: 1px solid #333333 !important;
-        border-radius: 4px !important;
-        font-size: 15px !important;
+        border: 2px solid #333333 !important;
+        border-radius: 6px !important;
+        font-size: 16px !important;
     }
     .stTextArea textarea:focus, .stTextInput input:focus {
         border-color: #E50914 !important;
-        box-shadow: 0 0 8px rgba(229, 9, 20, 0.6) !important;
+        box-shadow: 0 0 10px rgba(229, 9, 20, 0.8) !important;
     }
 
+    /* Botón principal de acción - Grande y fácil de pulsar */
     .stButton > button {
         background-color: #E50914 !important;
         color: #ffffff !important;
-        font-weight: 700 !important;
-        font-size: 16px !important;
+        font-weight: 800 !important;
+        font-size: 17px !important;
         border: none !important;
-        border-radius: 4px !important;
-        padding: 12px 28px !important;
-        transition: transform 0.2s ease, background-color 0.2s ease !important;
+        border-radius: 6px !important;
+        padding: 14px 28px !important;
+        transition: transform 0.1s ease, background-color 0.1s ease !important;
         width: 100%;
+        box-shadow: 0 4px 12px rgba(229, 9, 20, 0.4);
     }
     .stButton > button:hover {
-        background-color: #f6121d !important;
-        transform: scale(1.02);
+        background-color: #ff1e2a !important;
+        transform: scale(1.01);
     }
 
     .stDownloadButton > button {
-        background-color: #222222 !important;
+        background-color: #1a1a1a !important;
         color: #ffffff !important;
         border: 1px solid #E50914 !important;
         font-weight: 600 !important;
-        border-radius: 4px !important;
+        border-radius: 6px !important;
         width: 100%;
+        padding: 10px;
     }
     .stDownloadButton > button:hover {
         background-color: #E50914 !important;
@@ -89,9 +93,9 @@ st.markdown("""
     }
 
     .streamlit-expanderHeader {
-        background-color: #181818 !important;
+        background-color: #1a1a1a !important;
         color: #ffffff !important;
-        border-radius: 4px !important;
+        border-radius: 6px !important;
         border: 1px solid #333333 !important;
     }
     </style>
@@ -118,14 +122,14 @@ else:
 # Selección de modelo actualizado
 modelo_seleccionado = st.sidebar.selectbox(
     "Modelo Gemini:",
-    options=["gemini-3.6-flash", "gemini-2.5-flash", "gemini-1.5-flash"],
+    options=["gemini-2.5-flash", "gemini-1.5-flash", "gemini-3.6-flash"],
     index=0
 )
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("""
 ### 🎬 FaceFoodChef.com
-- **Estética:** Dark Mode Executable (`#141414`)
+- **Estética:** Modo Cocina High-Contrast (`#0d0d0d`)
 - **Métricas:** Decimales métricos (g, ml, ud)
 - **Temperatura:** Escala °C
 - **Estructura:** Bloques paralelos, secuenciales y convergentes
@@ -192,15 +196,15 @@ def extraer_texto_de_url(url):
 def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_previos, bloques_proceso, recomendaciones, texto_voz):
     
     html_header = f"""
-    <div style="background: linear-gradient(180deg, #1f1f1f 0%, #181818 100%); border-radius: 8px; padding: 30px; text-align: center; margin-bottom: 24px; border-left: 6px solid #E50914; border: 1px solid #333333;">
+    <div style="background: linear-gradient(180deg, #181818 0%, #111111 100%); border-radius: 8px; padding: 30px; text-align: center; margin-bottom: 24px; border-left: 6px solid #E50914; border: 1px solid #333333;">
         <span style="font-size: 11px; font-weight: 800; color: #E50914; text-transform: uppercase; letter-spacing: 2px; background: rgba(229, 9, 20, 0.15); padding: 5px 12px; border-radius: 4px;">🎬 Diagrama de Producción Culinaria</span>
         <h1 style="color: #ffffff; font-size: 30px; margin: 16px 0 8px 0; font-weight: 800;">{nombre_receta}</h1>
-        <p style="color: #AAAAAA; font-size: 14px; margin: 0;">Flujo ejecutable paso a paso con temporización integrada</p>
+        <p style="color: #AAAAAA; font-size: 14px; margin: 0;">Flujo ejecutable paso a paso optimizado para alta visibilidad</p>
     </div>
     """
 
     html_ing = """
-    <div style="background-color: #181818; border: 1px solid #333333; border-radius: 8px; padding: 22px; margin-bottom: 20px;">
+    <div style="background-color: #161616; border: 1px solid #333333; border-radius: 8px; padding: 22px; margin-bottom: 20px;">
         <h3 style="color: #E50914; margin-top: 0; font-size: 18px; font-weight: 700;">🛒 1. Ingredientes (Sistema Métrico Exacto)</h3>
         <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px;">
     """
@@ -209,7 +213,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
     html_ing += "</div></div>"
 
     html_prev = """
-    <div style="background-color: #181818; border: 1px solid #333333; border-radius: 8px; padding: 22px; margin-bottom: 24px;">
+    <div style="background-color: #161616; border: 1px solid #333333; border-radius: 8px; padding: 22px; margin-bottom: 24px;">
         <h3 style="color: #E5A00D; margin-top: 0; font-size: 18px; font-weight: 700;">🔪 2. Mise en Place (Preparación Previa)</h3>
         <ul style='margin: 12px 0 0 0; padding-left: 20px; color: #DDDDDD; font-size: 14px; line-height: 1.8;'>
     """
@@ -240,9 +244,10 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
                 dur_rama = rama.get("duracion_minutos", 5)
                 timer_id = f"timer_par_{i}_{idx}"
                 
+                # Bloque paralelo con borde lateral rosa brillante para alta visibilidad
                 html_diagrama += f"""
-                <div style="flex: 1; min-width: 280px; background-color: #1e1218; border: 1px solid #5a121e; border-left: 5px solid #E50914; border-radius: 8px; padding: 20px;">
-                    <span style="font-size: 11px; font-weight: 800; color: #ff8087; background: rgba(229,9,20,0.25); padding: 4px 10px; border-radius: 4px;">🔀 PARALELO: {nombre_rama}</span>
+                <div style="flex: 1; min-width: 280px; background-color: #1f1116; border: 1px solid #5a121e; border-left: 6px solid #ff3b47; border-radius: 8px; padding: 20px;">
+                    <span style="font-size: 11px; font-weight: 800; color: #ff8087; background: rgba(255,59,71,0.2); padding: 4px 10px; border-radius: 4px;">🔀 PARALELO: {nombre_rama}</span>
                     <div style="font-size: 15px; font-weight: 600; color: #ffffff; margin: 12px 0;">{accion}</div>
                     <div style="font-size: 12px; color: #AAAAAA; margin-bottom: 14px; background: rgba(0,0,0,0.4); padding: 6px 10px; border-radius: 4px;">🛠️ <b>Utensilios:</b> {utensilios_rama}</div>
                     <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.5); padding: 10px 14px; border-radius: 6px;">
@@ -254,8 +259,8 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
             html_diagrama += '</div>'
         else:
             es_convergencia = tipo == "convergencia"
-            bg = "#132219" if es_convergencia else "#181818"
-            border_color = "#2ea043" if es_convergencia else "#333333"
+            bg = "#112217" if es_convergencia else "#161616"
+            border_color = "#1e4d2b" if es_convergencia else "#333333"
             left_border = "#2ea043" if es_convergencia else "#E50914"
             badge_color = "#3fb950" if es_convergencia else "#ff8087"
             badge_bg = "rgba(46,160,67,0.2)" if es_convergencia else "rgba(229,9,20,0.2)"
@@ -263,7 +268,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
             timer_id = f"timer_seq_{i}"
 
             html_diagrama += f"""
-            <div style="background-color: {bg}; border: 1px solid {border_color}; border-left: 5px solid {left_border}; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+            <div style="background-color: {bg}; border: 1px solid {border_color}; border-left: 6px solid {left_border}; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
                 <span style="font-size: 11px; font-weight: 800; color: {badge_color}; background: {badge_bg}; padding: 4px 10px; border-radius: 4px;">{etiqueta}</span>
                 <div style="font-size: 15px; font-weight: 600; color: #ffffff; margin: 12px 0;">{bloque.get('accion')}</div>
                 <div style="font-size: 12px; color: #AAAAAA; margin-bottom: 14px; background: rgba(0,0,0,0.3); padding: 6px 10px; border-radius: 4px;">🛠️ <b>Utensilios:</b> {utensilios_str}</div>
@@ -298,9 +303,9 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
     <head>
         <meta charset="utf-8">
         <style>
-            body {{ background-color: #141414; color: #ffffff; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 16px; margin: 0; }}
+            body {{ background-color: #0d0d0d; color: #ffffff; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 16px; margin: 0; }}
             .container-hub {{ max-width: 900px; margin: auto; }}
-            .widget-box {{ background-color: #181818; border: 1px solid #333333; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 20px; }}
+            .widget-box {{ background-color: #161616; border: 1px solid #333333; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 20px; }}
             .btn-control {{ background-color: #E50914; color: white; border: none; padding: 10px 22px; font-size: 13px; font-weight: 700; border-radius: 4px; cursor: pointer; margin: 4px; }}
             .btn-stop {{ background-color: #333333; color: #ffffff; }}
         </style>
