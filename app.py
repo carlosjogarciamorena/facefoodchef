@@ -32,67 +32,70 @@ except ImportError:
 
 # Configuración de página
 st.set_page_config(
-    page_title="FaceFoodChef.com - Motor de Diagramas Culinarios", 
+    page_title="FaceFoodChef PRO - Diagramador Culinario", 
     layout="wide", 
-    page_icon="🍳"
+    page_icon="👨‍🍳"
 )
 
-# Estilos visuales estilo Netflix Dark UI
+# Estilos visuales de Streamlit
 st.markdown("""
     <style>
     .stApp {
-        background-color: #141414 !important;
-        color: #ffffff !important;
-        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        background-color: #0f172a !important;
+        color: #f8fafc !important;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
     header, footer { visibility: hidden; }
     
     .stTextArea textarea, .stTextInput input, .stSelectbox select {
-        background-color: #181818 !important;
+        background-color: #1e293b !important;
         color: #ffffff !important;
-        border: 1px solid #333333 !important;
-        border-radius: 4px !important;
+        border: 1px solid #334155 !important;
+        border-radius: 6px !important;
         font-size: 15px !important;
     }
     .stTextArea textarea:focus, .stTextInput input:focus {
-        border-color: #E50914 !important;
-        box-shadow: 0 0 8px rgba(229, 9, 20, 0.6) !important;
+        border-color: #f59e0b !important;
+        box-shadow: 0 0 8px rgba(245, 158, 11, 0.4) !important;
     }
 
     .stButton > button {
-        background-color: #E50914 !important;
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
         color: #ffffff !important;
         font-weight: 700 !important;
-        font-size: 16px !important;
+        font-size: 18px !important;
         border: none !important;
-        border-radius: 4px !important;
-        padding: 12px 28px !important;
-        transition: transform 0.2s ease, background-color 0.2s ease !important;
+        border-radius: 8px !important;
+        padding: 16px 28px !important;
+        transition: transform 0.2s ease, box-shadow 0.2s ease !important;
         width: 100%;
+        min-height: 54px;
+        cursor: pointer;
     }
     .stButton > button:hover {
-        background-color: #f6121d !important;
-        transform: scale(1.02);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4) !important;
     }
 
     .stDownloadButton > button {
-        background-color: #222222 !important;
-        color: #ffffff !important;
-        border: 1px solid #E50914 !important;
-        font-weight: 600 !important;
-        border-radius: 4px !important;
+        background-color: #1e293b !important;
+        color: #f8fafc !important;
+        border: 2px solid #10b981 !important;
+        font-weight: 700 !important;
+        border-radius: 8px !important;
         width: 100%;
+        min-height: 48px;
     }
     .stDownloadButton > button:hover {
-        background-color: #E50914 !important;
+        background-color: #10b981 !important;
         color: #ffffff !important;
     }
 
     .streamlit-expanderHeader {
-        background-color: #181818 !important;
+        background-color: #1e293b !important;
         color: #ffffff !important;
-        border-radius: 4px !important;
-        border: 1px solid #333333 !important;
+        border-radius: 6px !important;
+        border: 1px solid #334155 !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -104,46 +107,46 @@ if "GEMINI_API_KEY" in st.secrets:
 elif os.getenv("GEMINI_API_KEY"):
     API_KEY = os.getenv("GEMINI_API_KEY")
 
-st.sidebar.header("⚙️ Panel de Control")
+st.sidebar.header("⚙️ Configuración")
 
 if API_KEY:
-    st.sidebar.success("🔑 API Key vinculada correctamente.")
+    st.sidebar.success("🔑 API Key detectada correctamente.")
 else:
     API_KEY = st.sidebar.text_input(
         "API Key de Google Gemini:", 
         type="password", 
-        help="Introduce la clave manualmente o configúrala en secretos."
+        help="Introduce tu clave de Google AI Studio."
     )
 
-# Selección de modelo actualizado
+# Selección de modelo de IA
 modelo_seleccionado = st.sidebar.selectbox(
     "Modelo Gemini:",
-    options=["gemini-3.6-flash", "gemini-2.5-flash", "gemini-1.5-flash"],
+    options=["gemini-2.5-flash", "gemini-2.5-pro", "gemini-1.5-flash"],
     index=0
 )
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("""
-### 🎬 FaceFoodChef.com
-- **Estética:** Dark Mode Executable (`#141414`)
-- **Métricas:** Decimales métricos (g, ml, ud)
-- **Temperatura:** Escala °C
-- **Estructura:** Bloques paralelos, secuenciales y convergentes
+### 🍳 Guía Culinaria Ergonomizada
+- **🟠 Naranja:** Cocción / Calor Directo
+- **🟣 Violeta:** Tareas Simultáneas (Paralelas)
+- **🟢 Verde:** Convergencia / Mezcla / Ensamble
+- **🔵 Azul:** Mise en Place / Preparación
 """)
 
-st.markdown("<h1 style='text-align: center; color: #E50914; font-weight: 800; letter-spacing: -1px; margin-bottom: 0;'>FACEFOODCHEF <span style='font-size: 16px; background: #222; color: #fff; padding: 4px 10px; border-radius: 4px; vertical-align: middle; border: 1px solid #E50914;'>PRO</span></h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #AAAAAA; font-size: 15px; margin-bottom: 30px;'>Generador interactivo de diagramas ejecutables de cocina</p>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: #f59e0b; font-weight: 800; letter-spacing: -1px; margin-bottom: 0;'>👨‍🍳 FACEFOODCHEF <span style='font-size: 16px; background: #1e293b; color: #10b981; padding: 4px 12px; border-radius: 6px; vertical-align: middle; border: 1px solid #10b981;'>KITCHEN PRO</span></h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #94a3b8; font-size: 16px; margin-bottom: 30px;'>Generador de flujos ejecutables de cocina optimizados para lectura y control en tiempo real</p>", unsafe_allow_html=True)
 
 # Entrada de Datos
-st.subheader("📥 Entrada de Receta")
+st.subheader("📥 Receta de Origen")
 entrada_principal = st.text_area(
     "Pega la URL de la receta o el texto completo:", 
     height=130, 
-    placeholder="https://www.ejemplo.com/receta\nO pega directamente el texto de la receta aquí..."
+    placeholder="Ejemplo: https://www.directoalpaladar.com/receta...\nO pega aquí los ingredientes y pasos de tu receta..."
 )
 
 with st.expander("📁 Adjuntar archivo (PDF, Word, PPT o Imagen)"):
-    archivo_subido = st.file_uploader("Subir documento:", type=["pdf", "docx", "pptx", "txt", "jpg", "jpeg", "png", "webp"])
+    archivo_subido = st.file_uploader("Subir archivo:", type=["pdf", "docx", "pptx", "txt", "jpg", "jpeg", "png", "webp"])
 
 receta_texto_input = ""
 url_origen_detectada = ""
@@ -187,39 +190,42 @@ def extraer_texto_de_url(url):
                 element.decompose()
             return f"Contenido de {url}:\n{soup.get_text(separator='\n', strip=True)}", url
         except Exception as e:
-            raise Exception(f"Error al procesar la URL: {e}")
+            raise Exception(f"No se pudo extraer información automáticamente de la URL: {e}")
 
 def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_previos, bloques_proceso, recomendaciones, texto_voz):
     
     html_header = f"""
-    <div style="background: linear-gradient(180deg, #1f1f1f 0%, #181818 100%); border-radius: 8px; padding: 30px; text-align: center; margin-bottom: 24px; border-left: 6px solid #E50914; border: 1px solid #333333;">
-        <span style="font-size: 11px; font-weight: 800; color: #E50914; text-transform: uppercase; letter-spacing: 2px; background: rgba(229, 9, 20, 0.15); padding: 5px 12px; border-radius: 4px;">🎬 Diagrama de Producción Culinaria</span>
-        <h1 style="color: #ffffff; font-size: 30px; margin: 16px 0 8px 0; font-weight: 800;">{nombre_receta}</h1>
-        <p style="color: #AAAAAA; font-size: 14px; margin: 0;">Flujo ejecutable paso a paso con temporización integrada</p>
+    <div class="header-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <span class="badge-tag">📊 Diagrama de Ejecución Culinaria</span>
+            <button onclick="toggleModoCocina()" class="btn-theme-toggle" id="btnTheme">☀️ Modo Luz (Alto Contraste)</button>
+        </div>
+        <h1 class="main-title">{nombre_receta}</h1>
+        <p class="sub-title">Flujo paso a paso con código semántico de colores y control de progreso</p>
     </div>
     """
 
     html_ing = """
-    <div style="background-color: #181818; border: 1px solid #333333; border-radius: 8px; padding: 22px; margin-bottom: 20px;">
-        <h3 style="color: #E50914; margin-top: 0; font-size: 18px; font-weight: 700;">🛒 1. Ingredientes (Sistema Métrico Exacto)</h3>
-        <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px;">
+    <div class="section-card card-mise">
+        <h3 class="section-title text-blue">🛒 1. Ingredientes Exactos (Sistema Métrico)</h3>
+        <div class="ingredients-grid">
     """
     for ing in ingredientes:
-        html_ing += f"<span style='background-color: #222222; color: #ffffff; padding: 8px 16px; border-radius: 20px; font-size: 13px; border: 1px solid #444444;'>⚖️ {ing}</span>"
+        html_ing += f"<div class='ing-chip'>⚖️ {ing}</div>"
     html_ing += "</div></div>"
 
     html_prev = """
-    <div style="background-color: #181818; border: 1px solid #333333; border-radius: 8px; padding: 22px; margin-bottom: 24px;">
-        <h3 style="color: #E5A00D; margin-top: 0; font-size: 18px; font-weight: 700;">🔪 2. Mise en Place (Preparación Previa)</h3>
-        <ul style='margin: 12px 0 0 0; padding-left: 20px; color: #DDDDDD; font-size: 14px; line-height: 1.8;'>
+    <div class="section-card card-mise">
+        <h3 class="section-title text-blue">🔪 2. Mise en Place (Preparación Previa)</h3>
+        <ul class="step-list">
     """
     for prep in pasos_previos:
         html_prev += f"<li>{prep}</li>"
     html_prev += "</ul></div>"
 
     html_diagrama = """
-    <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-        <h3 style="color: #ffffff; font-size: 20px; font-weight: 800; margin-bottom: 22px;">📊 3. Diagrama de Ejecución</h3>
+    <div>
+        <h3 class="section-title" style="font-size: 22px; margin-bottom: 20px;">⚡ 3. Diagrama de Producción Interactiva</h3>
     """
     
     for i, bloque in enumerate(bloques_proceso):
@@ -227,12 +233,20 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
         duracion_min = bloque.get("duracion_minutos", 5)
         utensilios = bloque.get("utensilios", [])
         utensilios_str = ", ".join(utensilios) if utensilios else "Sin utensilios específicos"
+        card_id = f"block_card_{i}"
         
         if tipo == "paralelo":
             ramas = bloque.get("ramas", [])
-            html_diagrama += '<div style="display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap;">'
+            html_diagrama += f'<div id="{card_id}" class="block-card card-paralelo-container">'
+            html_diagrama += f'''
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <span class="badge-tag badge-paralelo">🔀 TAREAS PARALELAS (HACER SIMULTÁNEAMENTE)</span>
+                <button onclick="toggleCompletado('{card_id}')" class="btn-done">✓ Marcar completado</button>
+            </div>
+            <div class="parallel-grid">
+            '''
             for idx, rama in enumerate(ramas):
-                nombre_rama = rama.get("nombre", f"Rama {idx+1}").upper()
+                nombre_rama = rama.get("nombre", f"Tarea {idx+1}").upper()
                 accion = rama.get("accion", "")
                 tiempo = rama.get("tiempo", "")
                 temp = rama.get("temperatura", "")
@@ -241,55 +255,54 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
                 timer_id = f"timer_par_{i}_{idx}"
                 
                 html_diagrama += f"""
-                <div style="flex: 1; min-width: 280px; background-color: #1e1218; border: 1px solid #5a121e; border-left: 5px solid #E50914; border-radius: 8px; padding: 20px;">
-                    <span style="font-size: 11px; font-weight: 800; color: #ff8087; background: rgba(229,9,20,0.25); padding: 4px 10px; border-radius: 4px;">🔀 PARALELO: {nombre_rama}</span>
-                    <div style="font-size: 15px; font-weight: 600; color: #ffffff; margin: 12px 0;">{accion}</div>
-                    <div style="font-size: 12px; color: #AAAAAA; margin-bottom: 14px; background: rgba(0,0,0,0.4); padding: 6px 10px; border-radius: 4px;">🛠️ <b>Utensilios:</b> {utensilios_rama}</div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.5); padding: 10px 14px; border-radius: 6px;">
-                        <div style="font-size: 13px; color: #ffffff;">⏱️ <span id="{timer_id}" style="font-weight: bold; color: #E5A00D;">{tiempo}</span> | 🌡️ {temp}</div>
-                        <button onclick="iniciarTemporizador('{timer_id}', {dur_rama})" style="background-color: #E50914; color: white; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 700;">▶️ Iniciar</button>
+                <div class="parallel-subcard">
+                    <span class="branch-title">📌 {nombre_rama}</span>
+                    <div class="action-text">{accion}</div>
+                    <div class="utensil-box">🛠️ <b>Utensilios:</b> {utensilios_rama}</div>
+                    <div class="timer-bar">
+                        <div class="timer-info">⏱️ <span id="{timer_id}" class="timer-display">{tiempo}</span> | 🌡️ {temp}</div>
+                        <button onclick="iniciarTemporizador('{timer_id}', {dur_rama})" class="btn-timer">▶️ Temporizador</button>
                     </div>
                 </div>
                 """
-            html_diagrama += '</div>'
+            html_diagrama += '</div></div>'
         else:
             es_convergencia = tipo == "convergencia"
-            bg = "#132219" if es_convergencia else "#181818"
-            border_color = "#2ea043" if es_convergencia else "#333333"
-            left_border = "#2ea043" if es_convergencia else "#E50914"
-            badge_color = "#3fb950" if es_convergencia else "#ff8087"
-            badge_bg = "rgba(46,160,67,0.2)" if es_convergencia else "rgba(229,9,20,0.2)"
-            etiqueta = "CONVERGENCIA / UNIÓN" if es_convergencia else f"PASO {i+1}"
+            card_class = "card-convergencia" if es_convergencia else "card-secuencial"
+            badge_class = "badge-convergencia" if es_convergencia else "badge-secuencial"
+            etiqueta = "🟢 CONVERGENCIA / UNIÓN DE PREPARACIONES" if es_convergencia else f"🔥 PASO {i+1} (COCCIÓN / ACCIÓN)"
             timer_id = f"timer_seq_{i}"
 
             html_diagrama += f"""
-            <div style="background-color: {bg}; border: 1px solid {border_color}; border-left: 5px solid {left_border}; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-                <span style="font-size: 11px; font-weight: 800; color: {badge_color}; background: {badge_bg}; padding: 4px 10px; border-radius: 4px;">{etiqueta}</span>
-                <div style="font-size: 15px; font-weight: 600; color: #ffffff; margin: 12px 0;">{bloque.get('accion')}</div>
-                <div style="font-size: 12px; color: #AAAAAA; margin-bottom: 14px; background: rgba(0,0,0,0.3); padding: 6px 10px; border-radius: 4px;">🛠️ <b>Utensilios:</b> {utensilios_str}</div>
-                <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.4); padding: 10px 14px; border-radius: 6px;">
-                    <div style="font-size: 13px; color: #ffffff;">⏱️ <span id="{timer_id}" style="font-weight: bold; color: #E5A00D;">{bloque.get('tiempo')}</span> | 🌡️ {bloque.get('temperatura')}</div>
-                    <button onclick="iniciarTemporizador('{timer_id}', {duracion_min})" style="background-color: #E50914; color: white; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 700;">▶️ Iniciar Timer</button>
+            <div id="{card_id}" class="block-card {card_class}">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span class="badge-tag {badge_class}">{etiqueta}</span>
+                    <button onclick="toggleCompletado('{card_id}')" class="btn-done">✓ Marcar completado</button>
+                </div>
+                <div class="action-text">{bloque.get('accion')}</div>
+                <div class="utensil-box">🛠️ <b>Utensilios necesarios:</b> {utensilios_str}</div>
+                <div class="timer-bar">
+                    <div class="timer-info">⏱️ <span id="{timer_id}" class="timer-display">{bloque.get('tiempo')}</span> | 🌡️ {bloque.get('temperatura')}</div>
+                    <button onclick="iniciarTemporizador('{timer_id}', {duracion_min})" class="btn-timer">▶️ Iniciar Timer</button>
                 </div>
             </div>
             """
             
         if i < len(bloques_proceso) - 1:
-            html_diagrama += '<div style="text-align: center; color: #E50914; font-size: 22px; margin: -6px 0 10px 0; font-weight: bold;">⬇️</div>'
+            html_diagrama += '<div class="arrow-down">⬇️</div>'
     
     html_diagrama += "</div>"
 
     html_recom = """
-    <div style="background-color: #1e1b12; border: 1px solid #5a4b12; border-radius: 8px; padding: 22px; margin-top: 24px; margin-bottom: 20px;">
-        <h3 style="color: #E5A00D; margin-top: 0; font-size: 18px; font-weight: 700;">💡 4. Recomendaciones del Chef & Maridaje</h3>
-        <ul style='margin: 12px 0 0 0; padding-left: 20px; color: #f0e6c8; font-size: 14px; line-height: 1.8;'>
+    <div class="section-card card-recom">
+        <h3 class="section-title" style="color: #f59e0b;">💡 4. Recomendaciones del Chef & Presentación</h3>
+        <ul class="step-list">
     """
     for rec in recomendaciones:
         html_recom += f"<li>{rec}</li>"
     html_recom += "</ul></div>"
 
-    origen_html = f'<a href="{origen_receta}" target="_blank" style="color: #E50914; text-decoration: underline;">{origen_receta}</a>' if origen_receta.startswith("http") else f'<span style="color: #AAAAAA;">{origen_receta}</span>'
-
+    origen_html = f'<a href="{origen_receta}" target="_blank" style="color: #f59e0b; font-weight: bold; text-decoration: underline;">{origen_receta}</a>' if origen_receta.startswith("http") else f'<span>{origen_receta}</span>'
     texto_voz_seguro = json.dumps(texto_voz)
 
     return f"""
@@ -297,43 +310,265 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
     <html lang="es">
     <head>
         <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
-            body {{ background-color: #141414; color: #ffffff; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 16px; margin: 0; }}
-            .container-hub {{ max-width: 900px; margin: auto; }}
-            .widget-box {{ background-color: #181818; border: 1px solid #333333; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 20px; }}
-            .btn-control {{ background-color: #E50914; color: white; border: none; padding: 10px 22px; font-size: 13px; font-weight: 700; border-radius: 4px; cursor: pointer; margin: 4px; }}
-            .btn-stop {{ background-color: #333333; color: #ffffff; }}
+            :root {{
+                --bg-main: #0f172a;
+                --card-bg: #1e293b;
+                --text-main: #f8fafc;
+                --text-sub: #94a3b8;
+                --border-color: #334155;
+                
+                --secuencial-bg: #1f1912;
+                --secuencial-border: #f59e0b;
+                
+                --paralelo-bg: #1e1832;
+                --paralelo-border: #8b5cf6;
+                
+                --convergencia-bg: #0d281e;
+                --convergencia-border: #10b981;
+                
+                --mise-bg: #0f2338;
+                --mise-border: #3b82f6;
+
+                --btn-timer-bg: #f59e0b;
+                --btn-timer-text: #0f172a;
+            }}
+
+            body.light-mode {{
+                --bg-main: #f8fafc;
+                --card-bg: #ffffff;
+                --text-main: #0f172a;
+                --text-sub: #475569;
+                --border-color: #cbd5e1;
+                
+                --secuencial-bg: #fffbeeb;
+                --secuencial-border: #d97706;
+                
+                --paralelo-bg: #f5f3ff;
+                --paralelo-border: #7c3aed;
+                
+                --convergencia-bg: #ecfdf5;
+                --convergencia-border: #059669;
+                
+                --mise-bg: #eff6ff;
+                --mise-border: #2563eb;
+
+                --btn-timer-bg: #d97706;
+                --btn-timer-text: #ffffff;
+            }}
+
+            body {{ 
+                background-color: var(--bg-main); 
+                color: var(--text-main); 
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+                padding: 12px; 
+                margin: 0; 
+                transition: background-color 0.3s ease, color 0.3s ease;
+            }}
+
+            .container-hub {{ max-width: 950px; margin: auto; }}
+            
+            .header-card {{ 
+                background: var(--card-bg); 
+                border-radius: 12px; 
+                padding: 24px; 
+                margin-bottom: 20px; 
+                border: 1px solid var(--border-color); 
+                border-left: 8px solid #f59e0b;
+            }}
+
+            .main-title {{ font-size: 28px; margin: 12px 0 6px 0; font-weight: 800; color: var(--text-main); }}
+            .sub-title {{ color: var(--text-sub); font-size: 15px; margin: 0; }}
+
+            .btn-theme-toggle {{
+                background-color: var(--border-color);
+                color: var(--text-main);
+                border: none;
+                padding: 8px 16px;
+                border-radius: 20px;
+                font-weight: 700;
+                cursor: pointer;
+                font-size: 13px;
+            }}
+
+            .widget-voice {{ 
+                background-color: var(--card-bg); 
+                border: 1px solid var(--border-color); 
+                border-radius: 10px; 
+                padding: 16px; 
+                text-align: center; 
+                margin-bottom: 24px; 
+            }}
+
+            .btn-kitchen-action {{ 
+                background-color: #f59e0b; 
+                color: #0f172a; 
+                border: none; 
+                padding: 14px 24px; 
+                font-size: 16px; 
+                font-weight: 800; 
+                border-radius: 8px; 
+                cursor: pointer; 
+                margin: 6px; 
+                min-height: 48px;
+            }}
+            .btn-stop {{ background-color: var(--border-color); color: var(--text-main); }}
+
+            .section-card {{
+                background-color: var(--card-bg);
+                border-radius: 10px;
+                padding: 20px;
+                margin-bottom: 24px;
+                border: 1px solid var(--border-color);
+            }}
+
+            .card-mise {{ border-left: 6px solid var(--mise-border); background-color: var(--mise-bg); }}
+            .card-recom {{ border-left: 6px solid #f59e0b; }}
+
+            .section-title {{ margin-top: 0; font-size: 18px; font-weight: 800; }}
+            .text-blue {{ color: #3b82f6; }}
+
+            .ingredients-grid {{ display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }}
+            .ing-chip {{ 
+                background-color: var(--card-bg); 
+                color: var(--text-main); 
+                padding: 10px 16px; 
+                border-radius: 20px; 
+                font-size: 14px; 
+                font-weight: 600;
+                border: 1px solid var(--border-color); 
+            }}
+
+            .step-list {{ margin: 10px 0 0 0; padding-left: 20px; color: var(--text-main); font-size: 15px; line-height: 1.7; }}
+
+            .block-card {{ 
+                border-radius: 12px; 
+                padding: 20px; 
+                margin-bottom: 16px; 
+                border: 2px solid; 
+                transition: opacity 0.3s ease, filter 0.3s ease;
+            }}
+
+            .card-secuencial {{ background-color: var(--secuencial-bg); border-color: var(--secuencial-border); }}
+            .card-convergencia {{ background-color: var(--convergencia-bg); border-color: var(--convergencia-border); }}
+            .card-paralelo-container {{ background-color: var(--paralelo-bg); border-color: var(--paralelo-border); }}
+
+            .badge-tag {{ font-size: 12px; font-weight: 800; padding: 5px 12px; border-radius: 6px; letter-spacing: 0.5px; text-transform: uppercase; }}
+            .badge-secuencial {{ background: rgba(245, 158, 11, 0.2); color: #f59e0b; }}
+            .badge-convergencia {{ background: rgba(16, 185, 129, 0.2); color: #10b981; }}
+            .badge-paralelo {{ background: rgba(139, 92, 246, 0.2); color: #a78bfa; }}
+
+            .action-text {{ font-size: 17px; font-weight: 700; color: var(--text-main); margin: 14px 0; line-height: 1.5; }}
+            .utensil-box {{ font-size: 13px; color: var(--text-sub); margin-bottom: 14px; background: rgba(0,0,0,0.15); padding: 8px 12px; border-radius: 6px; }}
+
+            .parallel-grid {{ display: flex; gap: 16px; flex-wrap: wrap; margin-top: 10px; }}
+            .parallel-subcard {{ 
+                flex: 1; 
+                min-width: 280px; 
+                background: var(--card-bg); 
+                border: 1px solid var(--paralelo-border); 
+                border-radius: 8px; 
+                padding: 16px; 
+            }}
+            .branch-title {{ font-size: 13px; font-weight: 800; color: #a78bfa; display: block; }}
+
+            .timer-bar {{ 
+                display: flex; 
+                justify-content: space-between; 
+                align-items: center; 
+                background: rgba(0,0,0,0.2); 
+                padding: 10px 14px; 
+                border-radius: 8px; 
+                gap: 10px; flex-wrap: wrap;
+            }}
+            .timer-info {{ font-size: 14px; font-weight: 700; color: var(--text-main); }}
+            .timer-display {{ color: #f59e0b; font-size: 16px; font-weight: 800; }}
+
+            .btn-timer {{ 
+                background-color: var(--btn-timer-bg); 
+                color: var(--btn-timer-text); 
+                border: none; 
+                padding: 10px 18px; 
+                border-radius: 6px; 
+                cursor: pointer; 
+                font-size: 14px; 
+                font-weight: 800; 
+                min-height: 44px;
+            }}
+
+            .btn-done {{
+                background-color: transparent;
+                color: var(--text-sub);
+                border: 1px solid var(--border-color);
+                padding: 6px 12px;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 13px;
+                font-weight: 600;
+            }}
+
+            .arrow-down {{ text-align: center; color: #f59e0b; font-size: 24px; margin: -6px 0 10px 0; font-weight: bold; }}
+
+            /* Estado de bloque completado */
+            .is-completed {{
+                opacity: 0.45 !important;
+                filter: grayscale(80%) !important;
+            }}
+            .is-completed .btn-done {{
+                background-color: #10b981 !important;
+                color: #ffffff !important;
+                border-color: #10b981 !important;
+            }}
         </style>
     </head>
     <body>
         <div class="container-hub">
             {html_header}
-            <div class="widget-box">
-                <p style="color: #AAAAAA; font-size: 13px; margin: 0 0 12px 0; font-weight: 600;">🎙️ Asistente de Voz de Cocina</p>
-                <button id="btnVoz" class="btn-control" onclick="reproducir(this)">▶️ Escuchar Guía Completa</button>
-                <button class="btn-control btn-stop" onclick="detener()">⏹️ Silenciar</button>
+            <div class="widget-voice">
+                <p style="color: var(--text-sub); font-size: 14px; margin: 0 0 10px 0; font-weight: 700;">🎙️ ASISTENTE DE VOZ PARA COCINA</p>
+                <button id="btnVoz" class="btn-kitchen-action" onclick="reproducir(this)">🔊 Escuchar Instrucciones Completas</button>
+                <button class="btn-kitchen-action btn-stop" onclick="detener()">⏹️ Silenciar</button>
             </div>
             {html_ing}
             {html_prev}
             {html_diagrama}
             {html_recom}
-            <div style="text-align: center; color: #777777; font-size: 13px; margin-top: 35px; border-top: 1px solid #333333; padding-top: 20px;">
-                🎬 <b>FaceFoodChef.com</b> | Fuente: {origen_html}
+            <div style="text-align: center; color: var(--text-sub); font-size: 13px; margin-top: 35px; border-top: 1px solid var(--border-color); padding-top: 20px;">
+                👨‍🍳 <b>FaceFoodChef PRO</b> | Fuente: {origen_html}
             </div>
         </div>
+
         <script>
             const textoVoz = {texto_voz_seguro};
             let currentUtterance = null;
 
+            function toggleModoCocina() {{
+                document.body.classList.toggle('light-mode');
+                const btn = document.getElementById('btnTheme');
+                if (document.body.classList.contains('light-mode')) {{
+                    btn.innerText = "🌙 Modo Oscuro";
+                }} else {{
+                    btn.innerText = "☀️ Modo Luz (Alto Contraste)";
+                }}
+            }}
+
+            function toggleCompletado(cardId) {{
+                const el = document.getElementById(cardId);
+                if (el) {{
+                    el.classList.toggle('is-completed');
+                }}
+            }}
+
             function reproducir(btn) {{
-                if (!('speechSynthesis' in window)) return alert("Sintetizador no soportado.");
+                if (!('speechSynthesis' in window)) return alert("Sintetizador de voz no soportado en este navegador.");
                 window.speechSynthesis.cancel();
                 currentUtterance = new SpeechSynthesisUtterance(textoVoz);
                 currentUtterance.lang = 'es-ES';
                 currentUtterance.rate = 0.95;
-                btn.innerText = "🔊 Reproduciendo Guía...";
-                currentUtterance.onend = () => btn.innerText = "▶️ Escuchar Guía Completa";
-                currentUtterance.onerror = () => btn.innerText = "▶️ Escuchar Guía Completa";
+                btn.innerText = "🔊 Reproduciendo receta...";
+                currentUtterance.onend = () => btn.innerText = "🔊 Escuchar Instrucciones Completas";
+                currentUtterance.onerror = () => btn.innerText = "🔊 Escuchar Instrucciones Completas";
                 window.speechSynthesis.speak(currentUtterance);
             }}
 
@@ -341,7 +576,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
                 if ('speechSynthesis' in window) {{
                     window.speechSynthesis.cancel();
                     const btn = document.getElementById('btnVoz');
-                    if (btn) btn.innerText = "▶️ Escuchar Guía Completa";
+                    if (btn) btn.innerText = "🔊 Escuchar Instrucciones Completas";
                 }}
             }}
 
@@ -353,7 +588,8 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
                 window[elementId + "_interval"] = setInterval(() => {{
                     if (segundosRestantes <= 0) {{
                         clearInterval(window[elementId + "_interval"]);
-                        elemento.innerText = "¡TIEMPO CUMPLIDO! 🎉";
+                        elemento.innerText = "¡TIEMPO! 🎉";
+                        elemento.style.color = "#ef4444";
                         sonarAlerta();
                     }} else {{
                         segundosRestantes--;
@@ -365,16 +601,20 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
             }}
 
             function sonarAlerta() {{
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const oscillator = audioCtx.createOscillator();
-                const gainNode = audioCtx.createGain();
-                oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime);
-                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                oscillator.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-                oscillator.start();
-                setTimeout(() => {{ oscillator.stop(); }}, 1200);
+                try {{
+                    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    const oscillator = audioCtx.createOscillator();
+                    const gainNode = audioCtx.createGain();
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(659.25, audioCtx.currentTime); // Mi
+                    gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime);
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioCtx.destination);
+                    oscillator.start();
+                    setTimeout(() => {{ oscillator.stop(); }}, 1500);
+                }} catch(e) {{
+                    console.log("Audio no permitido sin interacción previa.");
+                }}
             }}
         </script>
     </body>
@@ -387,7 +627,7 @@ contenido_ia = None
 
 if url_origen_detectada:
     try:
-        with st.spinner("🌐 Obteniendo datos de la URL..."):
+        with st.spinner("🌐 Obteniendo receta desde la URL..."):
             contenido_ia, url_origen_detectada = extraer_texto_de_url(url_origen_detectada)
             procesar_accion = True
     except Exception as e:
@@ -398,56 +638,56 @@ elif receta_texto_input:
 elif archivo_multimodal:
     procesar_accion = True
 
-if st.button("🎬 GENERAR DIAGRAMA DE COCINA"):
+if st.button("🚀 GENERAR DIAGRAMA DE COCINA"):
     if not API_KEY:
-        st.error("⚠️ Es necesaria una API Key de Google Gemini para procesar la receta.")
+        st.error("⚠️ Es necesaria una API Key de Google Gemini en el panel lateral para procesar la receta.")
     elif not procesar_accion:
-        st.warning("⚠️ Introduce una URL, un texto o adjunta un archivo antes de continuar.")
+        st.warning("⚠️ Introduce una URL, pega el texto de una receta o sube un archivo antes de continuar.")
     else:
         try:
             client = genai.Client(api_key=API_KEY)
             
             prompt_sistema = f"""
-            Eres un experto en gastronomía y programación de flujos de trabajo en cocina. 
-            Transforma la siguiente receta en un esquema estructurado JSON para renderizar un diagrama de bloques técnico.
+            Eres un chef ejecutivo y programador de procesos culinarios.
+            Convierte la receta proporcionada en una estructura JSON válida para generar un diagrama de producción.
 
             REGLAS STRICTAS:
-            1. Devuelve EXCLUSIVAMENTE un JSON válido sin marcas ni textos adicionales fuera del JSON.
-            2. 'ingredientes': Transforma todas las cantidades ambiguas (pizca, al gusto, cucharada) a unidades métricas exactas: gramos (g), mililitros (ml) o unidades (ud).
-            3. 'temperatura': Especifica siempre la temperatura en grados Celsius (°C).
-            4. 'origen_receta': Asigna exactamente ({url_origen_detectada if url_origen_detectada else 'Texto aportado por el usuario'}).
-            5. 'bloques_proceso': Asigna 'paralelo' para acciones simultáneas y 'convergencia' para las uniones de ingredientes o mezclas.
+            1. Devuelve EXCLUSIVAMENTE el JSON solicitado sin bloques de código tipo markdown adicionales.
+            2. 'ingredientes': Convierte cantidades imprecisas (pizca, al gusto) a unidades métricas claras: gramos (g), mililitros (ml) o unidades (ud).
+            3. 'temperatura': Especifica siempre en Celsius (°C) o indica 'Fuego Medio', 'Fuego Vivo', 'Temperatura Ambiente'.
+            4. 'origen_receta': Asigna exactamente ({url_origen_detectada if url_origen_detectada else 'Texto o documento del usuario'}).
+            5. 'bloques_proceso': Asigna 'paralelo' para tareas simultáneas (ej. picar cebolla mientras hierva agua) y 'convergencia' cuando se unen preparaciones previas.
 
-            JSON Schema:
+            JSON Schema requerido:
             {{
               "nombre_receta": "String",
               "origen_receta": "String",
-              "ingredientes": ["200 g de harina", "5 g de sal"],
-              "pasos_previos": ["Mise en place..."],
+              "ingredientes": ["300 g de arroz arborio", "100 ml de vino blanco"],
+              "pasos_previos": ["Mise en place: Picar la cebolla fino y rallar el queso."],
               "bloques_proceso": [
-                {{"tipo": "secuencial", "accion": "Paso 1", "utensilios": ["Olla"], "tiempo": "5 min", "duracion_minutos": 5, "temperatura": "100°C"}},
+                {{"tipo": "secuencial", "accion": "Paso 1: Calentar el caldo", "utensilios": ["Cazo"], "tiempo": "5 min", "duracion_minutos": 5, "temperatura": "90°C"}},
                 {{
                   "tipo": "paralelo",
                   "ramas": [
-                    {{"nombre": "Sartén 1", "accion": "Sofreír...", "utensilios": ["Sartén"], "tiempo": "10 min", "duracion_minutos": 10, "temperatura": "90°C"}},
-                    {{"nombre": "Olla 2", "accion": "Cocer...", "utensilios": ["Olla"], "tiempo": "8 min", "duracion_minutos": 8, "temperatura": "100°C"}}
+                    {{"nombre": "Sartén Principal", "accion": "Sofrreír cebolla", "utensilios": ["Sartén grande"], "tiempo": "8 min", "duracion_minutos": 8, "temperatura": "Fuego medio"}},
+                    {{"nombre": "Cazo de Caldo", "accion": "Mantener el caldo a fuego lento", "utensilios": ["Cazo"], "tiempo": "8 min", "duracion_minutos": 8, "temperatura": "85°C"}}
                   ]
                 }},
-                {{"tipo": "convergencia", "accion": "Unir mezclas", "utensilios": ["Sartén grande"], "tiempo": "2 min", "duracion_minutos": 2, "temperatura": "80°C"}}
+                {{"tipo": "convergencia", "accion": "Añadir el vino y el caldo progresivamente al arroz", "utensilios": ["Espátula de madera"], "tiempo": "18 min", "duracion_minutos": 18, "temperatura": "Fuego medio-bajo"}}
               ],
-              "recomendaciones": ["Tip 1"],
-              "texto_voz": "Texto descriptivo completo"
+              "recomendaciones": ["Consejo de emplatado o maridaje"],
+              "texto_voz": "Texto descriptivo fluido paso a paso para lectura por voz."
             }}
             """
 
             contents_payload = [prompt_sistema]
             if archivo_multimodal:
                 contents_payload.append(types.Part.from_bytes(data=archivo_multimodal, mime_type=tipo_multimodal))
-                contents_payload.append("Analiza el archivo adjunto para extraer la receta.")
+                contents_payload.append("Analiza el contenido del documento/imagen adjunto para estructurar la receta.")
             else:
-                contents_payload.append(f"Receta:\n{contenido_ia}")
+                contents_payload.append(f"Receta a procesar:\n{contenido_ia}")
 
-            with st.spinner(f"⚙️ Procesando diagrama con {modelo_seleccionado}..."):
+            with st.spinner(f"⚡ Analizando receta y diagramando flujo con {modelo_seleccionado}..."):
                 response = client.models.generate_content(
                     model=modelo_seleccionado,
                     contents=contents_payload,
@@ -465,7 +705,7 @@ if st.button("🎬 GENERAR DIAGRAMA DE COCINA"):
                     texto_respuesta = texto_respuesta[:-3]
                 
                 datos = json.loads(texto_respuesta.strip())
-                origen_final = url_origen_detectada if url_origen_detectada else datos.get("origen_receta", "Texto aportado por el usuario")
+                origen_final = url_origen_detectada if url_origen_detectada else datos.get("origen_receta", "Texto o documento del usuario")
 
                 html_final = generar_html_dashboard(
                     datos.get("nombre_receta", "Receta Culinaria Pro"),
@@ -479,13 +719,13 @@ if st.button("🎬 GENERAR DIAGRAMA DE COCINA"):
                 
                 st.markdown("<br>", unsafe_allow_html=True)
                 st.download_button(
-                    label="📥 Descargar Diagrama HTML Autónomo",
+                    label="📥 Descargar Diagrama Autónomo (HTML)",
                     data=html_final,
-                    file_name="diagrama_facefoodchef.html",
+                    file_name="diagrama_receta_facefoodchef.html",
                     mime="text/html"
                 )
                 
-                components.html(html_final, height=1350, scrolling=True)
+                components.html(html_final, height=1450, scrolling=True)
                 
         except Exception as e:
             st.error(f"Error durante el procesamiento: {e}")
