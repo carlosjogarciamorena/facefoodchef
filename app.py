@@ -122,6 +122,13 @@ else:
         help="Introduce la clave manualmente o configúrala en secrets.toml / variables de entorno."
     )
 
+# Seleccionar modelo para evitar errores 404 por depreciación
+modelo_seleccionado = st.sidebar.selectbox(
+    "Modelo Gemini:",
+    options=["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"],
+    index=0
+)
+
 st.sidebar.markdown("---")
 st.sidebar.markdown("""
 ### 🎬 FaceFoodChef.com
@@ -225,7 +232,7 @@ def generar_html_dashboard_netflix(nombre_receta, origen_receta, ingredientes, p
         html_prev += f"<li style='margin-bottom: 6px;'>{prep}</li>"
     html_prev += "</ul></div>"
 
-    # Diagrama de Bloques Estilo "Episodios / Escenas"
+    # Diagrama de Bloques
     html_diagrama = """
     <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
         <h3 style="color: #ffffff; font-size: 20px; font-weight: 800; margin-bottom: 22px; display: flex; align-items: center; gap: 10px;">
@@ -295,7 +302,7 @@ def generar_html_dashboard_netflix(nombre_receta, origen_receta, ingredientes, p
     
     html_diagrama += "</div>"
 
-    # Recomendaciones del Chef
+    # Recomendaciones
     html_recom = """
     <div style="background-color: #1e1b12; border: 1px solid #5a4b12; border-radius: 8px; padding: 22px; margin-top: 24px; margin-bottom: 20px;">
         <h3 style="color: #E5A00D; margin-top: 0; font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 10px;">
@@ -478,9 +485,9 @@ if st.button("🎬 GENERAR DIAGRAMA DE COCINA"):
             else:
                 contents_payload.append(f"Receta:\n{contenido_ia}")
 
-            with st.spinner("⚙️ Procesando diagrama con Gemini..."):
+            with st.spinner(f"⚙️ Procesando diagrama con {modelo_seleccionado}..."):
                 response = client.models.generate_content(
-                    model='gemini-2.5-flash',
+                    model=modelo_seleccionado,
                     contents=contents_payload,
                     config=types.GenerateContentConfig(
                         response_mime_type="application/json",
