@@ -10,7 +10,7 @@ from recipe_scrapers import scrape_me
 from google import genai
 from google.genai import types
 
-# Cargar variables de entorno locales si existen (.env)
+# Cargar variables de entorno locales (.env)
 try:
     from dotenv import load_dotenv
     load_dotenv()
@@ -30,27 +30,23 @@ try:
 except ImportError:
     HAS_PPTX = False
 
-# Configuración de página Streamlit
+# Configuración de página
 st.set_page_config(
     page_title="FaceFoodChef.com - Motor de Diagramas Culinarios", 
     layout="wide", 
     page_icon="🍳"
 )
 
-# --- INYECCIÓN DE ESTILOS ESTILO NETFLIX / DARK STREAMING ---
+# Estilos visuales estilo Netflix Dark UI
 st.markdown("""
     <style>
-    /* Fondo global y tipografía estilo Netflix */
     .stApp {
         background-color: #141414 !important;
         color: #ffffff !important;
         font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     }
-    
-    /* Ocultar barra superior y pie nativos de Streamlit */
     header, footer { visibility: hidden; }
     
-    /* Contenedores de entrada de texto e inputs */
     .stTextArea textarea, .stTextInput input, .stSelectbox select {
         background-color: #181818 !important;
         color: #ffffff !important;
@@ -63,7 +59,6 @@ st.markdown("""
         box-shadow: 0 0 8px rgba(229, 9, 20, 0.6) !important;
     }
 
-    /* Botón principal de acción (Estilo 'Play' de Netflix) */
     .stButton > button {
         background-color: #E50914 !important;
         color: #ffffff !important;
@@ -80,7 +75,6 @@ st.markdown("""
         transform: scale(1.02);
     }
 
-    /* Botón de descarga de archivo */
     .stDownloadButton > button {
         background-color: #222222 !important;
         color: #ffffff !important;
@@ -94,7 +88,6 @@ st.markdown("""
         color: #ffffff !important;
     }
 
-    /* Expander estilizado */
     .streamlit-expanderHeader {
         background-color: #181818 !important;
         color: #ffffff !important;
@@ -104,7 +97,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- SISTEMA DE CARGA AUTOMÁTICA DE API KEY ---
+# Autenticación API Key
 API_KEY = None
 if "GEMINI_API_KEY" in st.secrets:
     API_KEY = st.secrets["GEMINI_API_KEY"]
@@ -119,30 +112,29 @@ else:
     API_KEY = st.sidebar.text_input(
         "API Key de Google Gemini:", 
         type="password", 
-        help="Introduce la clave manualmente o configúrala en secrets.toml / variables de entorno."
+        help="Introduce la clave manualmente o configúrala en secretos."
     )
 
-# Seleccionar modelo para evitar errores 404 por depreciación
+# Selección de modelo actualizado
 modelo_seleccionado = st.sidebar.selectbox(
     "Modelo Gemini:",
-    options=["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"],
+    options=["gemini-3.6-flash", "gemini-2.5-flash", "gemini-1.5-flash"],
     index=0
 )
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("""
 ### 🎬 FaceFoodChef.com
-- **Estética:** Netflix Dark UI (`#141414`)
-- **Métricas:** Sistema métrico decimal (g, ml, ud)
+- **Estética:** Dark Mode Executable (`#141414`)
+- **Métricas:** Decimales métricos (g, ml, ud)
 - **Temperatura:** Escala °C
-- **Diagrama:** Nodos secuenciales, paralelos y de convergencia
+- **Estructura:** Bloques paralelos, secuenciales y convergentes
 """)
 
-# Encabezado Principal
 st.markdown("<h1 style='text-align: center; color: #E50914; font-weight: 800; letter-spacing: -1px; margin-bottom: 0;'>FACEFOODCHEF <span style='font-size: 16px; background: #222; color: #fff; padding: 4px 10px; border-radius: 4px; vertical-align: middle; border: 1px solid #E50914;'>PRO</span></h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; color: #AAAAAA; font-size: 15px; margin-bottom: 30px;'>Generador interactivo de diagramas ejecutables de cocina</p>", unsafe_allow_html=True)
 
-# Entrada Unificada
+# Entrada de Datos
 st.subheader("📥 Entrada de Receta")
 entrada_principal = st.text_area(
     "Pega la URL de la receta o el texto completo:", 
@@ -197,47 +189,37 @@ def extraer_texto_de_url(url):
         except Exception as e:
             raise Exception(f"Error al procesar la URL: {e}")
 
-def generar_html_dashboard_netflix(nombre_receta, origen_receta, ingredientes, pasos_previos, bloques_proceso, recomendaciones, texto_voz):
+def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_previos, bloques_proceso, recomendaciones, texto_voz):
     
-    # Header estilo banner Netflix
     html_header = f"""
-    <div style="background: linear-gradient(180deg, #1f1f1f 0%, #181818 100%); border-radius: 8px; padding: 30px; text-align: center; margin-bottom: 24px; border-left: 6px solid #E50914; border-right: 1px solid #333333; border-top: 1px solid #333333; border-bottom: 1px solid #333333;">
+    <div style="background: linear-gradient(180deg, #1f1f1f 0%, #181818 100%); border-radius: 8px; padding: 30px; text-align: center; margin-bottom: 24px; border-left: 6px solid #E50914; border: 1px solid #333333;">
         <span style="font-size: 11px; font-weight: 800; color: #E50914; text-transform: uppercase; letter-spacing: 2px; background: rgba(229, 9, 20, 0.15); padding: 5px 12px; border-radius: 4px;">🎬 Diagrama de Producción Culinaria</span>
-        <h1 style="color: #ffffff; font-size: 30px; margin: 16px 0 8px 0; font-weight: 800; letter-spacing: -0.5px;">{nombre_receta}</h1>
+        <h1 style="color: #ffffff; font-size: 30px; margin: 16px 0 8px 0; font-weight: 800;">{nombre_receta}</h1>
         <p style="color: #AAAAAA; font-size: 14px; margin: 0;">Flujo ejecutable paso a paso con temporización integrada</p>
     </div>
     """
 
-    # Bloque de Ingredientes
     html_ing = """
     <div style="background-color: #181818; border: 1px solid #333333; border-radius: 8px; padding: 22px; margin-bottom: 20px;">
-        <h3 style="color: #E50914; margin-top: 0; font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 10px;">
-            <span>🛒</span> 1. Ingredientes (Sistema Métrico Exacto)
-        </h3>
+        <h3 style="color: #E50914; margin-top: 0; font-size: 18px; font-weight: 700;">🛒 1. Ingredientes (Sistema Métrico Exacto)</h3>
         <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px;">
     """
     for ing in ingredientes:
-        html_ing += f"<span style='background-color: #222222; color: #ffffff; padding: 8px 16px; border-radius: 20px; font-size: 13px; border: 1px solid #444444; font-weight: 500;'>⚖️ {ing}</span>"
+        html_ing += f"<span style='background-color: #222222; color: #ffffff; padding: 8px 16px; border-radius: 20px; font-size: 13px; border: 1px solid #444444;'>⚖️ {ing}</span>"
     html_ing += "</div></div>"
 
-    # Bloque Mise en Place
     html_prev = """
     <div style="background-color: #181818; border: 1px solid #333333; border-radius: 8px; padding: 22px; margin-bottom: 24px;">
-        <h3 style="color: #E5A00D; margin-top: 0; font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 10px;">
-            <span>🔪</span> 2. Mise en Place (Preparación Previa)
-        </h3>
+        <h3 style="color: #E5A00D; margin-top: 0; font-size: 18px; font-weight: 700;">🔪 2. Mise en Place (Preparación Previa)</h3>
         <ul style='margin: 12px 0 0 0; padding-left: 20px; color: #DDDDDD; font-size: 14px; line-height: 1.8;'>
     """
     for prep in pasos_previos:
-        html_prev += f"<li style='margin-bottom: 6px;'>{prep}</li>"
+        html_prev += f"<li>{prep}</li>"
     html_prev += "</ul></div>"
 
-    # Diagrama de Bloques
     html_diagrama = """
     <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-        <h3 style="color: #ffffff; font-size: 20px; font-weight: 800; margin-bottom: 22px; display: flex; align-items: center; gap: 10px;">
-            <span>📊</span> 3. Diagrama de Ejecución
-        </h3>
+        <h3 style="color: #ffffff; font-size: 20px; font-weight: 800; margin-bottom: 22px;">📊 3. Diagrama de Ejecución</h3>
     """
     
     for i, bloque in enumerate(bloques_proceso):
@@ -260,10 +242,8 @@ def generar_html_dashboard_netflix(nombre_receta, origen_receta, ingredientes, p
                 
                 html_diagrama += f"""
                 <div style="flex: 1; min-width: 280px; background-color: #1e1218; border: 1px solid #5a121e; border-left: 5px solid #E50914; border-radius: 8px; padding: 20px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                        <span style="font-size: 11px; font-weight: 800; color: #ff8087; background: rgba(229,9,20,0.25); padding: 4px 10px; border-radius: 4px;">🔀 PARALELO: {nombre_rama}</span>
-                    </div>
-                    <div style="font-size: 15px; font-weight: 600; color: #ffffff; margin-bottom: 12px; line-height: 1.5;">{accion}</div>
+                    <span style="font-size: 11px; font-weight: 800; color: #ff8087; background: rgba(229,9,20,0.25); padding: 4px 10px; border-radius: 4px;">🔀 PARALELO: {nombre_rama}</span>
+                    <div style="font-size: 15px; font-weight: 600; color: #ffffff; margin: 12px 0;">{accion}</div>
                     <div style="font-size: 12px; color: #AAAAAA; margin-bottom: 14px; background: rgba(0,0,0,0.4); padding: 6px 10px; border-radius: 4px;">🛠️ <b>Utensilios:</b> {utensilios_rama}</div>
                     <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.5); padding: 10px 14px; border-radius: 6px;">
                         <div style="font-size: 13px; color: #ffffff;">⏱️ <span id="{timer_id}" style="font-weight: bold; color: #E5A00D;">{tiempo}</span> | 🌡️ {temp}</div>
@@ -277,18 +257,15 @@ def generar_html_dashboard_netflix(nombre_receta, origen_receta, ingredientes, p
             bg = "#132219" if es_convergencia else "#181818"
             border_color = "#2ea043" if es_convergencia else "#333333"
             left_border = "#2ea043" if es_convergencia else "#E50914"
-            badge_bg = "rgba(46,160,67,0.2)" if es_convergencia else "rgba(229,9,20,0.2)"
             badge_color = "#3fb950" if es_convergencia else "#ff8087"
-            icono = "🔗" if es_convergencia else "🔥"
+            badge_bg = "rgba(46,160,67,0.2)" if es_convergencia else "rgba(229,9,20,0.2)"
             etiqueta = "CONVERGENCIA / UNIÓN" if es_convergencia else f"PASO {i+1}"
-            
             timer_id = f"timer_seq_{i}"
+
             html_diagrama += f"""
             <div style="background-color: {bg}; border: 1px solid {border_color}; border-left: 5px solid {left_border}; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                    <span style="font-size: 11px; font-weight: 800; color: {badge_color}; background: {badge_bg}; padding: 4px 10px; border-radius: 4px;">{icono} {etiqueta}</span>
-                </div>
-                <div style="font-size: 15px; font-weight: 600; color: #ffffff; margin-bottom: 12px; line-height: 1.5;">{bloque.get('accion')}</div>
+                <span style="font-size: 11px; font-weight: 800; color: {badge_color}; background: {badge_bg}; padding: 4px 10px; border-radius: 4px;">{etiqueta}</span>
+                <div style="font-size: 15px; font-weight: 600; color: #ffffff; margin: 12px 0;">{bloque.get('accion')}</div>
                 <div style="font-size: 12px; color: #AAAAAA; margin-bottom: 14px; background: rgba(0,0,0,0.3); padding: 6px 10px; border-radius: 4px;">🛠️ <b>Utensilios:</b> {utensilios_str}</div>
                 <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.4); padding: 10px 14px; border-radius: 6px;">
                     <div style="font-size: 13px; color: #ffffff;">⏱️ <span id="{timer_id}" style="font-weight: bold; color: #E5A00D;">{bloque.get('tiempo')}</span> | 🌡️ {bloque.get('temperatura')}</div>
@@ -302,71 +279,57 @@ def generar_html_dashboard_netflix(nombre_receta, origen_receta, ingredientes, p
     
     html_diagrama += "</div>"
 
-    # Recomendaciones
     html_recom = """
     <div style="background-color: #1e1b12; border: 1px solid #5a4b12; border-radius: 8px; padding: 22px; margin-top: 24px; margin-bottom: 20px;">
-        <h3 style="color: #E5A00D; margin-top: 0; font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 10px;">
-            <span>💡</span> 4. Recomendaciones del Chef & Maridaje
-        </h3>
+        <h3 style="color: #E5A00D; margin-top: 0; font-size: 18px; font-weight: 700;">💡 4. Recomendaciones del Chef & Maridaje</h3>
         <ul style='margin: 12px 0 0 0; padding-left: 20px; color: #f0e6c8; font-size: 14px; line-height: 1.8;'>
     """
     for rec in recomendaciones:
-        html_recom += f"<li style='margin-bottom: 6px;'>{rec}</li>"
+        html_recom += f"<li>{rec}</li>"
     html_recom += "</ul></div>"
 
-    if origen_receta.startswith("http://") or origen_receta.startswith("https://"):
-        origen_html = f'<a href="{origen_receta}" target="_blank" style="color: #E50914; text-decoration: underline;">{origen_receta}</a>'
-    else:
-        origen_html = f'<span style="color: #AAAAAA;">{origen_receta}</span>'
-
-    html_footer = f"""
-    <div style="text-align: center; color: #777777; font-size: 13px; margin-top: 35px; border-top: 1px solid #333333; padding-top: 20px;">
-        🎬 <b>FaceFoodChef.com</b> | Fuente de Origen: {origen_html}
-    </div>
-    """
+    origen_html = f'<a href="{origen_receta}" target="_blank" style="color: #E50914; text-decoration: underline;">{origen_receta}</a>' if origen_receta.startswith("http") else f'<span style="color: #AAAAAA;">{origen_receta}</span>'
 
     texto_voz_seguro = json.dumps(texto_voz)
 
-    documento_completo = f"""
+    return f"""
     <!DOCTYPE html>
     <html lang="es">
     <head>
         <meta charset="utf-8">
         <style>
             body {{ background-color: #141414; color: #ffffff; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 16px; margin: 0; }}
-            .container-hub {{ display: grid; grid-template-columns: 1fr; gap: 20px; max-width: 900px; margin: auto; }}
-            .widget-box {{ background-color: #181818; border: 1px solid #333333; border-radius: 8px; padding: 20px; text-align: center; }}
+            .container-hub {{ max-width: 900px; margin: auto; }}
+            .widget-box {{ background-color: #181818; border: 1px solid #333333; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 20px; }}
             .btn-control {{ background-color: #E50914; color: white; border: none; padding: 10px 22px; font-size: 13px; font-weight: 700; border-radius: 4px; cursor: pointer; margin: 4px; }}
             .btn-stop {{ background-color: #333333; color: #ffffff; }}
-            .btn-stop:hover {{ background-color: #444444; }}
         </style>
     </head>
     <body>
         <div class="container-hub">
             {html_header}
-
             <div class="widget-box">
                 <p style="color: #AAAAAA; font-size: 13px; margin: 0 0 12px 0; font-weight: 600;">🎙️ Asistente de Voz de Cocina</p>
                 <button id="btnVoz" class="btn-control" onclick="reproducir(this)">▶️ Escuchar Guía Completa</button>
                 <button class="btn-control btn-stop" onclick="detener()">⏹️ Silenciar</button>
             </div>
-
             {html_ing}
             {html_prev}
             {html_diagrama}
             {html_recom}
-            {html_footer}
+            <div style="text-align: center; color: #777777; font-size: 13px; margin-top: 35px; border-top: 1px solid #333333; padding-top: 20px;">
+                🎬 <b>FaceFoodChef.com</b> | Fuente: {origen_html}
+            </div>
         </div>
-
         <script>
             const textoVoz = {texto_voz_seguro};
             let currentUtterance = null;
 
             function reproducir(btn) {{
-                if (!('speechSynthesis' in window)) return alert("Tu navegador no soporta síntesis de voz.");
+                if (!('speechSynthesis' in window)) return alert("Sintetizador no soportado.");
                 window.speechSynthesis.cancel();
                 currentUtterance = new SpeechSynthesisUtterance(textoVoz);
-                currentUtterance.lang = 'es-ES'; 
+                currentUtterance.lang = 'es-ES';
                 currentUtterance.rate = 0.95;
                 btn.innerText = "🔊 Reproduciendo Guía...";
                 currentUtterance.onend = () => btn.innerText = "▶️ Escuchar Guía Completa";
@@ -375,8 +338,8 @@ def generar_html_dashboard_netflix(nombre_receta, origen_receta, ingredientes, p
             }}
 
             function detener() {{
-                if ('speechSynthesis' in window) {{ 
-                    window.speechSynthesis.cancel(); 
+                if ('speechSynthesis' in window) {{
+                    window.speechSynthesis.cancel();
                     const btn = document.getElementById('btnVoz');
                     if (btn) btn.innerText = "▶️ Escuchar Guía Completa";
                 }}
@@ -417,7 +380,6 @@ def generar_html_dashboard_netflix(nombre_receta, origen_receta, ingredientes, p
     </body>
     </html>
     """
-    return documento_completo
 
 # Procesamiento principal
 procesar_accion = False
@@ -505,7 +467,7 @@ if st.button("🎬 GENERAR DIAGRAMA DE COCINA"):
                 datos = json.loads(texto_respuesta.strip())
                 origen_final = url_origen_detectada if url_origen_detectada else datos.get("origen_receta", "Texto aportado por el usuario")
 
-                html_final = generar_html_dashboard_netflix(
+                html_final = generar_html_dashboard(
                     datos.get("nombre_receta", "Receta Culinaria Pro"),
                     origen_final,
                     datos.get("ingredientes", []),
