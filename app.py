@@ -1,75 +1,149 @@
 import os
 import streamlit as st
 import streamlit.components.v1 as components
-from openai import OpenAI
 
+# Configuración de página
 st.set_page_config(
-    page_title="Traductor de Recetas a Diagrama",
-    page_icon="🍳",
-    layout="wide"
+    page_title="FaceFoodChef — Recetas en Diagrama",
+    page_icon="🍿",
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-SYSTEM_PROMPT = """
-Eres un experto en gastronomía e ingeniería de procesos. Convierte la receta facilitada en un diagrama de flujo Mermaid.js (graph TD).
+# Estilos CSS con estética tipo Netflix
+NETFLIX_STYLE = """
+<style>
+    /* Fondo principal y textos */
+    .stApp {
+        background-color: #141414;
+        color: #E5E5E5;
+    }
+    
+    /* Encabezados y títulos */
+    h1, h2, h3, h4 {
+        color: #FFFFFF !important;
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        font-weight: 700;
+    }
+    
+    /* Marca principal */
+    .brand-title {
+        color: #E50914;
+        font-size: 2.8rem;
+        font-weight: 900;
+        letter-spacing: 1px;
+        margin-bottom: 0px;
+        text-transform: uppercase;
+    }
+    .brand-subtitle {
+        color: #B3B3B3;
+        font-size: 1.1rem;
+        margin-bottom: 25px;
+    }
 
-Reglas de generación:
-1. Usa la sintaxis 'graph TD'.
-2. Identifica ingredientes iniciales como nodos de entrada con corchetes [Ingrediente].
-3. Representa acciones o técnicas como procesos con flechas explicativas.
-4. Muestra explícitamente las tareas en paralelo (ej. hervir agua mientras se pican los vegetales).
-5. Agrega tiempos de cocción, temperaturas o reposos explícitos dentro de los nodos o conectores.
-6. Asigna clases de estilo CSS integradas en Mermaid para diferenciar visualmente los tipos de nodo:
-   - Ingredientes (fondo verde claro: fill:#e1f5fe,stroke:#0288d1)
-   - Acciones de corte/preparación (fondo azul claro: fill:#e8f5e9,stroke:#388e3c)
-   - Cocción/Calor (fondo naranja claro: fill:#fff3e0,stroke:#f57c00)
-   - Emplatado/Final (fondo amarillo claro: fill:#fffde7,stroke:#fbc02d)
-7. Devuelve ÚNICAMENTE el código Mermaid puro, sin bloques Markdown de código (```mermaid) ni texto aclaratorio.
+    /* Botones estilo Netflix */
+    div.stButton > button {
+        background-color: #E50914 !important;
+        color: #FFFFFF !important;
+        font-weight: bold !important;
+        border: none !important;
+        border-radius: 4px !important;
+        padding: 0.6rem 1.5rem !important;
+        transition: all 0.2s ease-in-out;
+    }
+    div.stButton > button:hover {
+        background-color: #F40612 !important;
+        transform: scale(1.02);
+    }
+
+    /* Cajas de texto y campos */
+    .stTextArea textarea, .stTextInput input {
+        background-color: #2F2F2F !important;
+        color: #FFFFFF !important;
+        border: 1px solid #404040 !important;
+        border-radius: 4px !important;
+    }
+    
+    /* Contenedor del Diagrama */
+    .diagram-container {
+        background-color: #181818;
+        border-radius: 8px;
+        padding: 20px;
+        border: 1px solid #333333;
+    }
+</style>
+"""
+st.markdown(NETFLIX_STYLE, unsafe_allow_html=True)
+
+# Manejo seguro de importación de OpenAI
+try:
+    from openai import OpenAI
+except ModuleNotFoundError:
+    st.error("⚠️ La librería `openai` no está instalada. Asegúrate de añadir `requirements.txt` a tu repositorio.")
+    st.stop()
+
+SYSTEM_PROMPT = """
+Eres un ingeniero de procesos gastronómicos. Tu único objetivo es transformar el texto de una receta en un diagrama de flujo en sintaxis Mermaid.js (graph TD) listo para ejecutar.
+
+Reglas de salida:
+1. Usa 'graph TD'.
+2. Representa ingredientes como nodos iniciales: [Ingrediente].
+3. Modela las técnicas de cocina como nodos centrales con tiempos explícitos (ej. "Hornear | 180°C - 20 min").
+4. Agrupa visualmente los procesos que se pueden realizar en paralelo.
+5. Usa las clases de estilo para personalizar los nodos con estética oscura:
+   classDef ing fill:#221f1f,stroke:#e50914,stroke-width:2px,color:#fff;
+   classDef proc fill:#333333,stroke:#ffffff,stroke-width:1px,color:#fff;
+   classDef final fill:#e50914,stroke:#ffffff,stroke-width:2px,color:#fff;
+6. Aplica class ID ing a ingredientes, class ID proc a procesos y class ID final al plato terminado.
+7. Devuelve ÚNICAMENTE el código Mermaid puro dentro de la respuesta, sin etiquetas Markdown ```mermaid.
 """
 
-def generar_mermaid(receta_texto: str, api_key: str) -> str:
-    """Procesa la receta con OpenAI y devuelve la sintaxis Mermaid."""
+def generar_diagrama_mermaid(receta: str, api_key: str) -> str:
+    """Consulta a OpenAI para obtener la representación en Mermaid."""
     client = OpenAI(api_key=api_key)
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": receta_texto}
+            {"role": "user", "content": receta}
         ],
         temperature=0.1
     )
     codigo = response.choices[0].message.content.strip()
-    
-    # Limpieza de etiquetas sobrantes si el modelo las incluye
     if codigo.startswith("```"):
-        lineas = codigo.split("\n")
-        codigo = "\n".join([l for l in lineas if not l.startswith("```")])
+        codigo = "\n".join([linea for linea in codigo.split("\n") if not linea.startswith("```")])
     return codigo.strip()
 
-def renderizar_mermaid(codigo_mermaid: str, height: int = 650):
-    """Renderiza el diagrama dentro de la interfaz usando CDN de Mermaid.js."""
+def renderizar_mermaid_dark(codigo_mermaid: str, altura: int = 600):
+    """Renderiza el diagrama utilizando el CDN de Mermaid con tema Dark."""
     html_code = f"""
     <!DOCTYPE html>
     <html>
     <head>
         <script type="module">
             import mermaid from '[https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs](https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs)';
-            mermaid.initialize({{ startOnLoad: true, theme: 'neutral' }});
+            mermaid.initialize({{ 
+                startOnLoad: true, 
+                theme: 'dark',
+                themeVariables: {{
+                    darkMode: true,
+                    background: '#181818',
+                    primaryColor: '#E50914',
+                    lineColor: '#FFFFFF'
+                }}
+            }});
         </script>
         <style>
             body {{
+                background-color: #181818;
                 margin: 0;
-                background-color: transparent;
                 display: flex;
                 justify-content: center;
                 align-items: center;
             }}
             .mermaid {{
-                background: #ffffff;
-                padding: 20px;
-                border-radius: 8px;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
                 width: 100%;
-                overflow-x: auto;
+                text-align: center;
             }}
         </style>
     </head>
@@ -80,60 +154,63 @@ def renderizar_mermaid(codigo_mermaid: str, height: int = 650):
     </body>
     </html>
     """
-    components.html(html_code, height=height, scrolling=True)
+    components.html(html_code, height=altura, scrolling=True)
+
+# Encabezado
+st.markdown('<div class="brand-title">FaceFoodChef</div>', unsafe_allow_html=True)
+st.markdown('<div class="brand-subtitle">Convierte cualquier receta en una secuencia gráfica de ejecución.</div>', unsafe_allow_html=True)
+
+# Barra Lateral (Configuración)
+with st.sidebar:
+    st.header("⚙️ Panel de Control")
+    api_key = st.text_input(
+        "OpenAI API Key",
+        type="password",
+        value=os.getenv("OPENAI_API_KEY", ""),
+        help="Introduce tu clave de API de OpenAI."
+    )
+    st.info("Asegúrate de configurar `OPENAI_API_KEY` en los Secrets de Streamlit Cloud para omitir este paso.")
 
 # Interfaz Principal
-st.title("🍳 Generador de Flujogramas de Cocina")
-st.caption("Estructura cualquier receta paso a paso con tiempos y tareas en paralelo.")
+col_left, col_right = st.columns([1, 1], gap="large")
 
-with st.sidebar:
-    st.header("⚙️ Configuración")
-    api_key_input = st.text_input(
-        "OpenAI API Key", 
-        type="password", 
-        value=os.getenv("OPENAI_API_KEY", ""),
-        help="Introduce tu clave de API de OpenAI para procesar el texto."
-    )
+with col_left:
+    st.subheader("📋 Receta Original")
+    receta_defecto = """Pizza Margherita Casera
 
-col1, col2 = st.columns([1, 1])
-
-with col1:
-    st.subheader("Receta de Entrada")
-    receta_ejemplo = """Espaguetis a la Carbonara Tradicional
-
-Ingredientes: 200g guanciale, 4 yemas de huevo, 100g queso Pecorino Romano, 320g espaguetis, pimienta negra molida.
+Ingredientes: 250g harina de fuerza, 150ml agua templada, 5g levadura fresca, 100g tomate triturado, 125g mozzarella fresca, hojas de albahaca fresca, aceite de oliva, sal.
 
 Pasos:
-1. Cortar el guanciale en tiras gruesas de 1 cm.
-2. En una sartén a fuego medio, dorar el guanciale durante 8 minutos hasta que quede crujiente. Retirar del fuego y reservar la grasa líquida sobrante.
-3. Poner a hervir 3 litros de agua con sal en una olla grande y cocinar la pasta durante 9 minutos (al dente).
-4. Mientras la pasta se cocina, batir las yemas de huevo con el queso Pecorino y abundante pimienta en un bol grande hasta formar una crema densa.
-5. Integrar 2 cucharadas de la grasa del guanciale a la mezcla de huevo y queso.
-6. Escurrir la pasta reservando media taza del agua caliente de cocción.
-7. Verter la pasta directamente en la sartén con el guanciale (fuera del fuego).
-8. Añadir la crema de huevo y queso sobre la pasta, junto con un chorrito del agua de cocción reservada. Mezclar de forma enérgica durante 1 minuto para formar una salsa cremosa sin cuajar el huevo.
-9. Servir inmediatamente con Pecorino extra por encima."""
+1. Disolver la levadura en el agua templada y dejar reposar 5 minutos.
+2. En un bol, mezclar la harina con la sal, añadir el agua con levadura y amasar durante 10 minutos hasta obtener una masa lisa.
+3. Dejar fermentar la masa tapada en un bol durante 2 horas hasta que doble su volumen.
+4. Mientras la masa fermenta, sazonar el tomate triturado con sal y un chorrito de aceite de oliva.
+5. Precalentar el horno a 250°C.
+6. Estirar la masa sobre papel de horno formando un disco.
+7. Extender la salsa de tomate sobre la base y añadir la mozzarella troceada.
+8. Hornear a 250°C durante 8-10 minutos hasta que los bordes estén dorados y el queso fundido.
+9. Decorar con albahaca fresca antes de servir."""
 
-    texto_receta = st.text_area("Pega o escribe la receta aquí:", value=receta_ejemplo, height=420)
-    boton_generar = st.button("🚀 Generar Diagrama de Bloques", use_container_width=True)
+    texto_receta = st.text_area("Ingresa o edita el texto de la receta:", value=receta_defecto, height=400)
+    procesar = st.button("🎬 GENERAR DIAGRAMA", use_container_width=True)
 
-with col2:
-    st.subheader("Diagrama de Procesos")
+with col_right:
+    st.subheader("📊 Flujograma de Cocina")
 
-    if boton_generar:
-        if not api_key_input:
-            st.error("⚠️ Es necesario proporcionar una API Key de OpenAI en la barra lateral.")
+    if procesar:
+        if not api_key:
+            st.error("❌ Falta la OpenAI API Key. Ingrésala en la barra lateral.")
         elif not texto_receta.strip():
-            st.warning("⚠️ Introduce el texto de una receta antes de continuar.")
+            st.warning("⚠️ Introduce una receta válida.")
         else:
-            with st.spinner("Analizando secuencia, tiempos e ingredientes..."):
+            with st.spinner("Analizando pasos, tiempos y tareas paralelas..."):
                 try:
-                    codigo_generado = generar_mermaid(texto_receta, api_key_input)
-                    st.session_state["codigo_mermaid"] = codigo_generado
-                except Exception as e:
-                    st.error(f"Error al generar el diagrama: {e}")
+                    codigo = generar_diagrama_mermaid(texto_receta, api_key)
+                    st.session_state["mermaid_code"] = codigo
+                except Exception as err:
+                    st.error(f"Error al procesar: {err}")
 
-    if "codigo_mermaid" in st.session_state:
-        renderizar_mermaid(st.session_state["codigo_mermaid"])
-        with st.expander("🛠️ Ver código de sintaxis Mermaid"):
-            st.code(st.session_state["codigo_mermaid"], language="mermaid")
+    if "mermaid_code" in st.session_state:
+        renderizar_mermaid_dark(st.session_state["mermaid_code"])
+        with st.expander("Ver sintaxis Mermaid generada"):
+            st.code(st.session_state["mermaid_code"], language="mermaid")
