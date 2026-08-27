@@ -118,7 +118,7 @@ else:
         help="Introduce la clave manualmente o configúrala en secretos."
     )
 
-# Selección de modelo actualizado con gemini-3.6-flash como opción principal
+# Selección de modelo actualizado
 modelo_seleccionado = st.sidebar.selectbox(
     "Modelo Gemini:",
     options=["gemini-3.6-flash", "gemini-1.5-flash"],
@@ -196,7 +196,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
     
     html_header = f"""
     <div style="background: linear-gradient(180deg, #36393F 0%, #2F3136 100%); border-radius: 8px; padding: 30px; text-align: center; margin-bottom: 24px; border-left: 6px solid #EF4444; border: 1px solid #4F545C; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-        <span style="font-size: 11px; font-weight: 800; color: #EF4444; text-transform: uppercase; letter-spacing: 2px; background: rgba(239, 68, 68, 0.15); padding: 5px 12px; border-radius: 4px;">🎬 Diagrama de Producción Culinaria</span>
+        <span style="font-size: 11px; font-weight: 800; color: #FFFFFF; text-transform: uppercase; letter-spacing: 2px; background: #EF4444; padding: 6px 14px; border-radius: 4px; display: inline-block;">🎬 Diagrama de Producción Culinaria</span>
         <h1 style="color: #ffffff; font-size: 30px; margin: 16px 0 8px 0; font-weight: 800;">{nombre_receta}</h1>
         <p style="color: #A0AEC0; font-size: 14px; margin: 0;">Flujo ejecutable paso a paso optimizado para alta visibilidad</p>
     </div>
@@ -243,9 +243,10 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
                 dur_rama = rama.get("duracion_minutos", 5)
                 timer_id = f"timer_par_{i}_{idx}"
                 
+                # Color sólido para etiquetas en paralelo
                 html_diagrama += f"""
                 <div style="flex: 1; min-width: 280px; background-color: #2B1519; border: 1px solid #7F1D1D; border-left: 6px solid #EF4444; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-                    <span style="font-size: 11px; font-weight: 800; color: #F87171; background: rgba(239,68,68,0.2); padding: 4px 10px; border-radius: 4px;">🔀 PARALELO: {nombre_rama}</span>
+                    <div style="margin-bottom: 12px;"><span style="font-size: 11px; font-weight: 800; color: #FFFFFF; background-color: #DC2626; padding: 5px 12px; border-radius: 4px; display: inline-block; text-transform: uppercase;">🔀 PARALELO: {nombre_rama}</span></div>
                     <div style="font-size: 15px; font-weight: 600; color: #ffffff; margin: 12px 0;">{accion}</div>
                     <div style="font-size: 12px; color: #A0AEC0; margin-bottom: 14px; background: rgba(0,0,0,0.3); padding: 6px 10px; border-radius: 4px;">🛠️ <b>Utensilios:</b> {utensilios_rama}</div>
                     <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.4); padding: 10px 14px; border-radius: 6px;">
@@ -260,14 +261,14 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
             bg = "#11241C" if es_convergencia else "#36393F"
             border_color = "#065F46" if es_convergencia else "#4F545C"
             left_border = "#34D399" if es_convergencia else "#EF4444"
-            badge_color = "#34D399" if es_convergencia else "#F87171"
-            badge_bg = "rgba(52,211,153,0.15)" if es_convergencia else "rgba(239,68,68,0.15)"
+            badge_bg = "#059669" if es_convergencia else "#EF4444"
             etiqueta = "CONVERGENCIA / UNIÓN" if es_convergencia else f"PASO {i+1}"
             timer_id = f"timer_seq_{i}"
 
+            # Color sólido para etiquetas secuenciales y de convergencia
             html_diagrama += f"""
             <div style="background-color: {bg}; border: 1px solid {border_color}; border-left: 6px solid {left_border}; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-                <span style="font-size: 11px; font-weight: 800; color: {badge_color}; background: {badge_bg}; padding: 4px 10px; border-radius: 4px;">{etiqueta}</span>
+                <div style="margin-bottom: 12px;"><span style="font-size: 11px; font-weight: 800; color: #FFFFFF; background-color: {badge_bg}; padding: 5px 12px; border-radius: 4px; display: inline-block; text-transform: uppercase;">{etiqueta}</span></div>
                 <div style="font-size: 15px; font-weight: 600; color: #ffffff; margin: 12px 0;">{bloque.get('accion')}</div>
                 <div style="font-size: 12px; color: #A0AEC0; margin-bottom: 14px; background: rgba(0,0,0,0.3); padding: 6px 10px; border-radius: 4px;">🛠️ <b>Utensilios:</b> {utensilios_str}</div>
                 <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.4); padding: 10px 14px; border-radius: 6px;">
