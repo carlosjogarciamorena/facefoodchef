@@ -121,7 +121,7 @@ else:
 # CORRECCIÓN: Selección de modelos existentes
 modelo_seleccionado = st.sidebar.selectbox(
     "Modelo Gemini:",
-    options=["gemini-2.0-flash", "gemini-1.5-flash"],
+    options=["gemini-3.6-flash"],
     index=0
 )
 
