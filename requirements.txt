@@ -1,8 +1,9 @@
 streamlit
+google-genai
+streamlit-mermaid
 beautifulsoup4
 requests
 recipe-scrapers
-google-genai
 python-dotenv
 python-docx
 python-pptx
