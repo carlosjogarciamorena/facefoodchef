@@ -118,10 +118,9 @@ else:
         help="Introduce la clave manualmente o configúrala en secretos."
     )
 
-# CORRECCIÓN: Selección de modelos existentes
 modelo_seleccionado = st.sidebar.selectbox(
     "Modelo Gemini:",
-    options=["gemini-3.6-flash"],
+    options=["gemini-3.6-flash", "gemini-2.5-flash", "gemini-1.5-flash"],
     index=0
 )
 
@@ -131,11 +130,12 @@ st.sidebar.markdown("""
 - **Estética:** Fondo Gris Metálico (`#2C2F33`)
 - **Métricas:** Decimales métricos (g, ml, ud)
 - **Temperatura:** Escala °C
-- **Estructura:** Bloques unificados con identificación por borde lateral
+- **Estructura:** Bloques unificados con temporizadores
+- **Maridaje:** Sugerencia automatizada (Vino/Cerveza)
 """)
 
 st.markdown("<h1 style='text-align: center; color: #EF4444; font-weight: 800; letter-spacing: -1px; margin-bottom: 0;'>FACEFOODCHEF <span style='font-size: 16px; background: #36393F; color: #fff; padding: 4px 10px; border-radius: 4px; vertical-align: middle; border: 1px solid #4F545C;'>PRO</span></h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #A0AEC0; font-size: 15px; margin-bottom: 30px;'>Generador interactivo de diagramas ejecutables de cocina</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #A0AEC0; font-size: 15px; margin-bottom: 30px;'>Generador interactivo de diagramas de cocina + Sommelier Virtual</p>", unsafe_allow_html=True)
 
 # Entrada de Datos
 st.subheader("📥 Entrada de Receta")
@@ -192,7 +192,7 @@ def extraer_texto_de_url(url):
         except Exception as e:
             raise Exception(f"Error al procesar la URL: {e}")
 
-def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_previos, bloques_proceso, recomendaciones, texto_voz):
+def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_previos, bloques_proceso, recomendaciones, texto_voz, maridaje):
     
     html_header = f"""
     <div style="background: linear-gradient(180deg, #36393F 0%, #2F3136 100%); border-radius: 8px; padding: 30px; text-align: center; margin-bottom: 24px; border-left: 6px solid #EF4444; border: 1px solid #4F545C; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
@@ -292,12 +292,23 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
 
     html_recom = """
     <div style="background-color: #36393F; border: 1px solid #4F545C; border-left: 6px solid #FBBF24; border-radius: 8px; padding: 22px; margin-top: 24px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-        <h3 style="color: #FBBF24; margin-top: 0; font-size: 18px; font-weight: 700;">💡 4. Recomendaciones del Chef & Maridaje</h3>
+        <h3 style="color: #FBBF24; margin-top: 0; font-size: 18px; font-weight: 700;">💡 4. Recomendaciones del Chef</h3>
         <ul style='margin: 12px 0 0 0; padding-left: 20px; color: #CBD5E0; font-size: 14px; line-height: 1.8;'>
     """
     for rec in recomendaciones:
         html_recom += f"<li>{rec}</li>"
     html_recom += "</ul></div>"
+
+    # NUEVO BLOQUE: MARIDAJE SOMMELIER INTEGRAD EN HTML
+    html_maridaje = f"""
+    <div style="background-color: #36393F; border: 1px solid #4F545C; border-left: 6px solid #9D4EDD; border-radius: 8px; padding: 22px; margin-top: 20px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+        <h3 style="color: #9D4EDD; margin-top: 0; font-size: 18px; font-weight: 700;">🍷 5. Sommelier Virtual (Maridaje)</h3>
+        <div style="margin-top: 12px; color: #CBD5E0; font-size: 15px; line-height: 1.6;">
+            <p style="margin-bottom: 12px;"><b>🍇 Sugerencia de Vino:</b><br>{maridaje.get('vino', 'Sin sugerencia disponible.')}</p>
+            <p><b>🍺 Sugerencia de Cerveza:</b><br>{maridaje.get('cerveza', 'Sin sugerencia disponible.')}</p>
+        </div>
+    </div>
+    """
 
     origen_html = f'<a href="{origen_receta}" target="_blank" style="color: #EF4444; text-decoration: underline;">{origen_receta}</a>' if origen_receta.startswith("http") else f'<span style="color: #A0AEC0;">{origen_receta}</span>'
 
@@ -328,6 +339,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
             {html_prev}
             {html_diagrama}
             {html_recom}
+            {html_maridaje}
             <div style="text-align: center; color: #718096; font-size: 13px; margin-top: 35px; border-top: 1px solid #4F545C; padding-top: 20px;">
                 🎬 <b>FaceFoodChef.com</b> | Fuente: {origen_html}
             </div>
@@ -409,7 +421,7 @@ elif receta_texto_input:
 elif archivo_multimodal:
     procesar_accion = True
 
-if st.button("🎬 GENERAR DIAGRAMA DE COCINA"):
+if st.button("🎬 GENERAR DIAGRAMA Y MARIDAJE"):
     if not API_KEY:
         st.error("⚠️ Es necesaria una API Key de Google Gemini para procesar la receta.")
     elif not procesar_accion:
@@ -419,17 +431,18 @@ if st.button("🎬 GENERAR DIAGRAMA DE COCINA"):
             client = genai.Client(api_key=API_KEY)
             
             prompt_sistema = f"""
-            Eres un experto en gastronomía y programación de flujos de trabajo en cocina. 
-            Transforma la siguiente receta en un esquema estructurado JSON para renderizar un diagrama de bloques técnico.
+            Eres un experto en gastronomía, sommelier y programador de flujos de trabajo en cocina. 
+            Transforma la siguiente receta en un esquema estructurado JSON para renderizar un diagrama de bloques técnico y recomendar un maridaje.
 
-            REGLAS STRICTAS:
+            REGLAS ESTRICTAS:
             1. Devuelve EXCLUSIVAMENTE un JSON válido sin marcas ni textos adicionales fuera del JSON.
-            2. 'ingredientes': Transforma todas las cantidades ambiguas (pizca, al gusto, cucharada) a unidades métricas exactas: gramos (g), mililitros (ml) o unidades (ud).
-            3. 'temperatura': Especifica siempre la temperatura en grados Celsius (°C).
-            4. 'origen_receta': Asigna exactamente ({url_origen_detectada if url_origen_detectada else 'Texto aportado por el usuario'}).
-            5. 'bloques_proceso': Asigna 'paralelo' para acciones simultáneas y 'convergencia' para las uniones de ingredientes o mezclas.
+            2. 'ingredientes': Unidades métricas exactas (g, ml, ud).
+            3. 'temperatura': Grados Celsius (°C).
+            4. 'origen_receta': Asigna exactamente ({url_origen_detectada if url_origen_detectada else 'Texto/Archivo aportado por el usuario'}).
+            5. 'bloques_proceso': Asigna 'paralelo' para acciones simultáneas y 'convergencia' para las uniones.
+            6. 'maridaje': Analiza el perfil organoléptico y sugiere un vino y una cerveza con justificación técnica.
 
-            JSON Schema:
+            JSON Schema esperado:
             {{
               "nombre_receta": "String",
               "origen_receta": "String",
@@ -447,18 +460,22 @@ if st.button("🎬 GENERAR DIAGRAMA DE COCINA"):
                 {{"tipo": "convergencia", "accion": "Unir mezclas", "utensilios": ["Sartén grande"], "tiempo": "2 min", "duracion_minutos": 2, "temperatura": "80°C"}}
               ],
               "recomendaciones": ["Tip 1"],
-              "texto_voz": "Texto descriptivo completo"
+              "texto_voz": "Texto descriptivo completo de la receta",
+              "maridaje": {{
+                "vino": "Recomendación de vino y justificación",
+                "cerveza": "Recomendación de cerveza y justificación"
+              }}
             }}
             """
 
             contents_payload = [prompt_sistema]
             if archivo_multimodal:
                 contents_payload.append(types.Part.from_bytes(data=archivo_multimodal, mime_type=tipo_multimodal))
-                contents_payload.append("Analiza el archivo adjunto para extraer la receta.")
+                contents_payload.append("Analiza el archivo adjunto para extraer la receta y el maridaje.")
             else:
                 contents_payload.append(f"Receta:\n{contenido_ia}")
 
-            with st.spinner(f"⚙️ Procesando diagrama con {modelo_seleccionado}..."):
+            with st.spinner(f"⚙️ Procesando diagrama y sommelier con {modelo_seleccionado}..."):
                 response = client.models.generate_content(
                     model=modelo_seleccionado,
                     contents=contents_payload,
@@ -470,7 +487,6 @@ if st.button("🎬 GENERAR DIAGRAMA DE COCINA"):
 
             if response:
                 texto_respuesta = response.text.strip()
-                # Limpieza mejorada de JSON
                 if texto_respuesta.startswith("```json"):
                     texto_respuesta = texto_respuesta[7:]
                 elif texto_respuesta.startswith("```"):
@@ -481,6 +497,7 @@ if st.button("🎬 GENERAR DIAGRAMA DE COCINA"):
                 datos = json.loads(texto_respuesta.strip())
                 origen_final = url_origen_detectada if url_origen_detectada else datos.get("origen_receta", "Texto aportado por el usuario")
 
+                # Llamada actualizada con el maridaje
                 html_final = generar_html_dashboard(
                     datos.get("nombre_receta", "Receta Culinaria Pro"),
                     origen_final,
@@ -488,18 +505,19 @@ if st.button("🎬 GENERAR DIAGRAMA DE COCINA"):
                     datos.get("pasos_previos", []),
                     datos.get("bloques_proceso", []),
                     datos.get("recomendaciones", []),
-                    datos.get("texto_voz", "")
+                    datos.get("texto_voz", ""),
+                    datos.get("maridaje", {}) # <-- Inyección del maridaje
                 )
                 
                 st.markdown("<br>", unsafe_allow_html=True)
                 st.download_button(
                     label="📥 Descargar Diagrama HTML Autónomo",
                     data=html_final,
-                    file_name="diagrama_facefoodchef.html",
+                    file_name="diagrama_facefoodchef_pro.html",
                     mime="text/html"
                 )
                 
-                components.html(html_final, height=1350, scrolling=True)
+                components.html(html_final, height=1450, scrolling=True)
                 
         except Exception as e:
             st.error(f"Error durante el procesamiento: {e}")
