@@ -118,10 +118,10 @@ else:
         help="Introduce la clave manualmente o configúrala en secretos."
     )
 
-# CORRECCIÓN: Selección de modelo actualizado a la versión recomendada (3.6-flash)
+# CORRECCIÓN: Selección de modelos existentes
 modelo_seleccionado = st.sidebar.selectbox(
     "Modelo Gemini:",
-    options=["gemini-3.6-flash", "gemini-1.5-flash"],
+    options=["gemini-2.0-flash", "gemini-1.5-flash"],
     index=0
 )
 
@@ -225,7 +225,6 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
         <h3 style="color: #ffffff; font-size: 20px; font-weight: 800; margin-bottom: 22px;">3. Diagrama de Ejecución</h3>
     """
     
-    # Constantes visuales unificadas
     BG_BLOQUE = "#36393F"
     BORDER_BLOQUE = "#4F545C"
     
@@ -247,7 +246,6 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
                 dur_rama = rama.get("duracion_minutos", 5)
                 timer_id = f"timer_par_{i}_{idx}"
                 
-                # Bloque en paralelo: mismo fondo oscuro, franja izquierda Naranja
                 color_franja_paralelo = "#F59E0B"
                 
                 html_diagrama += f"""
@@ -264,7 +262,6 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
             html_diagrama += '</div>'
         else:
             es_convergencia = tipo == "convergencia"
-            # Asignación de franjas de color manteniendo el fondo unificado #36393F
             left_border = "#10B981" if es_convergencia else "#EF4444"
             badge_bg = "#10B981" if es_convergencia else "#EF4444"
             etiqueta = "CONVERGENCIA / UNIÓN" if es_convergencia else f"PASO {i+1}"
@@ -282,7 +279,6 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
             </div>
             """
             
-        # Conectores técnicos
         if i < len(bloques_proceso) - 1:
             html_diagrama += """
             <div style="display: flex; flex-direction: column; align-items: center; margin: 6px 0 20px 0;">
@@ -474,8 +470,11 @@ if st.button("🎬 GENERAR DIAGRAMA DE COCINA"):
 
             if response:
                 texto_respuesta = response.text.strip()
+                # Limpieza mejorada de JSON
                 if texto_respuesta.startswith("```json"):
                     texto_respuesta = texto_respuesta[7:]
+                elif texto_respuesta.startswith("```"):
+                    texto_respuesta = texto_respuesta[3:]
                 if texto_respuesta.endswith("```"):
                     texto_respuesta = texto_respuesta[:-3]
                 
