@@ -11,7 +11,7 @@ from recipe_scrapers import scrape_me
 from google import genai
 from google.genai import types
 
-# Cargar variables de entorno locales (.env)
+# Cargar variables de entorno locales (.env) si existen
 try:
     from dotenv import load_dotenv
     load_dotenv()
@@ -98,23 +98,17 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Autenticación API Key
-API_KEY = None
-if "GEMINI_API_KEY" in st.secrets:
-    API_KEY = st.secrets["GEMINI_API_KEY"]
-elif os.getenv("GEMINI_API_KEY"):
-    API_KEY = os.getenv("GEMINI_API_KEY")
-
+# -----------------------------------------------------------------------------
+# AUTENTICACIÓN: Se elimina la vinculación automática desde secrets/env.
+# Ahora SIEMPRE pedirá la API Key manualmente.
+# -----------------------------------------------------------------------------
 st.sidebar.header("⚙️ Panel de Control")
 
-if API_KEY:
-    st.sidebar.success("🔑 API Key vinculada.")
-else:
-    API_KEY = st.sidebar.text_input(
-        "API Key de Google Gemini:", 
-        type="password", 
-        help="Introduce la clave manualmente o configúrala en secretos."
-    )
+API_KEY = st.sidebar.text_input(
+    "API Key de Google Gemini:", 
+    type="password", 
+    help="Introduce tu clave API de Google Gemini para procesar las recetas."
+)
 
 modelo_seleccionado = st.sidebar.selectbox(
     "Modelo Gemini:",
@@ -147,7 +141,7 @@ st.subheader("📥 Entrada de Receta")
 entrada_principal = st.text_area(
     "Pega la URL de la receta o el texto completo:", 
     height=130, 
-    placeholder="[https://www.ejemplo.com/receta](https://www.ejemplo.com/receta)\nO pega directamente el texto de la receta aquí..."
+    placeholder="https://www.ejemplo.com/receta\nO pega directamente el texto de la receta aquí..."
 )
 
 with st.expander("📁 Adjuntar archivo (PDF, Word, PPT o Imagen)"):
@@ -432,13 +426,13 @@ elif archivo_multimodal:
     procesar_accion = True
 
 if st.button("🎬 GENERAR DIAGRAMA Y MARIDAJE"):
-    if not API_KEY:
-        st.error("⚠️ Es necesaria una API Key de Google Gemini para procesar la receta.")
+    if not API_KEY or not API_KEY.strip():
+        st.error("⚠️ Es necesaria una API Key de Google Gemini para procesar la receta. Por favor, ingrésala en la barra lateral.")
     elif not procesar_accion:
         st.warning("⚠️ Introduce una URL, un texto o adjunta un archivo antes de continuar.")
     else:
         try:
-            client = genai.Client(api_key=API_KEY)
+            client = genai.Client(api_key=API_KEY.strip())
             
             prompt_sistema = f"""
             Eres un experto en gastronomía, sommelier y programador de flujos de trabajo en cocina. 
@@ -515,7 +509,6 @@ if st.button("🎬 GENERAR DIAGRAMA Y MARIDAJE"):
                     comensales_objetivo
                 )
                 
-                # Cálculo de altura dinámica estimada para la vista previa
                 num_bloques = len(datos.get("bloques_proceso", []))
                 altura_calculada = max(1000, 700 + (num_bloques * 180))
 
@@ -530,6 +523,6 @@ if st.button("🎬 GENERAR DIAGRAMA Y MARIDAJE"):
                 components.html(html_final, height=altura_calculada, scrolling=True)
                 
         except json.JSONDecodeError:
-            st.error("Error al procesar la respuesta del modelo: El formato JSON recibido no es válido. Inténtalo de nuevo.")
+            st.error("Error al procesar la respuesta del modelo: El formato JSON recibido no es válido. Revisa tu clave API o intentalo nuevamente.")
         except Exception as e:
             st.error(f"Error durante el procesamiento: {e}")
