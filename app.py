@@ -1,7 +1,6 @@
 import os
 import json
 import re
-import time
 from io import BytesIO
 import requests
 from bs4 import BeautifulSoup
@@ -38,7 +37,7 @@ st.set_page_config(
     page_icon="🍳"
 )
 
-# ESTILOS VISUALES - FONDO GRIS METÁLICO PROFESIONAL
+# ESTILOS VISUALES
 st.markdown("""
     <style>
     .stApp, .block-container, [data-testid="stSidebar"] {
@@ -88,27 +87,22 @@ st.markdown("""
         background-color: #EF4444 !important;
         color: #ffffff !important;
     }
-
-    .streamlit-expanderHeader {
-        background-color: #36393F !important;
-        color: #ffffff !important;
-        border-radius: 6px !important;
-        border: 1px solid #4F545C !important;
-    }
     </style>
 """, unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
-# AUTENTICACIÓN: Se elimina la vinculación automática desde secrets/env.
-# Ahora SIEMPRE pedirá la API Key manualmente.
+# PANEL DE CONTROL Y AUTENTICACIÓN
 # -----------------------------------------------------------------------------
 st.sidebar.header("⚙️ Panel de Control")
 
-API_KEY = st.sidebar.text_input(
+api_key_input = st.sidebar.text_input(
     "API Key de Google Gemini:", 
     type="password", 
-    help="Introduce tu clave API de Google Gemini para procesar las recetas."
+    help="Introduce tu clave API obtenida en Google AI Studio (empieza habitualmente por AIzaSy...)"
 )
+
+# Limpieza estricta de espacios invisibles
+API_KEY = api_key_input.strip() if api_key_input else ""
 
 modelo_seleccionado = st.sidebar.selectbox(
     "Modelo Gemini:",
@@ -251,7 +245,6 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
                 utensilios_rama = ", ".join(rama.get("utensilios", []))
                 dur_rama = rama.get("duracion_minutos", 5)
                 timer_id = f"timer_par_{i}_{idx}"
-                
                 color_franja_paralelo = "#F59E0B"
                 
                 html_diagrama += f"""
@@ -426,13 +419,14 @@ elif archivo_multimodal:
     procesar_accion = True
 
 if st.button("🎬 GENERAR DIAGRAMA Y MARIDAJE"):
-    if not API_KEY or not API_KEY.strip():
-        st.error("⚠️ Es necesaria una API Key de Google Gemini para procesar la receta. Por favor, ingrésala en la barra lateral.")
+    if not API_KEY:
+        st.error("⚠️ La API Key no puede estar vacía. Por favor, ingrésala en la barra lateral.")
     elif not procesar_accion:
         st.warning("⚠️ Introduce una URL, un texto o adjunta un archivo antes de continuar.")
     else:
         try:
-            client = genai.Client(api_key=API_KEY.strip())
+            # Creación del cliente pasando la clave explícitamente y limpia
+            client = genai.Client(api_key=API_KEY)
             
             prompt_sistema = f"""
             Eres un experto en gastronomía, sommelier y programador de flujos de trabajo en cocina. 
@@ -523,6 +517,10 @@ if st.button("🎬 GENERAR DIAGRAMA Y MARIDAJE"):
                 components.html(html_final, height=altura_calculada, scrolling=True)
                 
         except json.JSONDecodeError:
-            st.error("Error al procesar la respuesta del modelo: El formato JSON recibido no es válido. Revisa tu clave API o intentalo nuevamente.")
+            st.error("Error al decodificar la respuesta JSON. Inténtalo de nuevo.")
         except Exception as e:
-            st.error(f"Error durante el procesamiento: {e}")
+            error_msg = str(e)
+            if "401" in error_msg or "UNAUTHENTICATED" in error_msg:
+                st.error("❌ **Error 401 de Autenticación:** La API Key introducida es inválida o no corresponde a Google AI Studio. Genera una nueva clave en https://aistudio.google.com/ e inténtalo de nuevo.")
+            else:
+                st.error(f"Error durante el procesamiento: {e}")
