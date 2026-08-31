@@ -1,8 +1,7 @@
 streamlit
-streamlit-components
-recipe-scrapers
-beautifulsoup4
 requests
+beautifulsoup4
+recipe-scrapers
 python-docx
 python-pptx
 google-generativeai
