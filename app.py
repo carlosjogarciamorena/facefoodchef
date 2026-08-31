@@ -1,97 +1,109 @@
 import os
 import json
-import time
 import logging
-from typing import Dict, Any, Optional
 import requests
+from typing import Optional
+import streamlit as st
 from google import genai
 from google.genai import types
 
 # =============================================================================
-# 1. CONFIGURACIÓN Y LOGGING
+# CONFIGURACIÓN Y LOGGING DEL SISTEMA
 # =============================================================================
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-    handlers=[logging.StreamHandler(), logging.FileHandler("facefoodchef_engine.log")]
+    handlers=[logging.StreamHandler()]
 )
-logger = logging.getLogger("FaceFoodChef-Core")
+logger = logging.getLogger("FaceFoodChef-Production")
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "TU_GEMINI_API_KEY")
-WP_SITE_URL = os.getenv("WP_SITE_URL", "https://facefoodchef.com").rstrip("/")
-WP_USER = os.getenv("WP_USER", "usuario_wp")
-WP_APP_PASSWORD = os.getenv("WP_APP_PASSWORD", "password_aplicacion")
+# Carga de credenciales con tolerancia a fallos (Soporta Streamlit Cloud y Local)
+try:
+    GEMINI_API_KEY = st.secrets.get("GEMINI_API_KEY", os.getenv("GEMINI_API_KEY", ""))
+    WP_SITE_URL = st.secrets.get("WP_SITE_URL", os.getenv("WP_SITE_URL", "https://facefoodchef.com")).rstrip("/")
+    WP_USER = st.secrets.get("WP_USER", os.getenv("WP_USER", ""))
+    WP_APP_PASSWORD = st.secrets.get("WP_APP_PASSWORD", os.getenv("WP_APP_PASSWORD", ""))
+except Exception:
+    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+    WP_SITE_URL = os.getenv("WP_SITE_URL", "https://facefoodchef.com").rstrip("/")
+    WP_USER = os.getenv("WP_USER", "")
+    WP_APP_PASSWORD = os.getenv("WP_APP_PASSWORD", "")
 
 
 # =============================================================================
-# 2. VALIDACIÓN DEL ESQUEMA (DAG)
+# VALIDADOR DE ESQUEMA CULINARIO (DAG)
 # =============================================================================
 class ValidadorEsquemaCulinario:
-    """Garantiza que la IA devuelva una estructura de datos perfecta antes de renderizar."""
-    
     @staticmethod
     def validar(datos: dict) -> bool:
         campos_requeridos = ["titulo_plato", "tiempo_total_estimado", "bloques_proceso"]
         if not all(campo in datos for campo in campos_requeridos):
-            logger.error("Faltan campos maestros en el JSON.")
+            logger.error("Faltan campos maestros obligatorios en el JSON generado.")
             return False
         
         for idx, bloque in enumerate(datos.get("bloques_proceso", [])):
             if "tipo" not in bloque:
+                logger.error(f"El bloque #{idx} no especifica el tipo.")
                 return False
-            
             if bloque["tipo"] == "paralelo" and "ramas" not in bloque:
-                logger.error(f"El bloque paralelo {idx} no contiene 'ramas'.")
+                logger.error(f"El bloque paralelo #{idx} carece de la clave 'ramas'.")
                 return False
-                
         return True
 
 
 # =============================================================================
-# 3. MOTOR DE ANÁLISIS SEMÁNTICO (IA)
+# MOTOR DE ANÁLISIS SEMÁNTICO (GEMINI AI)
 # =============================================================================
 class MotorAnalisisSemantico:
-    """Conecta con Gemini para traducir lenguaje natural a un Grafo Acíclico Dirigido."""
-    
     def __init__(self, api_key: str):
+        if not api_key:
+            raise ValueError("La API Key de Gemini no está configurada.")
         self.client = genai.Client(api_key=api_key)
         self.modelo = "gemini-2.5-flash"
         
     def procesar_texto(self, texto_receta: str) -> dict:
         prompt = """
-        Eres un arquitecto de software y chef. Convierte esta receta en un diagrama de bloques JSON.
-        Clasifica estrictamente en:
-        1. "secuencial": Tareas lineales.
-        2. "paralelo": Tareas simultáneas agrupadas en "ramas".
-        3. "convergencia": Unión de tareas previas.
+        Eres un arquitecto de software y chef experto en optimización de procesos culinarios concurrentes.
+        Analiza la receta de cocina suministrada y descompón sus pasos en un diagrama de bloques estructurado en formato JSON estricto.
+        
+        Clasifica las acciones obligatoriamente en uno de estos tres tipos de bloques:
+        1. "secuencial": Pasos lineales independientes o preparativos previos.
+        2. "paralelo": Tareas independientes que ocurren al mismo tiempo en diferentes estaciones. Deben agruparse dentro de una clave llamada "ramas" (array de objetos con "estacion", "accion" y "duracion_minutos").
+        3. "convergencia": El punto donde las ramas paralelas o los pasos previos se unifican en el plato final.
 
-        Estructura requerida:
+        Devuelve UNICAMENTE un objeto JSON válido que cumpla estrictamente con esta estructura:
         {
-          "titulo_plato": "Nombre",
-          "tiempo_total_estimado": "Minutos",
+          "titulo_plato": "Nombre completo de la receta",
+          "tiempo_total_estimado": "X minutos",
           "bloques_proceso": [
             {
               "id": 1,
               "tipo": "secuencial",
-              "accion": "Paso 1",
+              "accion": "Descripción clara del paso",
               "duracion_minutos": 5
             },
             {
               "id": 2,
               "tipo": "paralelo",
               "ramas": [
-                {"estacion": "A", "accion": "Hervir", "duracion_minutos": 10},
-                {"estacion": "B", "accion": "Sofreír", "duracion_minutos": 8}
+                {"estacion": "Estación A", "accion": "Acción paralela 1", "duracion_minutos": 10},
+                {"estacion": "Estación B", "accion": "Acción paralela 2", "duracion_minutos": 8}
               ]
+            },
+            {
+              "id": 3,
+              "tipo": "convergencia",
+              "accion": "Unión final y emplatado",
+              "duracion_minutos": 2
             }
           ]
         }
-        Devuelve SOLO el JSON.
+        No incluyas etiquetas Markdown (como ```json) ni texto adicional de cortesía. Devuelve exclusivamente la cadena JSON pura.
         """
-        logger.info("Solicitando análisis de la receta a Gemini...")
+        
         response = self.client.models.generate_content(
             model=self.modelo,
-            contents=[prompt, f"Receta:\n{texto_receta}"],
+            contents=[prompt, f"Receta a procesar:\n{texto_receta}"],
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
                 temperature=0.1
@@ -101,22 +113,15 @@ class MotorAnalisisSemantico:
 
 
 # =============================================================================
-# 4. MOTOR DE RENDERIZADO FRONTEND (NUEVA FUNCIONALIDAD CLAVE)
+# MOTOR DE RENDERIZADO FRONTEND (HTML / CSS / JS INTERACTIVO)
 # =============================================================================
 class MotorRenderizadoFrontend:
-    """
-    Toma el JSON estructurado y genera el código HTML, CSS y JS necesario para 
-    crear la interfaz interactiva con temporizadores en WordPress.
-    """
-    
     def generar_html_interactivo(self, datos: dict) -> str:
-        logger.info("Generando interfaz de usuario (HTML/JS) a partir del diagrama...")
-        
         html_salida = f"""
-        <div class="facefoodchef-diagrama" style="font-family: sans-serif; max-width: 800px; margin: auto;">
-            <h2 style="text-align: center; color: #ff3b3b;">{datos.get('titulo_plato')}</h2>
-            <p style="text-align: center; font-weight: bold;">⏱️ Tiempo Total: {datos.get('tiempo_total_estimado')}</p>
-            <hr style="border: 1px solid #eee; margin-bottom: 20px;">
+        <div class="facefoodchef-diagrama" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: auto; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+            <h2 style="text-align: center; color: #ff3b3b; margin-bottom: 5px;">{datos.get('titulo_plato')}</h2>
+            <p style="text-align: center; font-weight: bold; color: #666; font-size: 1.1em;">⏱️ Tiempo Total Estimado: {datos.get('tiempo_total_estimado')}</p>
+            <hr style="border: 0; height: 1px; background: #eee; margin: 20px 0;">
         """
         
         for bloque in datos.get("bloques_proceso", []):
@@ -124,19 +129,16 @@ class MotorRenderizadoFrontend:
             b_id = bloque.get("id")
             
             if tipo in ["secuencial", "convergencia"]:
-                html_salida += self._renderizar_bloque_lineal(bloque, b_id, tipo)
+                html_salida += self._renderizar_lineal(bloque, b_id, tipo)
             elif tipo == "paralelo":
-                html_salida += self._renderizar_bloque_paralelo(bloque, b_id)
+                html_salida += self._renderizar_paralelo(bloque, b_id)
                 
         html_salida += "</div>"
-        
-        # Añadir CSS y JS inyectado
         html_salida += self._obtener_css()
         html_salida += self._obtener_js()
-        
         return html_salida
 
-    def _renderizar_bloque_lineal(self, bloque: dict, b_id: int, tipo: str) -> str:
+    def _renderizar_lineal(self, bloque: dict, b_id: int, tipo: str) -> str:
         accion = bloque.get("accion", "")
         minutos = bloque.get("duracion_minutos", 0)
         clase = "ffc-secuencial" if tipo == "secuencial" else "ffc-convergencia"
@@ -144,23 +146,21 @@ class MotorRenderizadoFrontend:
         
         return f"""
         <div class="ffc-bloque {clase}" id="bloque-{b_id}">
-            <div class="ffc-header">{icono} {tipo.capitalize()}</div>
+            <div class="ffc-header">{icono} {tipo.upper()}</div>
             <div class="ffc-body">{accion}</div>
             <div class="ffc-footer">
-                <button class="ffc-timer-btn" onclick="startTimer(this, {minutos})">⏱️ Iniciar {minutos} min</button>
+                <button class="ffc-timer-btn" onclick="startTimer(this, {minutos})">⏱️ Iniciar Temporizador ({minutos} min)</button>
             </div>
         </div>
         """
 
-    def _renderizar_bloque_paralelo(self, bloque: dict, b_id: int) -> str:
+    def _renderizar_paralelo(self, bloque: dict, b_id: int) -> str:
         ramas = bloque.get("ramas", [])
         html = f'<div class="ffc-bloque-paralelo" id="bloque-{b_id}">'
-        
         for idx, rama in enumerate(ramas):
             estacion = rama.get("estacion", f"Estación {idx+1}")
             accion = rama.get("accion", "")
             minutos = rama.get("duracion_minutos", 0)
-            
             html += f"""
             <div class="ffc-rama">
                 <div class="ffc-header">🔀 {estacion}</div>
@@ -176,17 +176,17 @@ class MotorRenderizadoFrontend:
     def _obtener_css(self) -> str:
         return """
         <style>
-            .ffc-bloque { background: #f9f9f9; border-left: 4px solid #333; margin-bottom: 20px; padding: 15px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-            .ffc-convergencia { border-left-color: #ff3b3b; background: #fff5f5; }
+            .ffc-bloque { background: #fcfcfc; border-left: 4px solid #333; margin-bottom: 20px; padding: 18px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.03); }
+            .ffc-convergencia { border-left-color: #ff3b3b; background: #fff8f8; }
             .ffc-bloque-paralelo { display: flex; gap: 15px; margin-bottom: 20px; }
-            .ffc-rama { flex: 1; background: #f0f7ff; border-left: 4px solid #0066cc; padding: 15px; border-radius: 4px; }
-            .ffc-header { font-weight: bold; font-size: 0.9em; text-transform: uppercase; margin-bottom: 10px; color: #555; }
-            .ffc-body { font-size: 1.1em; margin-bottom: 15px; line-height: 1.5; }
-            .ffc-timer-btn { background: #222; color: #fff; border: none; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-weight: bold; width: 100%; transition: background 0.3s; }
+            .ffc-rama { flex: 1; background: #f0f6ff; border-left: 4px solid #0066cc; padding: 15px; border-radius: 6px; }
+            .ffc-header { font-weight: bold; font-size: 0.85em; text-transform: uppercase; margin-bottom: 8px; color: #555; letter-spacing: 0.5px; }
+            .ffc-body { font-size: 1.05em; margin-bottom: 12px; line-height: 1.5; color: #222; }
+            .ffc-timer-btn { background: #1a1a1a; color: #fff; border: none; padding: 8px 14px; border-radius: 20px; cursor: pointer; font-weight: 600; width: 100%; transition: background 0.2s; font-size: 0.9em; }
             .ffc-timer-btn:hover { background: #ff3b3b; }
-            .ffc-timer-btn.active { background: #ff3b3b; animation: pulse 1.5s infinite; }
-            @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 1; } }
-            @media (max-width: 600px) { .ffc-bloque-paralelo { flex-direction: column; } }
+            .ffc-timer-btn.active { background: #ff3b3b; animation: ffc-pulse 1.5s infinite; }
+            @keyframes ffc-pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+            @media (max-width: 650px) { .ffc-bloque-paralelo { flex-direction: column; } }
         </style>
         """
 
@@ -197,7 +197,6 @@ class MotorRenderizadoFrontend:
                 if(btn.classList.contains('active')) return;
                 btn.classList.add('active');
                 let seconds = minutes * 60;
-                let originalText = btn.innerHTML;
                 
                 let interval = setInterval(() => {
                     seconds--;
@@ -207,12 +206,13 @@ class MotorRenderizadoFrontend:
                     
                     if (seconds <= 0) {
                         clearInterval(interval);
-                        btn.innerHTML = "✅ ¡Listo!";
+                        btn.innerHTML = "✅ ¡Paso completado!";
                         btn.classList.remove('active');
                         btn.style.background = "#28a745";
-                        // Aquí se puede integrar la API de voz Web Speech
-                        let speech = new SpeechSynthesisUtterance("Atención, tiempo finalizado para este paso.");
-                        window.speechSynthesis.speak(speech);
+                        try {
+                            let speech = new SpeechSynthesisUtterance("Atención cocinero, temporizador finalizado.");
+                            window.speechSynthesis.speak(speech);
+                        } catch(e) {}
                     }
                 }, 1000);
             }
@@ -221,88 +221,110 @@ class MotorRenderizadoFrontend:
 
 
 # =============================================================================
-# 5. GESTOR DE WORDPRESS (REST API)
+# GESTOR DE SINCRONIZACIÓN WORDPRESS (REST API)
 # =============================================================================
 class GestorSincronizacionWordPress:
-    """Publica la receta: el HTML visual al contenido y el JSON técnico a ACF."""
-    
     def __init__(self, site_url: str, user: str, app_password: str):
         self.endpoint = f"{site_url}/wp-json/wp/v2/receta_pro"
         self.auth = (user, app_password)
         self.headers = {"Content-Type": "application/json"}
 
-    def publicar(self, titulo: str, html_content: str, json_meta: dict) -> Optional[int]:
-        logger.info(f"Subiendo '{titulo}' a WordPress...")
-        
+    def publicar(self, titulo: str, html_content: str, json_meta: dict) -> Optional[dict]:
+        if not self.auth[0] or not self.auth[1]:
+            logger.warning("Credenciales de WordPress no provistas. Omitiendo sincronización remota.")
+            return None
+            
         payload = {
             "title": titulo,
-            "content": html_content,      # El usuario ve el diagrama interactivo
+            "content": html_content,
             "status": "publish",
             "meta": {
-                "json_diagrama": json.dumps(json_meta, ensure_ascii=False) # El JSON queda guardado para el futuro
+                "json_diagrama": json.dumps(json_meta, ensure_ascii=False)
             }
         }
 
         try:
-            response = requests.post(self.endpoint, json=payload, headers=self.headers, auth=self.auth, timeout=20)
+            response = requests.post(self.endpoint, json=payload, headers=self.headers, auth=self.auth, timeout=15)
             if response.status_code == 201:
-                data = response.json()
-                logger.info(f"Éxito -> ID: {data.get('id')} | URL: {data.get('link')}")
-                return data.get('id')
+                return response.json()
             else:
-                logger.error(f"Error WP ({response.status_code}): {response.text}")
+                logger.error(f"WordPress rechazó la petición ({response.status_code}): {response.text}")
                 return None
         except Exception as e:
-            logger.error(f"Fallo de conexión: {e}")
+            logger.error(f"Excepción de red al conectar con WordPress: {e}")
             return None
 
 
 # =============================================================================
-# 6. ORQUESTADOR PRINCIPAL
+# INTERFAZ GRÁFICA DE USUARIO (STREAMLIT)
 # =============================================================================
-class FaceFoodChefEngine:
-    """Controlador que unifica todas las piezas del sistema."""
+def main():
+    st.set_page_config(page_title="FaceFoodChef - Generador de Diagramas Culinarios", page_icon="🍳", layout="centered")
     
-    def __init__(self):
-        self.ia = MotorAnalisisSemantico(GEMINI_API_KEY)
-        self.validador = ValidadorEsquemaCulinario()
-        self.frontend = MotorRenderizadoFrontend()
-        self.wp = GestorSincronizacionWordPress(WP_SITE_URL, WP_USER, WP_APP_PASSWORD)
+    st.title("🍳 FaceFoodChef: Generador de Diagramas Culinarios")
+    st.markdown("Transforma cualquier texto de receta en un **grafo de bloques interactivo** optimizado para ejecución simultánea en cocina y sincronízalo automáticamente con tu plataforma WordPress.")
 
-    def ejecutar(self, receta_texto: str):
-        logger.info("=== INICIANDO PIPELINE DE CONVERSIÓN ===")
-        
-        # 1. Obtener JSON de Gemini
-        diagrama_json = self.ia.procesar_texto(receta_texto)
-        
-        # 2. Validar estructura
-        if not self.validador.validar(diagrama_json):
-            logger.critical("Proceso abortado por esquema JSON inválido.")
+    # Verificación preventiva de la clave de IA
+    if not GEMINI_API_KEY:
+        st.error("🚨 **Falta configurar la API Key de Gemini.** Añádela en los Secrets de Streamlit o como variable de entorno local (`GEMINI_API_KEY`).")
+        st.stop()
+
+    receta_por_defecto = """Spaghetti alla Carbonara Tradicional:
+Ingredientes: 200g espaguetis, 100g panceta curada, 2 yemas de huevo, queso pecorino rallado.
+Paso 1: Poner a calentar una olla con abundante agua y sal hasta que hierva, después cocer los espaguetis durante 10 minutos exactos.
+Paso 2: En paralelo, cortar la panceta en tiras finas y dorarla a fuego medio en una sartén durante 8 minutos sin aceite añadido.
+Paso 3: En un bol, batir enérgicamente las yemas de huevo con el queso pecorino.
+Paso 4: Convergencia: Escurrir la pasta, incorporarla a la sartén junto a la panceta fuera del fuego y verter la mezcla de huevo y queso para emulsionar de inmediato."""
+
+    texto_ingresado = st.text_area("✍️ Introduce o pega el texto de tu receta:", value=receta_por_defecto, height=200)
+
+    col1, col2 = st.columns([1, 1])
+    sincronizar_wp = col1.checkbox("Sincronizar automáticamente con WordPress", value=False)
+    
+    if st.button("🚀 Generar Diagrama de Bloques", type="primary", use_container_width=True):
+        if not texto_ingresado.strip():
+            st.warning("Por favor, introduce un texto de receta válido.")
             return
-            
-        # 3. Generar HTML/JS interactivo
-        html_interactivo = self.frontend.generar_html_interactivo(diagrama_json)
-        
-        # 4. Publicar en WordPress
-        titulo = diagrama_json.get("titulo_plato", "Receta sin Título")
-        self.wp.publicar(titulo, html_interactivo, diagrama_json)
-        
-        logger.info("=== PIPELINE COMPLETADO ===")
 
+        with st.spinner("Analizando la semántica culinaria con Gemini y generando el grafo..."):
+            try:
+                analizador = MotorAnalisisSemantico(GEMINI_API_KEY)
+                validador = ValidadorEsquemaCulinario()
+                renderizador = MotorRenderizadoFrontend()
+                
+                # 1. Extracción de IA
+                datos_grafo = analizador.procesar_texto(texto_ingresado)
+                
+                # 2. Validación de esquema
+                if not validador.validar(datos_grafo):
+                    st.error("El modelo devolvió una estructura no válida. Inténtalo de nuevo.")
+                    return
+                
+                # 3. Renderizado de interfaz visual HTML/JS
+                html_resultado = renderizador.generar_html_interactivo(datos_grafo)
+                
+                st.success("¡Diagrama de bloques generado con éxito!")
+                
+                # 4. Sincronización opcional con WordPress
+                if sincronizar_wp:
+                    with st.spinner("Publicando entrada y metadatos en WordPress..."):
+                        wp_manager = GestorSincronizacionWordPress(WP_SITE_URL, WP_USER, WP_APP_PASSWORD)
+                        res_wp = wp_manager.publicar(datos_grafo.get("titulo_plato", "Receta Automatizada"), html_resultado, datos_grafo)
+                        if res_wp:
+                            st.success(f"✅ ¡Publicado en WordPress con éxito! ID: {res_wp.get('id')} | [Ver enlace]({res_wp.get('link')})")
+                        else:
+                            st.warning("⚠️ El diagrama se generó localmente, pero falló la sincronización con WordPress. Revisa las credenciales en los ajustes.")
 
-# =============================================================================
-# 7. EJECUCIÓN (CLI)
-# =============================================================================
+                st.markdown("---")
+                st.subheader("👀 Vista Previa del Diagrama Interactivo:")
+                st.components.v1.html(html_resultado, height=550, scrolling=True)
+                
+                with st.expander("Ver código JSON técnico subyacente (DAG):"):
+                    st.json(datos_grafo)
+
+            except Exception as e:
+                st.error(f"Se ha producido un error crítico durante el pipeline de ejecución: {e}")
+                logger.error(f"Excepción en la app: {e}")
+
 if __name__ == "__main__":
-    receta_entrada = """
-    Tacos Al Pastor Express:
-    Ingredientes: 500g carne de cerdo, tortillas, piña, cebolla, cilantro, marinada (achiote, vinagre).
-    Primero, preparar la marinada mezclando el achiote con vinagre y especias, embadurnar la carne y dejar reposar 15 minutos.
-    Pasado el tiempo, arrancar dos procesos a la vez:
-    Por un lado, en una plancha bien caliente, asar la carne junto con la piña cortada en cubos durante 10 minutos.
-    Por otro lado, en un comal o sartén pequeña, calentar las tortillas de maíz durante 3 minutos y picar finamente la cebolla y el cilantro.
-    Finalmente, montar los tacos colocando la carne y piña sobre las tortillas calientes, espolvorear la cebolla y cilantro fresco, y servir inmediatamente.
-    """
-    
-    motor = FaceFoodChefEngine()
-    motor.ejecutar(receta_entrada)
+    main()
