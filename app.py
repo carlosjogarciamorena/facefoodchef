@@ -1,5 +1,6 @@
 import os
 import json
+import base64
 import pandas as pd
 import streamlit as st
 from PIL import Image
@@ -105,7 +106,7 @@ PROMPT_INGENIERIA_PROCESOS = (
     '    "dificultad_tecnica": "Baja / Media / Alta / Profesional",\n'
     '    "herramientas_clave": ["utensilio 1", "utensilio 2"]\n'
     '  },\n'
-    '  "diagrama_mermaid": "Código Mermaid.js comenzando por graph TD...",\n'
+    '  "diagrama_mermaid": "graph TD\\n A([Ingrediente]) --> B[Acción]",\n'
     '  "secuencia_pasos": [\n'
     '    {\n'
     '      "id": "A1",\n'
@@ -119,7 +120,7 @@ PROMPT_INGENIERIA_PROCESOS = (
     '    }\n'
     '  ],\n'
     '  "recomendaciones_chef": {\n'
-    '    "tecnicas_clave": ["Consejo técnico 1", "Consejo técnico 2"],\n'
+    '    "tecnicas_clave": ["Consejo técnico 1"],\n'
     '    "puntos_criticos_alerta": ["Punto crítico a evitar 1"],\n'
     '    "maridaje_sugerido": "Vino o bebida ideal",\n'
     '    "sustituciones_posibles": ["Sustitución para alergias o falta de stock"]\n'
@@ -130,55 +131,50 @@ PROMPT_INGENIERIA_PROCESOS = (
     "2. Identifica ingredientes de entrada con nodos redondeados: `id([Ingrediente / Cantidad])`.\n"
     "3. Identifica acciones de procesado con rectángulos: `id[Acción / Tiempo / Fuego]`.\n"
     "4. Identifica puntos de decisión/control con rombos: `id{¿Verificación?}`.\n"
-    "5. Muestra claramente la convergencia de ingredientes en recipientes o mezclas con flechas conectadas.\n"
-    "6. Aplica estilos con `classDef` para dar colores a ingredientes, acciones, fuego y resultado final.\n"
+    "5. NO USES caracteres especiales conflictivos (comillas dobles, paréntesis sueltos) dentro del texto de los nodos.\n"
 )
 
 # ==========================================
-# 3. EXTRACCIÓN DE TEXTO Y MULTIFORMATO
+# 3. HELPER PARA RENDERIZAR MERMAID VIA URL
+# ==========================================
+def obtener_url_mermaid(codigo_mermaid: str) -> str:
+    """Convierte el código Mermaid a una URL de imagen usando mermaid.ink."""
+    # Limpiar posibles delimitadores markdown del string
+    codigo_limpio = codigo_mermaid.replace("```mermaid", "").replace("```", "").strip()
+    graphbytes = codigo_limpio.encode('utf-8')
+    base64_bytes = base64.b64encode(graphbytes)
+    base64_string = base64_bytes.decode('utf-8')
+    return f"https://mermaid.ink/img/{base64_string}"
+
+# ==========================================
+# 4. EXTRACCIÓN DE TEXTO Y MULTIFORMATO
 # ==========================================
 def extraer_contenido_archivo(uploaded_file):
-    """Lee el archivo subido y extrae texto o devuelve la imagen para visión multimodal."""
     nombre = uploaded_file.name.lower()
-    
     if nombre.endswith(".txt"):
         return uploaded_file.read().decode("utf-8"), "texto"
-        
     elif nombre.endswith(".pdf"):
         reader = PdfReader(uploaded_file)
         texto_completo = ""
         for page in reader.pages:
             texto_completo += page.extract_text() + "\n"
         return texto_completo, "texto"
-        
     elif nombre.endswith(".docx"):
         doc = docx.Document(uploaded_file)
-        texto_completo = "\n".join([p.text for p in doc.paragraphs])
-        return texto_completo, "texto"
-        
+        return "\n".join([p.text for p in doc.paragraphs]), "texto"
     elif nombre.endswith((".png", ".jpg", ".jpeg", ".webp")):
-        imagen = Image.open(uploaded_file)
-        return imagen, "imagen"
-        
+        return Image.open(uploaded_file), "imagen"
     else:
-        raise ValueError("Formato de archivo no soportado.")
+        raise ValueError("Formato no soportado.")
 
 # ==========================================
-# 4. FUNCIÓN CON SDK OFFICIAL (google-genai)
+# 5. CONEXIÓN API CON SDK OFFICIAL
 # ==========================================
 def procesar_receta_con_gemini(api_key: str, modelo_nombre: str, contenido, tipo_contenido: str, nivel_detalle: str):
-    """Llama a la API oficial de Google GenAI enviando datos de texto o imagen."""
     client = genai.Client(api_key=api_key)
+    instrucciones = f"{PROMPT_INGENIERIA_PROCESOS}\n\nNIVEL DE DETALLE REQUERIDO: {nivel_detalle}"
     
-    instrucciones = (
-        PROMPT_INGENIERIA_PROCESOS +
-        "\n\nNIVEL DE DETALLE REQUERIDO: " + nivel_detalle
-    )
-    
-    if tipo_contenido == "texto":
-        contents = [instrucciones, "\n\nRECETA A ANALIZAR:\n" + contenido]
-    else:
-        contents = [instrucciones, "\n\nRECETA EN IMAGEN:", contenido]
+    contents = [instrucciones, "\n\nRECETA A ANALIZAR:\n" + contenido] if tipo_contenido == "texto" else [instrucciones, "\n\nRECETA EN IMAGEN:", contenido]
     
     response = client.models.generate_content(
         model=modelo_nombre,
@@ -188,11 +184,10 @@ def procesar_receta_con_gemini(api_key: str, modelo_nombre: str, contenido, tipo
             temperature=0.2,
         ),
     )
-    
     return json.loads(response.text)
 
 # ==========================================
-# 5. BARRA LATERAL
+# 6. BARRA LATERAL
 # ==========================================
 st.sidebar.markdown("## 👨‍🍳 Control de Procesos")
 
@@ -204,7 +199,6 @@ api_key_input = st.sidebar.text_input(
     help="Consigue tu API Key en https://aistudio.google.com/"
 )
 
-# Modelos actualizados
 modelo_opcion = st.sidebar.selectbox(
     "Motor de Inteligencia Artificial:",
     options=["gemini-3.6-flash", "gemini-3.6-pro"],
@@ -212,7 +206,6 @@ modelo_opcion = st.sidebar.selectbox(
 )
 
 st.sidebar.divider()
-st.sidebar.subheader("⚙️ Parámetros de Diagramación")
 nivel_detalle = st.sidebar.select_slider(
     "Nivel de desglose técnico:",
     options=["Básico (Consolidado)", "Estándar (Recomendado)", "Avanzado (Micro-pasos)"],
@@ -220,12 +213,12 @@ nivel_detalle = st.sidebar.select_slider(
 )
 
 # ==========================================
-# 6. INTERFAZ PRINCIPAL
+# 7. INTERFAZ PRINCIPAL
 # ==========================================
 st.markdown("""
 <div class="main-header">
     <h1>👨‍🍳 Kitchen Process Studio</h1>
-    <p>Traductor Inteligente de Recetas a Diagramas de Flujo Ejecutables (PDF, DOCX, TXT e Imágenes)</p>
+    <p>Traductor Inteligente de Recetas a Diagramas de Flujo Ejecutables</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -233,32 +226,24 @@ col_izq, col_der = st.columns([1, 1.15])
 
 with col_izq:
     st.subheader("📝 Entrada de Receta")
-    
     opcion_entrada = st.radio("Selecciona origen de la receta:", ["Subir Archivo (PDF, DOCX, TXT, PNG/JPG)", "Pegar Texto Manualmente"])
     
     receta_contenido = None
     tipo_entrada = "texto"
     
     if opcion_entrada == "Subir Archivo (PDF, DOCX, TXT, PNG/JPG)":
-        archivo_subido = st.file_uploader(
-            "Arrastra o selecciona el archivo de la receta:",
-            type=["txt", "pdf", "docx", "png", "jpg", "jpeg", "webp"]
-        )
+        archivo_subido = st.file_uploader("Arrastra el archivo de la receta:", type=["txt", "pdf", "docx", "png", "jpg", "jpeg", "webp"])
         if archivo_subido is not None:
             try:
                 receta_contenido, tipo_entrada = extraer_contenido_archivo(archivo_subido)
                 if tipo_entrada == "texto":
-                    st.text_area("Texto extraído del documento:", value=receta_contenido, height=250, disabled=True)
+                    st.text_area("Texto extraído:", value=receta_contenido, height=200, disabled=True)
                 else:
-                    st.image(receta_contenido, caption="Vista previa de la receta subida", use_column_width=True)
+                    st.image(receta_contenido, caption="Vista previa de la receta", use_column_width=True)
             except Exception as e:
-                st.error(f"Error al leer el archivo: {e}")
+                st.error(f"Error al leer archivo: {e}")
     else:
-        receta_input = st.text_area(
-            "Pega aquí el texto de la receta:",
-            height=350,
-            placeholder="Ejemplo:\n- 2 huevos\n- 100g de harina...\n\nPasos:\n1. Mezclar ingredientes..."
-        )
+        receta_input = st.text_area("Pega aquí la receta:", height=300, placeholder="Ejemplo:\n- 2 patatas\n- 4 huevos\n\nPasos:\n1. Cortar y freír las patatas...")
         if receta_input.strip():
             receta_contenido = receta_input
             tipo_entrada = "texto"
@@ -270,11 +255,11 @@ with col_der:
     
     if btn_procesar:
         if not api_key_input:
-            st.error("⚠️ Introduce tu API Key de Gemini en el panel lateral para continuar.")
+            st.error("⚠️ Introduce tu API Key de Gemini en el panel lateral.")
         elif receta_contenido is None:
-            st.warning("⚠️ Debes proporcionar una receta (subiendo un archivo o pegando texto).")
+            st.warning("⚠️ Proporciona una receta antes de procesar.")
         else:
-            with st.spinner("👨‍🍳 Procesando el documento, estructurando los pasos y generando el diagrama..."):
+            with st.spinner("👨‍🍳 Generando el diagrama ejecutable..."):
                 try:
                     resultado = procesar_receta_con_gemini(
                         api_key=api_key_input,
@@ -284,15 +269,14 @@ with col_der:
                         nivel_detalle=nivel_detalle
                     )
                     st.session_state["resultado_gastronomico"] = resultado
-                    st.success("¡Diagrama y análisis técnico generados con éxito!")
+                    st.success("¡Diagrama renderizado con éxito!")
                 except Exception as e:
-                    st.error(f"❌ Error durante el análisis del proceso: {str(e)}")
+                    st.error(f"❌ Error durante el proceso: {str(e)}")
 
     if "resultado_gastronomico" in st.session_state:
         res = st.session_state["resultado_gastronomico"]
-        
-        # Tarjetas métricas
         resumen = res.get("resumen_ejecutivo", {})
+        
         m1, m2, m3 = st.columns(3)
         with m1:
             st.markdown(f'<div class="metric-container"><div class="metric-value">{resumen.get("tiempo_total_estimado_min", "N/A")} min</div><div class="metric-label">Tiempo Total</div></div>', unsafe_allow_html=True)
@@ -303,59 +287,43 @@ with col_der:
             
         st.markdown("<br>", unsafe_allow_html=True)
         
-        # Pestañas principales
         tab_diagrama, tab_secuencia, tab_chef, tab_codigo = st.tabs([
-            "📌 Diagrama de Flujo (Mermaid)",
-            "📋 Secuencia de Pasos Paralelos",
-            "👨‍🍳 Recomendaciones del Chef",
+            "📌 Diagrama de Flujo Visual",
+            "📋 Secuencia de Pasos",
+            "👨‍🍳 Consejos del Chef",
             "💻 Código Fuente Mermaid"
         ])
         
         with tab_diagrama:
-            st.markdown("#### Grafo Dirigido Ejecutable de la Receta")
-            st.caption("💡 Sigue las flechas. Los bloques paralelos muestran tareas simultáneas.")
-            
+            st.markdown("#### Grafo Dirigido Ejecutable")
             codigo_mermaid = res.get("diagrama_mermaid", "")
-            try:
-                st.mermaid(codigo_mermaid)
-            except Exception:
-                st.code(codigo_mermaid, language="mermaid")
+            
+            if codigo_mermaid:
+                url_imagen_mermaid = obtener_url_mermaid(codigo_mermaid)
+                st.image(url_imagen_mermaid, use_column_width=True, caption="Diagrama de flujo generado")
+            else:
+                st.warning("No se pudo generar el código del diagrama.")
                 
         with tab_secuencia:
-            st.markdown("#### Desglose Técnico de Tareas")
             pasos = res.get("secuencia_pasos", [])
             if pasos:
-                df_pasos = pd.DataFrame(pasos)
-                st.dataframe(df_pasos, use_container_width=True)
-            else:
-                st.info("No se devolvió desglose en formato tabla.")
+                st.dataframe(pd.DataFrame(pasos), use_container_width=True)
                 
         with tab_chef:
             chef_data = res.get("recomendaciones_chef", {})
-            
             st.markdown('<div class="chef-recommendation-card">', unsafe_allow_html=True)
-            st.markdown("### 🎓 Técnicas Clave de Cocina")
+            st.markdown("### 🎓 Técnicas Clave")
             for tec in chef_data.get("tecnicas_clave", []):
                 st.markdown(f"* **{tec}**")
             st.markdown('</div>', unsafe_allow_html=True)
             
             st.markdown('<div class="critical-alert-card">', unsafe_allow_html=True)
-            st.markdown("### ⚠️ Alertas y Puntos Críticos")
+            st.markdown("### ⚠️ Puntos Críticos")
             for alt in chef_data.get("puntos_criticos_alerta", []):
                 st.markdown(f"* {alt}")
             st.markdown('</div>', unsafe_allow_html=True)
             
-            col_m1, col_m2 = st.columns(2)
-            with col_m1:
-                st.markdown("#### 🍷 Maridaje Recomendado")
-                st.write(chef_data.get("maridaje_sugerido", "No especificado"))
-            with col_m2:
-                st.markdown("#### 🔄 Sustituciones de Ingredientes")
-                for sust in chef_data.get("sustituciones_posibles", []):
-                    st.markdown(f"* {sust}")
-                    
         with tab_codigo:
-            st.markdown("#### Código Fuente .mmd")
             st.code(res.get("diagrama_mermaid", ""), language="mermaid")
             st.download_button(
                 label="📥 Descargar Diagrama (.mmd)",
