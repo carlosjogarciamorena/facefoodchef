@@ -1,11 +1,9 @@
 import os
-import re
 import json
-import time
-import base64
 import pandas as pd
 import streamlit as st
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from dotenv import load_dotenv
 
 # Cargar variables de entorno
@@ -21,7 +19,6 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Estilos CSS avanzados para interfaz técnica gastronómica
 CSS_CUSTOM = """
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
@@ -86,27 +83,12 @@ CSS_CUSTOM = """
         color: #64748B;
         font-weight: 600;
     }
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 10px;
-    }
-    .stTabs [data-baseweb="tab"] {
-        height: 50px;
-        white-space: pre-wrap;
-        background-color: #F1F5F9;
-        border-radius: 8px 8px 0px 0px;
-        padding: 10px 16px;
-        font-weight: 600;
-    }
-    .stTabs [aria-selected="true"] {
-        background-color: #2563EB !important;
-        color: white !important;
-    }
 </style>
 """
 st.markdown(CSS_CUSTOM, unsafe_allow_html=True)
 
 # ==========================================
-# 2. PROMPTS DE INGENIERÍA Y GASTRONOMÍA
+# 2. PROMPT DE INGENIERÍA Y COCINA
 # ==========================================
 PROMPT_INGENIERIA_PROCESOS = (
     "Eres un Chef Ejecutivo Michelin e Ingeniero de Procesos Industriales Gastronómicos.\n"
@@ -146,11 +128,11 @@ PROMPT_INGENIERIA_PROCESOS = (
     "3. Identifica acciones de procesado con rectángulos: `id[Acción / Tiempo / Fuego]`.\n"
     "4. Identifica puntos de decisión/control con rombos: `id{¿Verificación?}`.\n"
     "5. Muestra claramente la convergencia de ingredientes en recipientes o mezclas con flechas conectadas.\n"
-    "6. Aplica estilos con `classDef` para dar colores a ingredientes (verde), acciones (naranja), fuego (rojo) y resultado final (azul).\n"
+    "6. Aplica estilos con `classDef` para dar colores a ingredientes, acciones, fuego y resultado final.\n"
 )
 
 # ==========================================
-# 3. BASE DE DATOS DE RECETAS DE EJEMPLO
+# 3. RECETAS DE EJEMPLO
 # ==========================================
 RECETAS_COMPLETAS = {
     "Tortilla de Patatas Tradicional": """Tortilla de patatas con cebolla tradicional:
@@ -166,47 +148,40 @@ Elaboración:
 1. Pelar y cortar las patatas en láminas finas y de grosor uniforme. Cortar la cebolla en juliana fina.
 2. Calentar el aceite de oliva virgen extra en una sartén antiadherente profunda. Pochar la patata junto con la cebolla a fuego medio-bajo durante 18 minutos hasta que estén confitadas y tiernas, sin llegar a dorarse en exceso.
 3. Mientras se fríen las patatas y la cebolla, cascar los 6 huevos en un bol grande y batirlos enérgicamente con una pizca de sal.
-4. Una vez tiernas las patatas y cebollas, escurrir bien el aceite usando un colador (reservar el aceite para otros usos).
-5. Incorporar las patatas y la cebolla bien calientes al bol con el huevo batido. Mezclar bien con una lengua de cocina y dejar reposar la mezcla durante 5 minutos para que la patata absorba el huevo.
-6. Calentar una sartén antiadherente a fuego medio con 1 cucharada del aceite reservado. Verter la mezcla y cuajar durante 2 minutos moviendo suavemente los bordes.
-7. Colocar un plato llano sobre la sartén, dar la vuelta a la tortilla con un movimiento rápido y firme.
-8. Deslizar la tortilla de nuevo en la sartén y cuajar por el segundo lado durante 1.5 minutos a fuego medio para mantener el centro jugoso. Servir inmediatamente.""",
+4. Una vez tiernas las patatas y cebollas, escurrir bien el aceite usando un colador.
+5. Incorporar las patatas y la cebolla bien calientes al bol con el huevo batido. Mezclar bien y dejar reposar la mezcla durante 5 minutos.
+6. Calentar una sartén antiadherente a fuego medio con 1 cucharada de aceite. Verter la mezcla y cuajar durante 2 minutos.
+7. Dar la vuelta a la tortilla con un plato y cuajar por el segundo lado durante 1.5 minutos.""",
 
-    "Risotto de Setas y Mantequilla de Trufa": """Risotto cremoso de setas silvestres y parmesano:
+    "Risotto de Setas": """Risotto cremoso de setas silvestres y parmesano:
 
 Ingredientes:
-- 320g de arroz Carnaroli o Arborio
-- 300g de setas variadas (Boletus, champiñones, portobello)
+- 320g de arroz Carnaroli
+- 300g de setas variadas
 - 1 litro de caldo de verduras
 - 1 chalota grande
 - 100ml de vino blanco seco
-- 50g de mantequilla fría en cubos
-- 70g de queso Parmesano Reggiano recién rallado
-- Aceite de oliva virgen extra, sal y pimienta negra.
+- 50g de mantequilla fría
+- 70g de queso Parmesano Reggiano
+- Aceite de oliva, sal y pimienta.
 
 Elaboración:
-1. Calentar el caldo de verduras en un cazo a fuego lento y mantenerlo hirviendo suavemente durante todo el proceso.
-2. Limpiar las setas con un paño húmedo y trocearlas en dados de 1.5cm. Picar la chalota en brunoise muy fina.
-3. En una cazuela baja y ancha, calentar 2 cucharadas de aceite de oliva y sofreír la chalota picada durante 3 minutos hasta que esté transparente.
-4. Saltear las setas en la cazuela a fuego vivo durante 5 minutos hasta que pierdan el agua y se doren. Retirar una tercera parte de las setas para la decoración final.
-5. Añadir los 320g de arroz a la cazuela y nacarar (tostar el grano) durante 2 minutos removiendo constantemente hasta que los bordes del arroz transparenten.
-6. Verter los 100ml de vino blanco seco y remover a fuego fuerte durante 2 minutos hasta que el alcohol se evapore por completo.
-7. Comenzar a añadir el caldo hirviendo cazo a cazo, removiendo continuamente con cuchara de madera a fuego medio. Esperar a que el arroz absorba casi todo el líquido antes de añadir el siguiente cazo. Este proceso dura entre 16 y 18 minutos.
-8. Retirar la cazuela del fuego cuando el arroz esté al dente. Añadir los 50g de mantequilla fría y los 70g de Parmesano rallado.
-9. Mantecar enérgicamente haciendo movimientos circulares durante 2 minutos para emulsionar los almidones con la grasa.
-10. Tapar la cazuela, dejar reposar 2 minutos y servir decorando con las setas salteadas reservadas."""
+1. Calentar el caldo de verduras en un cazo a fuego lento y mantenerlo hirviendo suavemente.
+2. Limpiar las setas y trocearlas. Picar la chalota en brunoise fina.
+3. En una cazuela, calentar aceite de oliva y sofreír la chalota durante 3 minutos.
+4. Saltear las setas en la cazuela a fuego vivo durante 5 minutos. Reservar un tercio.
+5. Añadir el arroz a la cazuela y nacarar durante 2 minutos.
+6. Verter el vino blanco y remover a fuego fuerte durante 2 minutos hasta evaporar alcohol.
+7. Añadir el caldo hirviendo cazo a cazo, removiendo continuamente durante 18 minutos.
+8. Retirar del fuego, añadir la mantequilla fría y el Parmesano. Mantecar enérgicamente 2 minutos. Servir."""
 }
 
 # ==========================================
-# 4. FUNCIONES DE PROCESAMIENTO E IA
+# 4. FUNCIÓN CON SDK ACTUALIZADO (google-genai)
 # ==========================================
 def procesar_receta_con_gemini(api_key: str, modelo_nombre: str, receta_texto: str, nivel_detalle: str):
-    """Envía la receta a la API de Gemini y devuelve la estructura analizada."""
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel(
-        model_name=modelo_nombre,
-        generation_config={"temperature": 0.2, "top_p": 0.95}
-    )
+    """Utiliza el cliente oficial google-genai con Structured Outputs (JSON)."""
+    client = genai.Client(api_key=api_key)
     
     prompt_completo = (
         PROMPT_INGENIERIA_PROCESOS +
@@ -214,21 +189,19 @@ def procesar_receta_con_gemini(api_key: str, modelo_nombre: str, receta_texto: s
         "\n\nRECETA A ANALIZAR:\n" + receta_texto
     )
     
-    response = model.generate_content(prompt_completo)
+    response = client.models.generate_content(
+        model=modelo_nombre,
+        contents=prompt_completo,
+        config=types.GenerateContentConfig(
+            response_mime_type="application/json",
+            temperature=0.2,
+        ),
+    )
     
-    raw_text = response.text.strip()
-    if raw_text.startswith("```json"):
-        raw_text = raw_text[7:]
-    if raw_text.startswith("```"):
-        raw_text = raw_text[3:]
-    if raw_text.endswith("```"):
-        raw_text = raw_text[:-3]
-        
-    raw_text = raw_text.strip()
-    return json.loads(raw_text)
+    return json.loads(response.text)
 
 # ==========================================
-# 5. BARRA LATERAL (CENTRO DE CONTROL)
+# 5. BARRA LATERAL
 # ==========================================
 st.sidebar.markdown("## 👨‍🍳 Control de Procesos")
 
@@ -237,12 +210,13 @@ api_key_input = st.sidebar.text_input(
     "API Key de Google Gemini:",
     value=api_key_env,
     type="password",
-    help="Consigue tu API Key gratuita en [https://aistudio.google.com/](https://aistudio.google.com/)"
+    help="Consigue tu API Key en https://aistudio.google.com/"
 )
 
+# Modelos oficiales actualizados de la serie Gemini 2.5 y 1.5
 modelo_opcion = st.sidebar.selectbox(
     "Motor de Inteligencia Artificial:",
-    options=["gemini-1.5-flash", "gemini-1.5-pro"],
+    options=["gemini-2.5-flash", "gemini-2.5-pro", "gemini-1.5-flash", "gemini-1.5-pro"],
     index=0
 )
 
@@ -254,13 +228,8 @@ nivel_detalle = st.sidebar.select_slider(
     value="Estándar (Recomendado)"
 )
 
-st.sidebar.info(
-    "💡 **Nota sobre tareas paralelas:** El algoritmo analiza qué tareas se pueden realizar durante "
-    "tiempos de espera (ej. picar mientras se fríe) para optimizar la secuencia en cocina."
-)
-
 # ==========================================
-# 6. CABECERA PRINCIPAL
+# 6. INTERFAZ PRINCIPAL
 # ==========================================
 st.markdown("""
 <div class="main-header">
@@ -269,9 +238,6 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ==========================================
-# 7. ESTRUCTURA DE LA INTERFAZ PRINCIPAL
-# ==========================================
 col_izq, col_der = st.columns([1, 1.15])
 
 with col_izq:
@@ -290,7 +256,7 @@ with col_izq:
         "Pega aquí el texto completo de la receta (ingredientes + pasos):",
         value=texto_inicial,
         height=420,
-        placeholder="Ejemplo:\n- 2 huevos\n- 100g de harina...\n\nPasos:\n1. Mezclar ingredientes...\n2. Hornear a 180°C..."
+        placeholder="Ejemplo:\n- 2 huevos\n- 100g de harina...\n\nPasos:\n1. Mezclar ingredientes..."
     )
     
     btn_procesar = st.button("🚀 Generar Diagrama y Estudio de Cocina", use_container_width=True, type="primary")
@@ -304,7 +270,7 @@ with col_der:
         elif not receta_input.strip():
             st.warning("⚠️ Escribe o selecciona una receta antes de procesar.")
         else:
-            with st.spinner("👨‍🍳 La IA está compilando los pasos, identificando secuencias paralelas y generando el diagrama..."):
+            with st.spinner("👨‍🍳 Generando el diagrama y optimizando la secuencia de pasos..."):
                 try:
                     resultado = procesar_receta_con_gemini(
                         api_key=api_key_input,
@@ -332,7 +298,7 @@ with col_der:
             
         st.markdown("<br>", unsafe_allow_html=True)
         
-        # Pestañas principales de entrega de contenido
+        # Pestañas principales
         tab_diagrama, tab_secuencia, tab_chef, tab_codigo = st.tabs([
             "📌 Diagrama de Flujo (Mermaid)",
             "📋 Secuencia de Pasos Paralelos",
@@ -342,13 +308,12 @@ with col_der:
         
         with tab_diagrama:
             st.markdown("#### Grafo Dirigido Ejecutable de la Receta")
-            st.caption("💡 Sigue las flechas. Los bloques alineados en horizontal representan procesos paralelos.")
+            st.caption("💡 Sigue las flechas. Los bloques paralelos muestran tareas simultáneas.")
             
             codigo_mermaid = res.get("diagrama_mermaid", "")
             try:
                 st.mermaid(codigo_mermaid)
             except Exception:
-                st.warning("Renderizando como código estructurado debido a especificaciones del navegador:")
                 st.code(codigo_mermaid, language="mermaid")
                 
         with tab_secuencia:
