@@ -16,7 +16,7 @@ load_dotenv()
 # 1. CONFIGURACIÓN DE LA PÁGINA Y ESTILOS
 # ==========================================
 st.set_page_config(
-    page_title="Traductor Multiformato de Recetas a Diagrama de Bloques",
+    page_title="Kitchen Process Studio & Diagram Translator",
     page_icon="👨‍🍳",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -91,7 +91,7 @@ CSS_CUSTOM = """
 st.markdown(CSS_CUSTOM, unsafe_allow_html=True)
 
 # ==========================================
-# 2. PROMPT DE INGENIERÍA Y COCINA
+# 2. PROMPT DE INGENIERÍA Y GASTRONOMÍA
 # ==========================================
 PROMPT_INGENIERIA_PROCESOS = (
     "Eres un Chef Ejecutivo e Ingeniero de Procesos Industriales Gastronómicos.\n"
@@ -135,10 +135,10 @@ PROMPT_INGENIERIA_PROCESOS = (
 )
 
 # ==========================================
-# 3. EXTRACCIÓN DE TEXTO SEGÚN FORMATO
+# 3. EXTRACCIÓN DE TEXTO Y MULTIFORMATO
 # ==========================================
 def extraer_contenido_archivo(uploaded_file):
-    """Lee el archivo subido y extrae texto o devuelve la imagen para multimodalidad."""
+    """Lee el archivo subido y extrae texto o devuelve la imagen para visión multimodal."""
     nombre = uploaded_file.name.lower()
     
     if nombre.endswith(".txt"):
@@ -178,7 +178,6 @@ def procesar_receta_con_gemini(api_key: str, modelo_nombre: str, contenido, tipo
     if tipo_contenido == "texto":
         contents = [instrucciones, "\n\nRECETA A ANALIZAR:\n" + contenido]
     else:
-        # Modo multimodal: pasa la imagen directamente al modelo Gemini 2.5/3.6
         contents = [instrucciones, "\n\nRECETA EN IMAGEN:", contenido]
     
     response = client.models.generate_content(
@@ -225,7 +224,7 @@ nivel_detalle = st.sidebar.select_slider(
 st.markdown("""
 <div class="main-header">
     <h1>👨‍🍳 Kitchen Process Studio</h1>
-    <p>Traductor Inteligente de Recetas a Diagramas de Flujo Ejecutables (Soporta TXT, PDF, DOCX e Imágenes)</p>
+    <p>Traductor Inteligente de Recetas a Diagramas de Flujo Ejecutables (PDF, DOCX, TXT e Imágenes)</p>
 </div>
 """, unsafe_allow_html=True)
 
