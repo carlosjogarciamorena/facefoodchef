@@ -1,4 +1,3 @@
-import os
 import json
 import time
 from io import BytesIO
@@ -7,8 +6,7 @@ from bs4 import BeautifulSoup
 import streamlit as st
 import streamlit.components.v1 as components
 from recipe_scrapers import scrape_me
-from google import genai
-from google.genai import types
+import google.generativeai as genai
 
 # Importaciones opcionales para lectura de documentos
 try:
@@ -100,13 +98,12 @@ API_KEY = st.sidebar.text_input(
 )
 
 if API_KEY:
-    # Forzar la clave en el entorno para evitar errores 401 de OAuth en el SDK moderno
-    os.environ["GEMINI_API_KEY"] = API_KEY.strip()
-    st.sidebar.success("✅ API Key configurada correctamente.")
+    st.sidebar.success("✅ API Key introducida.")
+    genai.configure(api_key=API_KEY.strip())
 
 modelo_seleccionado = st.sidebar.selectbox(
     "Modelo Gemini:",
-    options=["gemini-2.5-flash", "gemini-1.5-flash"],
+    options=["gemini-2.5-flash", "gemini-1.5-flash", "gemini-2.0-flash-exp"],
     index=0
 )
 
@@ -145,7 +142,6 @@ with st.expander("📁 Adjuntar archivo (PDF, Word, PPT o Imagen)"):
 receta_texto_input = ""
 url_origen_detectada = ""
 archivo_multimodal = None
-tipo_multimodal = None
 
 if entrada_principal.strip():
     texto_limpio = entrada_principal.strip()
@@ -165,8 +161,7 @@ if archivo_subido:
         prs = Presentation(BytesIO(archivo_subido.getvalue()))
         receta_texto_input = "\n".join([p.text for slide in prs.slides for shape in slide.shapes if shape.has_text_frame for p in shape.text_frame.paragraphs])
     elif ext in ["pdf", "jpg", "jpeg", "png", "webp"]:
-        archivo_multimodal = archivo_subido.getvalue()
-        tipo_multimodal = "application/pdf" if ext == "pdf" else archivo_subido.type
+        archivo_multimodal = archivo_subido
 
 def extraer_texto_de_url(url):
     url = url.strip()
@@ -420,9 +415,6 @@ if st.button("🎬 GENERAR DIAGRAMA Y MARIDAJE"):
         st.warning("⚠️ Introduce una URL, un texto o adjunta un archivo antes de continuar.")
     else:
         try:
-            # Inicialización estándar del cliente moderno leyendo automáticamente os.environ["GEMINI_API_KEY"]
-            client = genai.Client()
-            
             prompt_sistema = f"""
             Eres un experto en gastronomía, sommelier y programador de flujos de trabajo en cocina. 
             Transforma la siguiente receta en un esquema estructurado JSON para renderizar un diagrama de bloques técnico y recomendar un maridaje.
@@ -466,20 +458,19 @@ if st.button("🎬 GENERAR DIAGRAMA Y MARIDAJE"):
 
             contents_payload = [prompt_sistema]
             if archivo_multimodal:
-                contents_payload.append(types.Part.from_bytes(data=archivo_multimodal, mime_type=tipo_multimodal))
+                bytes_data = archivo_multimodal.getvalue()
+                mime_t = archivo_multimodal.type
+                contents_payload.append({'mime_type': mime_t, 'data': bytes_data})
                 contents_payload.append(f"Analiza el archivo adjunto para extraer la receta, escalar a {comensales_objetivo} comensales y recomendar maridaje.")
             else:
                 contents_payload.append(f"Receta:\n{contenido_ia}")
 
             with st.spinner(f"⚙️ Procesando diagrama (Escalando a {comensales_objetivo} pax) y sommelier con {modelo_seleccionado}..."):
-                response = client.models.generate_content(
-                    model=modelo_seleccionado,
-                    contents=contents_payload,
-                    config=types.GenerateContentConfig(
-                        response_mime_type="application/json",
-                        temperature=0.1
-                    ),
+                model = genai.GenerativeModel(
+                    model_name=modelo_seleccionado,
+                    generation_config={"response_mime_type": "application/json", "temperature": 0.1}
                 )
+                response = model.generate_content(contents_payload)
 
             if response:
                 texto_respuesta = response.text.strip()
