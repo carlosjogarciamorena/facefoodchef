@@ -100,7 +100,7 @@ API_KEY = st.sidebar.text_input(
 )
 
 if API_KEY:
-    st.sidebar.success("✅ API Key introducida.")Aquí tienes el código modificado. He eliminado toda la lógica que buscaba la API Key en variables de entorno (`.env`) o en los secretos de Streamlit, dejando únicamente el campo en el menú lateral para que la introduzcas a mano cada vez que uses la aplicación.
+    st.sidebar.success("✅ API Key introducida.")
 
 ```python
 import json
