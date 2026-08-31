@@ -4,4 +4,4 @@ beautifulsoup4
 recipe-scrapers
 python-docx
 python-pptx
-google-genai
+google-generativeai
