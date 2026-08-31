@@ -4,7 +4,8 @@ import requests
 from bs4 import BeautifulSoup
 import streamlit as st
 from recipe_scrapers import scrape_me
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
 # Importaciones opcionales para lectura de documentos
 try:
@@ -95,10 +96,6 @@ API_KEY = st.sidebar.text_input(
     help="Introduce tu clave API manualmente para esta sesión."
 )
 
-if API_KEY:
-    st.sidebar.success("✅ API Key introducida.")
-    genai.configure(api_key=API_KEY.strip())
-
 modelo_seleccionado = st.sidebar.selectbox(
     "Modelo Gemini:",
     options=["gemini-2.5-flash", "gemini-1.5-flash"],
@@ -186,7 +183,6 @@ def renderizar_dashboard_nativo(datos, comensales, origen_receta):
     recomendaciones = datos.get("recomendaciones", [])
     maridaje = datos.get("maridaje", {})
 
-    # Cabecera
     st.markdown(f"""
     <div style="background: linear-gradient(180deg, #36393F 0%, #2F3136 100%); border-radius: 8px; padding: 25px; text-align: center; margin-bottom: 20px; border-left: 6px solid #EF4444; border: 1px solid #4F545C;">
         <span style="font-size: 11px; font-weight: 800; color: #FFFFFF; text-transform: uppercase; letter-spacing: 2px; background: #EF4444; padding: 5px 12px; border-radius: 4px;">Diagrama de Producción Culinaria</span>
@@ -195,19 +191,16 @@ def renderizar_dashboard_nativo(datos, comensales, origen_receta):
     </div>
     """, unsafe_allow_html=True)
 
-    # Ingredientes
     st.markdown(f"### 🛒 1. Ingredientes ({comensales} pax)")
     cols_ing = st.columns(2)
     for idx, ing in enumerate(ingredientes):
         cols_ing[idx % 2].markdown(f"- {ing}")
 
-    # Mise en place
     if pasos_previos:
         st.markdown("### 🔪 2. Mise en Place (Preparación Previa)")
         for prev in pasos_previos:
             st.markdown(f"- {prev}")
 
-    # Diagrama de Ejecución
     st.markdown("### 3. Diagrama de Ejecución")
     for i, bloque in enumerate(bloques_proceso):
         tipo = bloque.get("tipo", "secuencial")
@@ -246,13 +239,11 @@ def renderizar_dashboard_nativo(datos, comensales, origen_receta):
         if i < len(bloques_proceso) - 1:
             st.markdown("<div style='text-align: center; color: #ffffff; font-size: 18px; margin: -5px 0 10px 0;'>⬇️</div>", unsafe_allow_html=True)
 
-    # Recomendaciones
     if recomendaciones:
         st.markdown("### 💡 4. Recomendaciones del Chef")
         for rec in recomendaciones:
             st.markdown(f"- {rec}")
 
-    # Maridaje
     if maridaje:
         st.markdown("### 🍷 5. Sommelier Virtual (Maridaje)")
         col_vino, col_cerveza = st.columns(2)
@@ -264,7 +255,6 @@ def renderizar_dashboard_nativo(datos, comensales, origen_receta):
     st.markdown("---")
     st.markdown(f"<div style='text-align: center; color: #718096; font-size: 12px;'>🎬 <b>FaceFoodChef.com</b> | Fuente: {origen_receta}</div>", unsafe_allow_html=True)
 
-# Procesamiento principal
 procesar_accion = False
 contenido_ia = None
 
@@ -288,6 +278,9 @@ if st.button("🎬 GENERAR DIAGRAMA Y MARIDAJE"):
         st.warning("⚠️ Introduce una URL, un texto o adjunta un archivo antes de continuar.")
     else:
         try:
+            # Inicialización corregida con la nueva librería google-genai
+            client = genai.Client(api_key=API_KEY.strip())
+
             prompt_sistema = f"""
             Eres un experto en gastronomía, sommelier y programador de flujos de trabajo en cocina. 
             Transforma la siguiente receta en un esquema estructurado JSON para renderizar un diagrama de bloques técnico y recomendar un maridaje.
@@ -333,19 +326,23 @@ if st.button("🎬 GENERAR DIAGRAMA Y MARIDAJE"):
             if archivo_multimodal:
                 bytes_data = archivo_multimodal.getvalue()
                 mime_t = archivo_multimodal.type
-                contents_payload.append({'mime_type': mime_t, 'data': bytes_data})
+                contents_payload.append(types.Part.from_bytes(data=bytes_data, mime_type=mime_t))
                 contents_payload.append(f"Analiza el archivo adjunto para extraer la receta, escalar a {comensales_objetivo} comensales y recomendar maridaje.")
             else:
                 contents_payload.append(f"Receta:\n{contenido_ia}")
 
             with st.spinner(f"⚙️ Procesando diagrama (Escalando a {comensales_objetivo} pax) y sommelier con {modelo_seleccionado}..."):
-                model = genai.GenerativeModel(
-                    model_name=modelo_seleccionado,
-                    generation_config={"response_mime_type": "application/json", "temperature": 0.1}
+                # Llamada actualizada usando el SDK moderno google-genai
+                response = client.models.generate_content(
+                    model=modelo_seleccionado,
+                    contents=contents_payload,
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        temperature=0.1
+                    )
                 )
-                response = model.generate_content(contents_payload)
 
-            if response:
+            if response and response.text:
                 texto_respuesta = response.text.strip()
                 if texto_respuesta.startswith("```json"):
                     texto_respuesta = texto_respuesta[7:]
