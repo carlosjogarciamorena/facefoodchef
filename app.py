@@ -7,7 +7,7 @@ from recipe_scrapers import scrape_me
 from google import genai
 from google.genai import types
 
-# Importaciones opcionales para lectura de documentos
+# Importaciones opcionales para lectura de documentos locales
 try:
     import docx
     HAS_DOCX = True
@@ -20,14 +20,14 @@ try:
 except ImportError:
     HAS_PPTX = False
 
-# Configuración de página
+# Configuración de página de Streamlit
 st.set_page_config(
     page_title="FaceFoodChef.com - Motor de Diagramas Culinarios", 
     layout="wide", 
     page_icon="🍳"
 )
 
-# ESTILOS VISUALES - FONDO GRIS METÁLICO PROFESIONAL
+# ESTILOS VISUALES - DISEÑO PROFESIONAL
 st.markdown("""
     <style>
     .stApp, .block-container, [data-testid="stSidebar"] {
@@ -64,20 +64,6 @@ st.markdown("""
         background-color: #dc2626 !important;
     }
 
-    .stDownloadButton > button {
-        background-color: #36393F !important;
-        color: #ffffff !important;
-        border: 1px solid #EF4444 !important;
-        font-weight: 600 !important;
-        border-radius: 6px !important;
-        width: 100%;
-        padding: 10px;
-    }
-    .stDownloadButton > button:hover {
-        background-color: #EF4444 !important;
-        color: #ffffff !important;
-    }
-
     .streamlit-expanderHeader {
         background-color: #36393F !important;
         color: #ffffff !important;
@@ -87,13 +73,13 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Panel de Control - Autenticación Manual
+# Panel de Control Lateral
 st.sidebar.header("⚙️ Panel de Control")
 
 API_KEY = st.sidebar.text_input(
     "🔑 API Key de Google Gemini:", 
     type="password", 
-    help="Introduce tu clave API manualmente para esta sesión."
+    help="Introduce tu clave API de Google AI Studio."
 )
 
 modelo_seleccionado = st.sidebar.selectbox(
@@ -108,19 +94,20 @@ comensales_objetivo = st.sidebar.number_input(
     max_value=100,
     value=2,
     step=1,
-    help="El sistema recalculará los ingredientes para este número de personas."
+    help="El sistema recalculará automáticamente las proporciones de los ingredientes."
 )
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("""
 ### 🎬 FaceFoodChef.com
-- **Métricas:** Recálculo para comensales (g, ml, ud)
-- **Estructura:** Bloques unificados estables
-- **Maridaje:** Sugerencia automatizada (Vino/Cerveza)
+- **Métricas:** Escalado adaptativo (g, ml, ud)
+- **Estructura:** Flujos secuenciales, paralelos y de convergencia
+- **Sommelier:** Maridaje automático de vino y cerveza
 """)
 
+# Cabecera Principal
 st.markdown("<h1 style='text-align: center; color: #EF4444; font-weight: 800; letter-spacing: -1px; margin-bottom: 0;'>FACEFOODCHEF <span style='font-size: 16px; background: #36393F; color: #fff; padding: 4px 10px; border-radius: 4px; vertical-align: middle; border: 1px solid #4F545C;'>PRO</span></h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #A0AEC0; font-size: 15px; margin-bottom: 30px;'>Diagramas de cocina escalables + Sommelier Virtual</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #A0AEC0; font-size: 15px; margin-bottom: 30px;'>Diagramas de flujo culinario y optimización de procesos de cocina</p>", unsafe_allow_html=True)
 
 # Entrada de Datos
 st.subheader("📥 Entrada de Receta")
@@ -173,7 +160,7 @@ def extraer_texto_de_url(url):
                 element.decompose()
             return f"Contenido de {url}:\n{soup.get_text(separator='\n', strip=True)}", url
         except Exception as e:
-            raise Exception(f"Error al procesar la URL: {e}")
+            raise Exception(f"No se pudo extraer el contenido de la URL: {e}")
 
 def renderizar_dashboard_nativo(datos, comensales, origen_receta):
     nombre = datos.get("nombre_receta", "Receta Culinaria Pro")
@@ -278,7 +265,7 @@ if st.button("🎬 GENERAR DIAGRAMA Y MARIDAJE"):
         st.warning("⚠️ Introduce una URL, un texto o adjunta un archivo antes de continuar.")
     else:
         try:
-            # Inicialización con el SDK oficial y actualizado google-genai
+            # Inicialización correcta y limpia del cliente moderno de la API de Gemini
             client = genai.Client(api_key=API_KEY.strip())
 
             prompt_sistema = f"""
@@ -326,7 +313,7 @@ if st.button("🎬 GENERAR DIAGRAMA Y MARIDAJE"):
             if archivo_multimodal:
                 bytes_data = archivo_multimodal.getvalue()
                 mime_t = archivo_multimodal.type
-                contents_payload.append(types.Part.from_bytes(data=bytes_data, mime_t=mime_t))
+                contents_payload.append(types.Part.from_bytes(data=bytes_data, mime_type=mime_t))
                 contents_payload.append(f"Analiza el archivo adjunto para extraer la receta, escalar a {comensales_objetivo} comensales y recomendar maridaje.")
             else:
                 contents_payload.append(f"Receta:\n{contenido_ia}")
