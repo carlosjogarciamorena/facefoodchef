@@ -1,10 +1,8 @@
 import json
-import time
 from io import BytesIO
 import requests
 from bs4 import BeautifulSoup
 import streamlit as st
-import streamlit.components.v1 as components
 from recipe_scrapers import scrape_me
 import google.generativeai as genai
 
@@ -103,11 +101,10 @@ if API_KEY:
 
 modelo_seleccionado = st.sidebar.selectbox(
     "Modelo Gemini:",
-    options=["gemini-2.5-flash", "gemini-1.5-flash", "gemini-2.0-flash-exp"],
+    options=["gemini-2.5-flash", "gemini-1.5-flash"],
     index=0
 )
 
-# Selector de comensales para escalar la receta
 comensales_objetivo = st.sidebar.number_input(
     "👥 Número de comensales:",
     min_value=1,
@@ -121,7 +118,7 @@ st.sidebar.markdown("---")
 st.sidebar.markdown("""
 ### 🎬 FaceFoodChef.com
 - **Métricas:** Recálculo para comensales (g, ml, ud)
-- **Estructura:** Bloques unificados con temporizadores
+- **Estructura:** Bloques unificados estables
 - **Maridaje:** Sugerencia automatizada (Vino/Cerveza)
 """)
 
@@ -181,215 +178,91 @@ def extraer_texto_de_url(url):
         except Exception as e:
             raise Exception(f"Error al procesar la URL: {e}")
 
-def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_previos, bloques_proceso, recomendaciones, texto_voz, maridaje, comensales):
-    
-    html_header = f"""
-    <div style="background: linear-gradient(180deg, #36393F 0%, #2F3136 100%); border-radius: 8px; padding: 30px; text-align: center; margin-bottom: 24px; border-left: 6px solid #EF4444; border: 1px solid #4F545C; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-        <span style="font-size: 11px; font-weight: 800; color: #FFFFFF; text-transform: uppercase; letter-spacing: 2px; background: #EF4444; padding: 6px 14px; border-radius: 4px; display: inline-block;">Diagrama de Producción Culinaria</span>
-        <h1 style="color: #ffffff; font-size: 30px; margin: 16px 0 8px 0; font-weight: 800;">{nombre_receta}</h1>
+def renderizar_dashboard_nativo(datos, comensales, origen_receta):
+    nombre = datos.get("nombre_receta", "Receta Culinaria Pro")
+    ingredientes = datos.get("ingredientes", [])
+    pasos_previos = datos.get("pasos_previos", [])
+    bloques_proceso = datos.get("bloques_proceso", [])
+    recomendaciones = datos.get("recomendaciones", [])
+    maridaje = datos.get("maridaje", {})
+
+    # Cabecera
+    st.markdown(f"""
+    <div style="background: linear-gradient(180deg, #36393F 0%, #2F3136 100%); border-radius: 8px; padding: 25px; text-align: center; margin-bottom: 20px; border-left: 6px solid #EF4444; border: 1px solid #4F545C;">
+        <span style="font-size: 11px; font-weight: 800; color: #FFFFFF; text-transform: uppercase; letter-spacing: 2px; background: #EF4444; padding: 5px 12px; border-radius: 4px;">Diagrama de Producción Culinaria</span>
+        <h2 style="color: #ffffff; margin: 12px 0 6px 0; font-weight: 800;">{nombre}</h2>
         <p style="color: #A0AEC0; font-size: 14px; margin: 0;">Calculado y escalado para <b>{comensales} comensales</b>.</p>
     </div>
-    """
+    """, unsafe_allow_html=True)
 
-    html_ing = f"""
-    <div style="background-color: #36393F; border: 1px solid #4F545C; border-radius: 8px; padding: 22px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
-        <h3 style="color: #EF4444; margin-top: 0; font-size: 18px; font-weight: 700;">🛒 1. Ingredientes ({comensales} pax)</h3>
-        <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px;">
-    """
-    for ing in ingredientes:
-        html_ing += f"<span style='background-color: #2F3136; color: #E2E8F0; padding: 8px 16px; border-radius: 20px; font-size: 13px; border: 1px solid #5C626B; font-weight: 500;'> {ing}</span>"
-    html_ing += "</div></div>"
+    # Ingredientes
+    st.markdown(f"### 🛒 1. Ingredientes ({comensales} pax)")
+    cols_ing = st.columns(2)
+    for idx, ing in enumerate(ingredientes):
+        cols_ing[idx % 2].markdown(f"- {ing}")
 
-    html_prev = """
-    <div style="background-color: #36393F; border: 1px solid #4F545C; border-radius: 8px; padding: 22px; margin-bottom: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
-        <h3 style="color: #FBBF24; margin-top: 0; font-size: 18px; font-weight: 700;">🔪 2. Mise en Place (Preparación Previa)</h3>
-        <ul style='margin: 12px 0 0 0; padding-left: 20px; color: #CBD5E0; font-size: 14px; line-height: 1.8;'>
-    """
-    for prep in pasos_previos:
-        html_prev += f"<li>{prep}</li>"
-    html_prev += "</ul></div>"
+    # Mise en place
+    if pasos_previos:
+        st.markdown("### 🔪 2. Mise en Place (Preparación Previa)")
+        for prev in pasos_previos:
+            st.markdown(f"- {prev}")
 
-    html_diagrama = """
-    <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-        <h3 style="color: #ffffff; font-size: 20px; font-weight: 800; margin-bottom: 22px;">3. Diagrama de Ejecución</h3>
-    """
-    
-    BG_BLOQUE = "#36393F"
-    BORDER_BLOQUE = "#4F545C"
-    
+    # Diagrama de Ejecución
+    st.markdown("### 3. Diagrama de Ejecución")
     for i, bloque in enumerate(bloques_proceso):
         tipo = bloque.get("tipo", "secuencial")
-        duracion_min = bloque.get("duracion_minutos", 5)
-        utensilios = bloque.get("utensilios", [])
-        utensilios_str = ", ".join(utensilios) if utensilios else "Sin utensilios específicos"
+        utensilios_str = ", ".join(bloque.get("utensilios", [])) or "Sin utensilios específicos"
         
         if tipo == "paralelo":
+            st.markdown("#### ⚙️ Bloque en Paralelo")
             ramas = bloque.get("ramas", [])
-            html_diagrama += '<div style="display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap;">'
-            for idx, rama in enumerate(ramas):
-                nombre_rama = rama.get("nombre", f"Rama {idx+1}").upper()
-                accion = rama.get("accion", "")
-                tiempo = rama.get("tiempo", "")
-                temp = rama.get("temperatura", "")
-                utensilios_rama = ", ".join(rama.get("utensilios", []))
-                dur_rama = rama.get("duracion_minutos", 5)
-                timer_id = f"timer_par_{i}_{idx}"
-                
-                color_franja_paralelo = "#F59E0B"
-                
-                html_diagrama += f"""
-                <div style="flex: 1; min-width: 280px; background-color: {BG_BLOQUE}; border: 1px solid {BORDER_BLOQUE}; border-left: 6px solid {color_franja_paralelo}; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-                    <div style="margin-bottom: 12px;"><span style="font-size: 11px; font-weight: 800; color: #FFFFFF; background-color: {color_franja_paralelo}; padding: 5px 12px; border-radius: 4px; display: inline-block; text-transform: uppercase;">⚙️ PARALELO: {nombre_rama}</span></div>
-                    <div style="font-size: 15px; font-weight: 600; color: #ffffff; margin: 12px 0;">{accion}</div>
-                    <div style="font-size: 12px; color: #A0AEC0; margin-bottom: 14px; background: rgba(0,0,0,0.3); padding: 6px 10px; border-radius: 4px;">🛠️ <b>Utensilios:</b> {utensilios_rama}</div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.4); padding: 10px 14px; border-radius: 6px;">
-                        <div style="font-size: 13px; color: #ffffff;">⏱️ <span id="{timer_id}" style="font-weight: bold; color: #FBBF24;">{tiempo}</span> | 🌡️ {temp}</div>
-                        <button onclick="iniciarTemporizador('{timer_id}', {dur_rama})" style="background-color: #EF4444; color: white; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 700;">⏳ Iniciar</button>
+            cols_ramas = st.columns(len(ramas) if ramas else 1)
+            for r_idx, rama in enumerate(ramas):
+                with cols_ramas[r_idx]:
+                    st.markdown(f"""
+                    <div style="background-color: #36393F; border: 1px solid #4F545C; border-left: 5px solid #F59E0B; border-radius: 6px; padding: 15px; margin-bottom: 10px;">
+                        <b style="color: #F59E0B;">{rama.get('nombre', f'Rama {r_idx+1}')}</b><br>
+                        <p style="margin: 8px 0; color: #E2E8F0; font-size: 14px;">{rama.get('accion')}</p>
+                        <hr style="border-color: #4F545C; margin: 8px 0;">
+                        <span style="font-size: 12px; color: #A0AEC0;">🛠️ {', '.join(rama.get('utensilios', []))}</span><br>
+                        <span style="font-size: 12px; color: #FBBF24;">⏱️ {rama.get('tiempo')} | 🌡️ {rama.get('temperatura')}</span>
                     </div>
-                </div>
-                """
-            html_diagrama += '</div>'
+                    """, unsafe_allow_html=True)
         else:
-            es_convergencia = tipo == "convergencia"
-            left_border = "#10B981" if es_convergencia else "#EF4444"
-            badge_bg = "#10B981" if es_convergencia else "#EF4444"
-            etiqueta = "CONVERGENCIA / UNIÓN" if es_convergencia else f"PASO {i+1}"
-            timer_id = f"timer_seq_{i}"
-
-            html_diagrama += f"""
-            <div style="background-color: {BG_BLOQUE}; border: 1px solid {BORDER_BLOQUE}; border-left: 6px solid {left_border}; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-                <div style="margin-bottom: 12px;"><span style="font-size: 11px; font-weight: 800; color: #FFFFFF; background-color: {badge_bg}; padding: 5px 12px; border-radius: 4px; display: inline-block; text-transform: uppercase;">{etiqueta}</span></div>
-                <div style="font-size: 15px; font-weight: 600; color: #ffffff; margin: 12px 0;">{bloque.get('accion')}</div>
-                <div style="font-size: 12px; color: #A0AEC0; margin-bottom: 14px; background: rgba(0,0,0,0.3); padding: 6px 10px; border-radius: 4px;">🛠️ <b>Utensilios:</b> {utensilios_str}</div>
-                <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.4); padding: 10px 14px; border-radius: 6px;">
-                    <div style="font-size: 13px; color: #ffffff;">⏱️ <span id="{timer_id}" style="font-weight: bold; color: #FBBF24;">{bloque.get('tiempo')}</span> | 🌡️ {bloque.get('temperatura')}</div>
-                    <button onclick="iniciarTemporizador('{timer_id}', {duracion_min})" style="background-color: #EF4444; color: white; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 700;">⏳ Iniciar</button>
+            es_conv = tipo == "convergencia"
+            b_color = "#10B981" if es_conv else "#EF4444"
+            etiqueta = "CONVERGENCIA / UNIÓN" if es_conv else f"PASO {i+1}"
+            
+            st.markdown(f"""
+            <div style="background-color: #36393F; border: 1px solid #4F545C; border-left: 6px solid {b_color}; border-radius: 6px; padding: 16px; margin-bottom: 15px;">
+                <span style="font-size: 10px; font-weight: 800; background: {b_color}; color: white; padding: 3px 8px; border-radius: 3px; text-transform: uppercase;">{etiqueta}</span>
+                <p style="margin: 10px 0; font-size: 15px; font-weight: 600; color: #ffffff;">{bloque.get('accion')}</p>
+                <div style="font-size: 13px; color: #A0AEC0; background: rgba(0,0,0,0.2); padding: 6px 10px; border-radius: 4px;">
+                    🛠️ <b>Utensilios:</b> {utensilios_str} &nbsp;|&nbsp; ⏱️ <b style="color: #FBBF24;">{bloque.get('tiempo')}</b> &nbsp;|&nbsp; 🌡️ {bloque.get('temperatura')}
                 </div>
             </div>
-            """
+            """, unsafe_allow_html=True)
             
         if i < len(bloques_proceso) - 1:
-            html_diagrama += """
-            <div style="display: flex; flex-direction: column; align-items: center; margin: 6px 0 20px 0;">
-                <div style="width: 4px; height: 16px; background: #ffffff; box-shadow: 0 0 8px rgba(255,255,255,0.6);"></div>
-                <div style="background-color: #ffffff; color: #2C2F33; border: 2px solid #ffffff; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 900; box-shadow: 0 0 12px rgba(255,255,255,0.8);">👇</div>
-                <div style="width: 4px; height: 16px; background: #ffffff; box-shadow: 0 0 8px rgba(255,255,255,0.6);"></div>
-            </div>
-            """
-    
-    html_diagrama += "</div>"
+            st.markdown("<div style='text-align: center; color: #ffffff; font-size: 18px; margin: -5px 0 10px 0;'>⬇️</div>", unsafe_allow_html=True)
 
-    html_recom = """
-    <div style="background-color: #36393F; border: 1px solid #4F545C; border-left: 6px solid #FBBF24; border-radius: 8px; padding: 22px; margin-top: 24px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-        <h3 style="color: #FBBF24; margin-top: 0; font-size: 18px; font-weight: 700;">💡 4. Recomendaciones del Chef</h3>
-        <ul style='margin: 12px 0 0 0; padding-left: 20px; color: #CBD5E0; font-size: 14px; line-height: 1.8;'>
-    """
-    for rec in recomendaciones:
-        html_recom += f"<li>{rec}</li>"
-    html_recom += "</ul></div>"
+    # Recomendaciones
+    if recomendaciones:
+        st.markdown("### 💡 4. Recomendaciones del Chef")
+        for rec in recomendaciones:
+            st.markdown(f"- {rec}")
 
-    html_maridaje = f"""
-    <div style="background-color: #36393F; border: 1px solid #4F545C; border-left: 6px solid #9D4EDD; border-radius: 8px; padding: 22px; margin-top: 20px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-        <h3 style="color: #9D4EDD; margin-top: 0; font-size: 18px; font-weight: 700;">🍷 5. Sommelier Virtual (Maridaje)</h3>
-        <div style="margin-top: 12px; color: #CBD5E0; font-size: 15px; line-height: 1.6;">
-            <p style="margin-bottom: 12px;"><b>🍇 Sugerencia de Vino:</b><br>{maridaje.get('vino', 'Sin sugerencia disponible.')}</p>
-            <p><b>🍺 Sugerencia de Cerveza:</b><br>{maridaje.get('cerveza', 'Sin sugerencia disponible.')}</p>
-        </div>
-    </div>
-    """
+    # Maridaje
+    if maridaje:
+        st.markdown("### 🍷 5. Sommelier Virtual (Maridaje)")
+        col_vino, col_cerveza = st.columns(2)
+        with col_vino:
+            st.info(f"**🍇 Sugerencia de Vino:**\n\n{maridaje.get('vino', 'N/D')}")
+        with col_cerveza:
+            st.warning(f"**🍺 Sugerencia de Cerveza:**\n\n{maridaje.get('cerveza', 'N/D')}")
 
-    origen_html = f'<a href="{origen_receta}" target="_blank" style="color: #EF4444; text-decoration: underline;">{origen_receta}</a>' if origen_receta.startswith("http") else f'<span style="color: #A0AEC0;">{origen_receta}</span>'
-    texto_voz_seguro = json.dumps(texto_voz)
-
-    return f"""
-    <!DOCTYPE html>
-    <html lang="es">
-    <head>
-        <meta charset="utf-8">
-        <style>
-            body {{ background-color: #2C2F33; color: #E2E8F0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 16px; margin: 0; }}
-            .container-hub {{ max-width: 900px; margin: auto; }}
-            .widget-box {{ background-color: #36393F; border: 1px solid #4F545C; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }}
-            .btn-control {{ background-color: #EF4444; color: white; border: none; padding: 10px 22px; font-size: 13px; font-weight: 700; border-radius: 4px; cursor: pointer; margin: 4px; }}
-            .btn-stop {{ background-color: #4F545C; color: #ffffff; }}
-        </style>
-    </head>
-    <body>
-        <div class="container-hub">
-            {html_header}
-            <div class="widget-box">
-                <p style="color: #A0AEC0; font-size: 13px; margin: 0 0 12px 0; font-weight: 600;">👨‍🍳💬 Asistente de Voz de Cocina</p>
-                <button id="btnVoz" class="btn-control" onclick="reproducir(this)">🎧 Asistente Manos Libres</button>
-                <button class="btn-control btn-stop" onclick="detener()">🔇 Oído Cocina (Silenciar)</button>
-            </div>
-            {html_ing}
-            {html_prev}
-            {html_diagrama}
-            {html_recom}
-            {html_maridaje}
-            <div style="text-align: center; color: #718096; font-size: 13px; margin-top: 35px; border-top: 1px solid #4F545C; padding-top: 20px;">
-                🎬 <b>FaceFoodChef.com</b> | Fuente: {origen_html}
-            </div>
-        </div>
-        <script>
-            const textoVoz = {texto_voz_seguro};
-            let currentUtterance = null;
-
-            function reproducir(btn) {{
-                if (!('speechSynthesis' in window)) return alert("Sintetizador no soportado.");
-                window.speechSynthesis.cancel();
-                currentUtterance = new SpeechSynthesisUtterance(textoVoz);
-                currentUtterance.lang = 'es-ES';
-                currentUtterance.rate = 0.95;
-                btn.innerText = "🔊 Reproduciendo Guía...";
-                currentUtterance.onend = () => btn.innerText = "🎧 Asistente Manos Libres";
-                currentUtterance.onerror = () => btn.innerText = "🎧 Asistente Manos Libres";
-                window.speechSynthesis.speak(currentUtterance);
-            }}
-
-            function detener() {{
-                if ('speechSynthesis' in window) {{
-                    window.speechSynthesis.cancel();
-                    const btn = document.getElementById('btnVoz');
-                    if (btn) btn.innerText = "🎧 Asistente Manos Libres";
-                }}
-            }}
-
-            function iniciarTemporizador(elementId, minutos) {{
-                const elemento = document.getElementById(elementId);
-                let segundosRestantes = minutos * 60;
-                if (window[elementId + "_interval"]) clearInterval(window[elementId + "_interval"]);
-
-                window[elementId + "_interval"] = setInterval(() => {{
-                    if (segundosRestantes <= 0) {{
-                        clearInterval(window[elementId + "_interval"]);
-                        elemento.innerText = "¡TIEMPO CUMPLIDO! ⏰";
-                        sonarAlerta();
-                    }} else {{
-                        segundosRestantes--;
-                        const m = Math.floor(segundosRestantes / 60);
-                        const s = segundosRestantes % 60;
-                        elemento.innerText = `${{m}}m ${{s < 10 ? '0' : ''}}${{s}}s`;
-                    }}
-                }}, 1000);
-            }}
-
-            function sonarAlerta() {{
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const oscillator = audioCtx.createOscillator();
-                const gainNode = audioCtx.createGain();
-                oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime);
-                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                oscillator.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-                oscillator.start();
-                setTimeout(() => {{ oscillator.stop(); }}, 1200);
-            }}
-        </script>
-    </body>
-    </html>
-    """
+    st.markdown("---")
+    st.markdown(f"<div style='text-align: center; color: #718096; font-size: 12px;'>🎬 <b>FaceFoodChef.com</b> | Fuente: {origen_receta}</div>", unsafe_allow_html=True)
 
 # Procesamiento principal
 procesar_accion = False
@@ -484,27 +357,7 @@ if st.button("🎬 GENERAR DIAGRAMA Y MARIDAJE"):
                 datos = json.loads(texto_respuesta.strip())
                 origen_final = url_origen_detectada if url_origen_detectada else datos.get("origen_receta", "Texto aportado por el usuario")
 
-                html_final = generar_html_dashboard(
-                    datos.get("nombre_receta", "Receta Culinaria Pro"),
-                    origen_final,
-                    datos.get("ingredientes", []),
-                    datos.get("pasos_previos", []),
-                    datos.get("bloques_proceso", []),
-                    datos.get("recomendaciones", []),
-                    datos.get("texto_voz", ""),
-                    datos.get("maridaje", {}),
-                    comensales_objetivo
-                )
-                
-                st.markdown("<br>", unsafe_allow_html=True)
-                st.download_button(
-                    label="📥 Descargar Diagrama HTML Autónomo",
-                    data=html_final,
-                    file_name="diagrama_facefoodchef_pro.html",
-                    mime="text/html"
-                )
-                
-                components.html(html_final, height=1450, scrolling=True)
+                renderizar_dashboard_nativo(datos, comensales_objetivo, origen_final)
                 
         except Exception as e:
             st.error(f"Error durante el procesamiento: {e}")
