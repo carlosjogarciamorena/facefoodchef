@@ -13,7 +13,7 @@ load_dotenv()
 # 1. CONFIGURACIÓN DE LA PÁGINA Y ESTILOS
 # ==========================================
 st.set_page_config(
-    page_title="Kitchen Process Studio & Diagram Translator",
+    page_title="Traductor de Recetas a Diagrama de Bloques",
     page_icon="👨‍🍳",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -91,8 +91,8 @@ st.markdown(CSS_CUSTOM, unsafe_allow_html=True)
 # 2. PROMPT DE INGENIERÍA Y COCINA
 # ==========================================
 PROMPT_INGENIERIA_PROCESOS = (
-    "Eres un Chef Ejecutivo Michelin e Ingeniero de Procesos Industriales Gastronómicos.\n"
-    "Tu objetivo es convertir el texto de una receta en un Grafo Dirigido Acíclico (DAG) que describa la ejecución de la cocina.\n\n"
+    "Eres un Chef Ejecutivo e Ingeniero de Procesos Industriales Gastronómicos.\n"
+    "Tu objetivo es convertir el texto de una receta en un Grafo Dirigido Acíclico (DAG) ejecutable.\n\n"
     "DEBES DEVOLVER TU RESPUESTA EN UN ÚNICO BLOQUE JSON VÁLIDO CON LA SIGUIENTE ESTRUCTURA:\n\n"
     "{\n"
     '  "resumen_ejecutivo": {\n'
@@ -111,7 +111,7 @@ PROMPT_INGENIERIA_PROCESOS = (
     '      "ingredientes_involucrados": ["Ingrediente 1"],\n'
     '      "tiempo_min": 10,\n'
     '      "es_paralelo": true,\n'
-    '      "puede_hacerse_durante": "Mientas se fríe la patata",\n'
+    '      "puede_hacerse_durante": "Mientras se fríe la patata",\n'
     '      "temperatura_o_fuego": "Fuego medio / 180°C / N/A"\n'
     '    }\n'
     '  ],\n'
@@ -146,7 +146,7 @@ Ingredientes:
 
 Elaboración:
 1. Pelar y cortar las patatas en láminas finas y de grosor uniforme. Cortar la cebolla en juliana fina.
-2. Calentar el aceite de oliva virgen extra en una sartén antiadherente profunda. Pochar la patata junto con la cebolla a fuego medio-bajo durante 18 minutos hasta que estén confitadas y tiernas, sin llegar a dorarse en exceso.
+2. Calentar el aceite de oliva virgen extra en una sartén antiadherente profunda. Pochar la patata junto con la cebolla a fuego medio-bajo durante 18 minutos hasta que estén confitadas y tiernas.
 3. Mientras se fríen las patatas y la cebolla, cascar los 6 huevos en un bol grande y batirlos enérgicamente con una pizca de sal.
 4. Una vez tiernas las patatas y cebollas, escurrir bien el aceite usando un colador.
 5. Incorporar las patatas y la cebolla bien calientes al bol con el huevo batido. Mezclar bien y dejar reposar la mezcla durante 5 minutos.
@@ -177,10 +177,10 @@ Elaboración:
 }
 
 # ==========================================
-# 4. FUNCIÓN CON SDK ACTUALIZADO (google-genai)
+# 4. FUNCIÓN CON SDK ACTUALIZADO
 # ==========================================
 def procesar_receta_con_gemini(api_key: str, modelo_nombre: str, receta_texto: str, nivel_detalle: str):
-    """Utiliza el cliente oficial google-genai con Structured Outputs (JSON)."""
+    """Llamada a la API de Gemini utilizando la SDK oficial google-genai."""
     client = genai.Client(api_key=api_key)
     
     prompt_completo = (
@@ -213,10 +213,10 @@ api_key_input = st.sidebar.text_input(
     help="Consigue tu API Key en https://aistudio.google.com/"
 )
 
-# Modelos oficiales actualizados de la serie Gemini 2.5 y 1.5
+# Actualizado con el nuevo modelo recomendado según el mensaje de error de la API
 modelo_opcion = st.sidebar.selectbox(
     "Motor de Inteligencia Artificial:",
-    options=["gemini-2.5-flash", "gemini-2.5-pro", "gemini-1.5-flash", "gemini-1.5-pro"],
+    options=["gemini-2.5-flash", "gemini-2.5-pro"],
     index=0
 )
 
