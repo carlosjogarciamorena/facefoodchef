@@ -1,8 +1,8 @@
 import os
 import json
-import base64
 import pandas as pd
 import streamlit as st
+import streamlit.components.v1 as components
 from PIL import Image
 from pypdf import PdfReader
 import docx
@@ -131,20 +131,44 @@ PROMPT_INGENIERIA_PROCESOS = (
     "2. Identifica ingredientes de entrada con nodos redondeados: `id([Ingrediente / Cantidad])`.\n"
     "3. Identifica acciones de procesado con rectángulos: `id[Acción / Tiempo / Fuego]`.\n"
     "4. Identifica puntos de decisión/control con rombos: `id{¿Verificación?}`.\n"
-    "5. NO USES caracteres especiales conflictivos (comillas dobles, paréntesis sueltos) dentro del texto de los nodos.\n"
+    "5. NO USES caracteres especiales conflictivos (comillas dobles, comillas simples dentro del texto del nodo).\n"
 )
 
 # ==========================================
-# 3. HELPER PARA RENDERIZAR MERMAID VIA URL
+# 3. HELPER RENDERIZADOR HTML / JS DE MERMAID
 # ==========================================
-def obtener_url_mermaid(codigo_mermaid: str) -> str:
-    """Convierte el código Mermaid a una URL de imagen usando mermaid.ink."""
-    # Limpiar posibles delimitadores markdown del string
+def renderizar_mermaid_html(codigo_mermaid: str, alto: int = 500):
+    """Renderiza sintaxis Mermaid en un canvas HTML/JS embebido localmente."""
     codigo_limpio = codigo_mermaid.replace("```mermaid", "").replace("```", "").strip()
-    graphbytes = codigo_limpio.encode('utf-8')
-    base64_bytes = base64.b64encode(graphbytes)
-    base64_string = base64_bytes.decode('utf-8')
-    return f"https://mermaid.ink/img/{base64_string}"
+    html_code = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <script type="module">
+            import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.mjs';
+            mermaid.initialize({{ startOnLoad: true, theme: 'default' }});
+        </script>
+        <style>
+            body {{
+                margin: 0;
+                padding: 10px;
+                background-color: transparent;
+                display: flex;
+                justify-content: center;
+            }}
+            .mermaid {{
+                width: 100%;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="mermaid">
+            {codigo_limpio}
+        </div>
+    </body>
+    </html>
+    """
+    components.html(html_code, height=alto, scrolling=True)
 
 # ==========================================
 # 4. EXTRACCIÓN DE TEXTO Y MULTIFORMATO
@@ -239,7 +263,7 @@ with col_izq:
                 if tipo_entrada == "texto":
                     st.text_area("Texto extraído:", value=receta_contenido, height=200, disabled=True)
                 else:
-                    st.image(receta_contenido, caption="Vista previa de la receta", use_column_width=True)
+                    st.image(receta_contenido, caption="Vista previa de la receta", use_container_width=True)
             except Exception as e:
                 st.error(f"Error al leer archivo: {e}")
     else:
@@ -299,8 +323,8 @@ with col_der:
             codigo_mermaid = res.get("diagrama_mermaid", "")
             
             if codigo_mermaid:
-                url_imagen_mermaid = obtener_url_mermaid(codigo_mermaid)
-                st.image(url_imagen_mermaid, use_column_width=True, caption="Diagrama de flujo generado")
+                # Renderizado fluido en HTML/JS nativo
+                renderizar_mermaid_html(codigo_mermaid, alto=550)
             else:
                 st.warning("No se pudo generar el código del diagrama.")
                 
