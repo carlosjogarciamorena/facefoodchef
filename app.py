@@ -133,7 +133,7 @@ st.subheader("📥 Entrada de Receta")
 entrada_principal = st.text_area(
     "Pega la URL de la receta o el texto completo:", 
     height=130, 
-    placeholder="[https://www.ejemplo.com/receta](https://www.ejemplo.com/receta)\nO pega directamente el texto de la receta aquí..."
+    placeholder="https://www.ejemplo.com/receta\nO pega directamente el texto de la receta aquí..."
 )
 
 with st.expander("📁 Adjuntar archivo (PDF, Word, PPT o Imagen)"):
@@ -417,7 +417,8 @@ if st.button("🎬 GENERAR DIAGRAMA Y MARIDAJE"):
         st.warning("⚠️ Introduce una URL, un texto o adjunta un archivo antes de continuar.")
     else:
         try:
-            client = genai.Client(api_key=API_KEY)
+            # Corrección de autenticación para API Key mediante http_options v1beta
+            client = genai.Client(api_key=API_KEY, http_options={'api_version': 'v1beta'})
             
             prompt_sistema = f"""
             Eres un experto en gastronomía, sommelier y programador de flujos de trabajo en cocina. 
