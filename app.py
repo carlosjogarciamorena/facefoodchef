@@ -278,7 +278,7 @@ if st.button("🎬 GENERAR DIAGRAMA Y MARIDAJE"):
         st.warning("⚠️ Introduce una URL, un texto o adjunta un archivo antes de continuar.")
     else:
         try:
-            # Inicialización corregida con la nueva librería google-genai
+            # Inicialización con el SDK oficial y actualizado google-genai
             client = genai.Client(api_key=API_KEY.strip())
 
             prompt_sistema = f"""
@@ -326,13 +326,12 @@ if st.button("🎬 GENERAR DIAGRAMA Y MARIDAJE"):
             if archivo_multimodal:
                 bytes_data = archivo_multimodal.getvalue()
                 mime_t = archivo_multimodal.type
-                contents_payload.append(types.Part.from_bytes(data=bytes_data, mime_type=mime_t))
+                contents_payload.append(types.Part.from_bytes(data=bytes_data, mime_t=mime_t))
                 contents_payload.append(f"Analiza el archivo adjunto para extraer la receta, escalar a {comensales_objetivo} comensales y recomendar maridaje.")
             else:
                 contents_payload.append(f"Receta:\n{contenido_ia}")
 
             with st.spinner(f"⚙️ Procesando diagrama (Escalando a {comensales_objetivo} pax) y sommelier con {modelo_seleccionado}..."):
-                # Llamada actualizada usando el SDK moderno google-genai
                 response = client.models.generate_content(
                     model=modelo_seleccionado,
                     contents=contents_payload,
