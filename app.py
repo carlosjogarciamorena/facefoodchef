@@ -1,4 +1,3 @@
-import os
 import json
 import time
 from io import BytesIO
@@ -102,110 +101,9 @@ API_KEY = st.sidebar.text_input(
 if API_KEY:
     st.sidebar.success("✅ API Key introducida.")
 
-```python
-import json
-import time
-from io import BytesIO
-import requests
-from bs4 import BeautifulSoup
-import streamlit as st
-import streamlit.components.v1 as components
-from recipe_scrapers import scrape_me
-from google import genai
-from google.genai import types
-
-# Importaciones opcionales para lectura de documentos
-try:
-    import docx
-    HAS_DOCX = True
-except ImportError:
-    HAS_DOCX = False
-
-try:
-    from pptx import Presentation
-    HAS_PPTX = True
-except ImportError:
-    HAS_PPTX = False
-
-# Configuración de página
-st.set_page_config(
-    page_title="FaceFoodChef.com - Motor de Diagramas Culinarios", 
-    layout="wide", 
-    page_icon="🍳"
-)
-
-# ESTILOS VISUALES - FONDO GRIS METÁLICO PROFESIONAL
-st.markdown("""
-    <style>
-    .stApp, .block-container, [data-testid="stSidebar"] {
-        background-color: #2C2F33 !important;
-        color: #E2E8F0 !important;
-        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    }
-    header, footer { visibility: hidden; }
-    
-    .stTextArea textarea, .stTextInput input, .stSelectbox select, .stNumberInput input {
-        background-color: #36393F !important;
-        color: #ffffff !important;
-        border: 2px solid #4F545C !important;
-        border-radius: 6px !important;
-        font-size: 16px !important;
-    }
-    .stTextArea textarea:focus, .stTextInput input:focus, .stNumberInput input:focus {
-        border-color: #EF4444 !important;
-        box-shadow: 0 0 10px rgba(239, 68, 68, 0.4) !important;
-    }
-
-    .stButton > button {
-        background-color: #EF4444 !important;
-        color: #ffffff !important;
-        font-weight: 800 !important;
-        font-size: 17px !important;
-        border: none !important;
-        border-radius: 6px !important;
-        padding: 14px 28px !important;
-        width: 100%;
-        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
-    }
-    .stButton > button:hover {
-        background-color: #dc2626 !important;
-    }
-
-    .stDownloadButton > button {
-        background-color: #36393F !important;
-        color: #ffffff !important;
-        border: 1px solid #EF4444 !important;
-        font-weight: 600 !important;
-        border-radius: 6px !important;
-        width: 100%;
-        padding: 10px;
-    }
-    .stDownloadButton > button:hover {
-        background-color: #EF4444 !important;
-        color: #ffffff !important;
-    }
-
-    .streamlit-expanderHeader {
-        background-color: #36393F !important;
-        color: #ffffff !important;
-        border-radius: 6px !important;
-        border: 1px solid #4F545C !important;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-st.sidebar.header("⚙️ Panel de Control")
-
-# Entrada manual de la API Key (Sin automatizaciones)
-API_KEY = st.sidebar.text_input(
-    "🔑 API Key de Google Gemini:", 
-    type="password", 
-    help="Introduce tu clave API manualmente aquí."
-)
-
 modelo_seleccionado = st.sidebar.selectbox(
     "Modelo Gemini:",
-    options=["gemini-3.6-flash", "gemini-2.5-flash", "gemini-1.5-flash"],
+    options=["gemini-2.5-flash", "gemini-1.5-flash"],
     index=0
 )
 
