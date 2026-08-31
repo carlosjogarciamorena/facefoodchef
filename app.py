@@ -204,9 +204,10 @@ api_key_input = st.sidebar.text_input(
     help="Consigue tu API Key en https://aistudio.google.com/"
 )
 
+# Modelos actualizados
 modelo_opcion = st.sidebar.selectbox(
     "Motor de Inteligencia Artificial:",
-    options=["gemini-2.5-flash", "gemini-2.5-pro"],
+    options=["gemini-3.6-flash", "gemini-3.6-pro"],
     index=0
 )
 
