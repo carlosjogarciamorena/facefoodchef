@@ -10,12 +10,109 @@ from recipe_scrapers import scrape_me
 from google import genai
 from google.genai import types
 
-# Cargar variables de entorno locales (.env)
+# Importaciones opcionales para lectura de documentos
 try:
-    from dotenv import load_dotenv
-    load_dotenv()
+    import docx
+    HAS_DOCX = True
 except ImportError:
-    pass
+    HAS_DOCX = False
+
+try:
+    from pptx import Presentation
+    HAS_PPTX = True
+except ImportError:
+    HAS_PPTX = False
+
+# Configuración de página
+st.set_page_config(
+    page_title="FaceFoodChef.com - Motor de Diagramas Culinarios", 
+    layout="wide", 
+    page_icon="🍳"
+)
+
+# ESTILOS VISUALES - FONDO GRIS METÁLICO PROFESIONAL
+st.markdown("""
+    <style>
+    .stApp, .block-container, [data-testid="stSidebar"] {
+        background-color: #2C2F33 !important;
+        color: #E2E8F0 !important;
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    }
+    header, footer { visibility: hidden; }
+    
+    .stTextArea textarea, .stTextInput input, .stSelectbox select, .stNumberInput input {
+        background-color: #36393F !important;
+        color: #ffffff !important;
+        border: 2px solid #4F545C !important;
+        border-radius: 6px !important;
+        font-size: 16px !important;
+    }
+    .stTextArea textarea:focus, .stTextInput input:focus, .stNumberInput input:focus {
+        border-color: #EF4444 !important;
+        box-shadow: 0 0 10px rgba(239, 68, 68, 0.4) !important;
+    }
+
+    .stButton > button {
+        background-color: #EF4444 !important;
+        color: #ffffff !important;
+        font-weight: 800 !important;
+        font-size: 17px !important;
+        border: none !important;
+        border-radius: 6px !important;
+        padding: 14px 28px !important;
+        width: 100%;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+    .stButton > button:hover {
+        background-color: #dc2626 !important;
+    }
+
+    .stDownloadButton > button {
+        background-color: #36393F !important;
+        color: #ffffff !important;
+        border: 1px solid #EF4444 !important;
+        font-weight: 600 !important;
+        border-radius: 6px !important;
+        width: 100%;
+        padding: 10px;
+    }
+    .stDownloadButton > button:hover {
+        background-color: #EF4444 !important;
+        color: #ffffff !important;
+    }
+
+    .streamlit-expanderHeader {
+        background-color: #36393F !important;
+        color: #ffffff !important;
+        border-radius: 6px !important;
+        border: 1px solid #4F545C !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# Panel de Control - Autenticación Manual
+st.sidebar.header("⚙️ Panel de Control")
+
+API_KEY = st.sidebar.text_input(
+    "🔑 API Key de Google Gemini:", 
+    type="password", 
+    help="Introduce tu clave API manualmente para esta sesión."
+)
+
+if API_KEY:
+    st.sidebar.success("✅ API Key introducida.")Aquí tienes el código modificado. He eliminado toda la lógica que buscaba la API Key en variables de entorno (`.env`) o en los secretos de Streamlit, dejando únicamente el campo en el menú lateral para que la introduzcas a mano cada vez que uses la aplicación.
+
+```python
+import json
+import time
+from io import BytesIO
+import requests
+from bs4 import BeautifulSoup
+import streamlit as st
+import streamlit.components.v1 as components
+from recipe_scrapers import scrape_me
+from google import genai
+from google.genai import types
 
 # Importaciones opcionales para lectura de documentos
 try:
@@ -97,23 +194,14 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Autenticación API Key
-API_KEY = None
-if "GEMINI_API_KEY" in st.secrets:
-    API_KEY = st.secrets["GEMINI_API_KEY"]
-elif os.getenv("GEMINI_API_KEY"):
-    API_KEY = os.getenv("GEMINI_API_KEY")
-
 st.sidebar.header("⚙️ Panel de Control")
 
-if API_KEY:
-    st.sidebar.success("🔑 API Key vinculada.")
-else:
-    API_KEY = st.sidebar.text_input(
-        "API Key de Google Gemini:", 
-        type="password", 
-        help="Introduce la clave manualmente o configúrala en secretos."
-    )
+# Entrada manual de la API Key (Sin automatizaciones)
+API_KEY = st.sidebar.text_input(
+    "🔑 API Key de Google Gemini:", 
+    type="password", 
+    help="Introduce tu clave API manualmente aquí."
+)
 
 modelo_seleccionado = st.sidebar.selectbox(
     "Modelo Gemini:",
@@ -121,7 +209,7 @@ modelo_seleccionado = st.sidebar.selectbox(
     index=0
 )
 
-# NUEVO: Selector de comensales para escalar la receta
+# Selector de comensales para escalar la receta
 comensales_objetivo = st.sidebar.number_input(
     "👥 Número de comensales:",
     min_value=1,
@@ -147,7 +235,7 @@ st.subheader("📥 Entrada de Receta")
 entrada_principal = st.text_area(
     "Pega la URL de la receta o el texto completo:", 
     height=130, 
-    placeholder="https://www.ejemplo.com/receta\nO pega directamente el texto de la receta aquí..."
+    placeholder="[https://www.ejemplo.com/receta](https://www.ejemplo.com/receta)\nO pega directamente el texto de la receta aquí..."
 )
 
 with st.expander("📁 Adjuntar archivo (PDF, Word, PPT o Imagen)"):
@@ -426,7 +514,7 @@ elif archivo_multimodal:
 
 if st.button("🎬 GENERAR DIAGRAMA Y MARIDAJE"):
     if not API_KEY:
-        st.error("⚠️ Es necesaria una API Key de Google Gemini para procesar la receta.")
+        st.error("⚠️ Es necesaria una API Key de Google Gemini para procesar la receta. Introdúcela en el menú lateral.")
     elif not procesar_accion:
         st.warning("⚠️ Introduce una URL, un texto o adjunta un archivo antes de continuar.")
     else:
