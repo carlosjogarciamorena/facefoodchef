@@ -1,529 +1,365 @@
 import os
 import json
-import time
-from io import BytesIO
-import requests
-from bs4 import BeautifulSoup
+import pandas as pd
 import streamlit as st
-import streamlit.components.v1 as components
-from recipe_scrapers import scrape_me
+from PIL import Image
+from pypdf import PdfReader
+import docx
 from google import genai
 from google.genai import types
+from dotenv import load_dotenv
 
-# Cargar variables de entorno locales (.env)
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass
+# Cargar variables de entorno
+load_dotenv()
 
-# Importaciones opcionales para lectura de documentos
-try:
-    import docx
-    HAS_DOCX = True
-except ImportError:
-    HAS_DOCX = False
-
-try:
-    from pptx import Presentation
-    HAS_PPTX = True
-except ImportError:
-    HAS_PPTX = False
-
-# Configuración de página
+# ==========================================
+# 1. CONFIGURACIÓN DE LA PÁGINA Y ESTILOS
+# ==========================================
 st.set_page_config(
-    page_title="FaceFoodChef.com - Motor de Diagramas Culinarios", 
-    layout="wide", 
-    page_icon="🍳"
+    page_title="Traductor Multiformato de Recetas a Diagrama de Bloques",
+    page_icon="👨‍🍳",
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-# ESTILOS VISUALES - FONDO GRIS METÁLICO PROFESIONAL
-st.markdown("""
-    <style>
-    .stApp, .block-container, [data-testid="stSidebar"] {
-        background-color: #2C2F33 !important;
-        color: #E2E8F0 !important;
-        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    }
-    header, footer { visibility: hidden; }
+CSS_CUSTOM = """
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
     
-    .stTextArea textarea, .stTextInput input, .stSelectbox select, .stNumberInput input {
-        background-color: #36393F !important;
-        color: #ffffff !important;
-        border: 2px solid #4F545C !important;
-        border-radius: 6px !important;
-        font-size: 16px !important;
+    html, body, [class*="css"] {
+        font-family: 'Inter', sans-serif;
     }
-    .stTextArea textarea:focus, .stTextInput input:focus, .stNumberInput input:focus {
-        border-color: #EF4444 !important;
-        box-shadow: 0 0 10px rgba(239, 68, 68, 0.4) !important;
+    .main-header {
+        background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+        padding: 1.8rem 2rem;
+        border-radius: 12px;
+        color: white;
+        margin-bottom: 1.5rem;
+        border-bottom: 4px solid #F59E0B;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     }
+    .main-header h1 {
+        font-weight: 800;
+        font-size: 2.2rem;
+        margin: 0;
+        color: #F8FAFC;
+    }
+    .main-header p {
+        color: #94A3B8;
+        font-size: 1rem;
+        margin-top: 0.4rem;
+        margin-bottom: 0;
+    }
+    .chef-recommendation-card {
+        background-color: #FFFFFF;
+        border: 1px solid #E2E8F0;
+        border-left: 6px solid #D97706;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.2rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+    .critical-alert-card {
+        background-color: #FEF2F2;
+        border: 1px solid #FECACA;
+        border-left: 6px solid #EF4444;
+        border-radius: 8px;
+        padding: 1.2rem;
+        margin-bottom: 1rem;
+    }
+    .metric-container {
+        background-color: #F8FAFC;
+        border: 1px solid #E2E8F0;
+        border-radius: 8px;
+        padding: 1rem;
+        text-align: center;
+    }
+    .metric-value {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: #0F172A;
+    }
+    .metric-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #64748B;
+        font-weight: 600;
+    }
+</style>
+"""
+st.markdown(CSS_CUSTOM, unsafe_allow_html=True)
 
-    .stButton > button {
-        background-color: #EF4444 !important;
-        color: #ffffff !important;
-        font-weight: 800 !important;
-        font-size: 17px !important;
-        border: none !important;
-        border-radius: 6px !important;
-        padding: 14px 28px !important;
-        width: 100%;
-        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
-    }
-    .stButton > button:hover {
-        background-color: #dc2626 !important;
-    }
+# ==========================================
+# 2. PROMPT DE INGENIERÍA Y COCINA
+# ==========================================
+PROMPT_INGENIERIA_PROCESOS = (
+    "Eres un Chef Ejecutivo e Ingeniero de Procesos Industriales Gastronómicos.\n"
+    "Tu objetivo es convertir la receta facilitada en un Grafo Dirigido Acíclico (DAG) ejecutable.\n\n"
+    "DEBES DEVOLVER TU RESPUESTA EN UN ÚNICO BLOQUE JSON VÁLIDO CON LA SIGUIENTE ESTRUCTURA:\n\n"
+    "{\n"
+    '  "resumen_ejecutivo": {\n'
+    '    "nombre_plato": "Nombre del plato",\n'
+    '    "tiempo_total_estimado_min": 0,\n'
+    '    "tiempo_manos_a_la_obra_min": 0,\n'
+    '    "dificultad_tecnica": "Baja / Media / Alta / Profesional",\n'
+    '    "herramientas_clave": ["utensilio 1", "utensilio 2"]\n'
+    '  },\n'
+    '  "diagrama_mermaid": "Código Mermaid.js comenzando por graph TD...",\n'
+    '  "secuencia_pasos": [\n'
+    '    {\n'
+    '      "id": "A1",\n'
+    '      "fase": "Mise en Place / Preparación / Cocción / Emplatado",\n'
+    '      "accion": "Descripción de la acción",\n'
+    '      "ingredientes_involucrados": ["Ingrediente 1"],\n'
+    '      "tiempo_min": 10,\n'
+    '      "es_paralelo": true,\n'
+    '      "puede_hacerse_durante": "Mientras se fríe la patata",\n'
+    '      "temperatura_o_fuego": "Fuego medio / 180°C / N/A"\n'
+    '    }\n'
+    '  ],\n'
+    '  "recomendaciones_chef": {\n'
+    '    "tecnicas_clave": ["Consejo técnico 1", "Consejo técnico 2"],\n'
+    '    "puntos_criticos_alerta": ["Punto crítico a evitar 1"],\n'
+    '    "maridaje_sugerido": "Vino o bebida ideal",\n'
+    '    "sustituciones_posibles": ["Sustitución para alergias o falta de stock"]\n'
+    '  }\n'
+    '}\n\n'
+    "REGLAS DEL DIAGRAMA MERMAID:\n"
+    "1. Usa sintaxis `graph TD`.\n"
+    "2. Identifica ingredientes de entrada con nodos redondeados: `id([Ingrediente / Cantidad])`.\n"
+    "3. Identifica acciones de procesado con rectángulos: `id[Acción / Tiempo / Fuego]`.\n"
+    "4. Identifica puntos de decisión/control con rombos: `id{¿Verificación?}`.\n"
+    "5. Muestra claramente la convergencia de ingredientes en recipientes o mezclas con flechas conectadas.\n"
+    "6. Aplica estilos con `classDef` para dar colores a ingredientes, acciones, fuego y resultado final.\n"
+)
 
-    .stDownloadButton > button {
-        background-color: #36393F !important;
-        color: #ffffff !important;
-        border: 1px solid #EF4444 !important;
-        font-weight: 600 !important;
-        border-radius: 6px !important;
-        width: 100%;
-        padding: 10px;
-    }
-    .stDownloadButton > button:hover {
-        background-color: #EF4444 !important;
-        color: #ffffff !important;
-    }
+# ==========================================
+# 3. EXTRACCIÓN DE TEXTO SEGÚN FORMATO
+# ==========================================
+def extraer_contenido_archivo(uploaded_file):
+    """Lee el archivo subido y extrae texto o devuelve la imagen para multimodalidad."""
+    nombre = uploaded_file.name.lower()
+    
+    if nombre.endswith(".txt"):
+        return uploaded_file.read().decode("utf-8"), "texto"
+        
+    elif nombre.endswith(".pdf"):
+        reader = PdfReader(uploaded_file)
+        texto_completo = ""
+        for page in reader.pages:
+            texto_completo += page.extract_text() + "\n"
+        return texto_completo, "texto"
+        
+    elif nombre.endswith(".docx"):
+        doc = docx.Document(uploaded_file)
+        texto_completo = "\n".join([p.text for p in doc.paragraphs])
+        return texto_completo, "texto"
+        
+    elif nombre.endswith((".png", ".jpg", ".jpeg", ".webp")):
+        imagen = Image.open(uploaded_file)
+        return imagen, "imagen"
+        
+    else:
+        raise ValueError("Formato de archivo no soportado.")
 
-    .streamlit-expanderHeader {
-        background-color: #36393F !important;
-        color: #ffffff !important;
-        border-radius: 6px !important;
-        border: 1px solid #4F545C !important;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-# Autenticación API Key
-API_KEY = None
-if "GEMINI_API_KEY" in st.secrets:
-    API_KEY = st.secrets["GEMINI_API_KEY"]
-elif os.getenv("GEMINI_API_KEY"):
-    API_KEY = os.getenv("GEMINI_API_KEY")
-
-st.sidebar.header("⚙️ Panel de Control")
-
-if API_KEY:
-    st.sidebar.success("🔑 API Key vinculada.")
-else:
-    API_KEY = st.sidebar.text_input(
-        "API Key de Google Gemini:", 
-        type="password", 
-        help="Introduce la clave manualmente o configúrala en secretos."
+# ==========================================
+# 4. FUNCIÓN CON SDK OFFICIAL (google-genai)
+# ==========================================
+def procesar_receta_con_gemini(api_key: str, modelo_nombre: str, contenido, tipo_contenido: str, nivel_detalle: str):
+    """Llama a la API oficial de Google GenAI enviando datos de texto o imagen."""
+    client = genai.Client(api_key=api_key)
+    
+    instrucciones = (
+        PROMPT_INGENIERIA_PROCESOS +
+        "\n\nNIVEL DE DETALLE REQUERIDO: " + nivel_detalle
     )
+    
+    if tipo_contenido == "texto":
+        contents = [instrucciones, "\n\nRECETA A ANALIZAR:\n" + contenido]
+    else:
+        # Modo multimodal: pasa la imagen directamente al modelo Gemini 2.5/3.6
+        contents = [instrucciones, "\n\nRECETA EN IMAGEN:", contenido]
+    
+    response = client.models.generate_content(
+        model=modelo_nombre,
+        contents=contents,
+        config=types.GenerateContentConfig(
+            response_mime_type="application/json",
+            temperature=0.2,
+        ),
+    )
+    
+    return json.loads(response.text)
 
-modelo_seleccionado = st.sidebar.selectbox(
-    "Modelo Gemini:",
-    options=["gemini-3.6-flash", "gemini-2.5-flash", "gemini-1.5-flash"],
+# ==========================================
+# 5. BARRA LATERAL
+# ==========================================
+st.sidebar.markdown("## 👨‍🍳 Control de Procesos")
+
+api_key_env = os.getenv("GEMINI_API_KEY", "")
+api_key_input = st.sidebar.text_input(
+    "API Key de Google Gemini:",
+    value=api_key_env,
+    type="password",
+    help="Consigue tu API Key en https://aistudio.google.com/"
+)
+
+modelo_opcion = st.sidebar.selectbox(
+    "Motor de Inteligencia Artificial:",
+    options=["gemini-2.5-flash", "gemini-2.5-pro"],
     index=0
 )
 
-# NUEVO: Selector de comensales para escalar la receta
-comensales_objetivo = st.sidebar.number_input(
-    "👥 Número de comensales:",
-    min_value=1,
-    max_value=100,
-    value=2,
-    step=1,
-    help="El sistema recalculará los ingredientes para este número de personas."
+st.sidebar.divider()
+st.sidebar.subheader("⚙️ Parámetros de Diagramación")
+nivel_detalle = st.sidebar.select_slider(
+    "Nivel de desglose técnico:",
+    options=["Básico (Consolidado)", "Estándar (Recomendado)", "Avanzado (Micro-pasos)"],
+    value="Estándar (Recomendado)"
 )
 
-st.sidebar.markdown("---")
-st.sidebar.markdown("""
-### 🎬 FaceFoodChef.com
-- **Métricas:** Recálculo para comensales (g, ml, ud)
-- **Estructura:** Bloques unificados con temporizadores
-- **Maridaje:** Sugerencia automatizada (Vino/Cerveza)
-""")
+# ==========================================
+# 6. INTERFAZ PRINCIPAL
+# ==========================================
+st.markdown("""
+<div class="main-header">
+    <h1>👨‍🍳 Kitchen Process Studio</h1>
+    <p>Traductor Inteligente de Recetas a Diagramas de Flujo Ejecutables (Soporta TXT, PDF, DOCX e Imágenes)</p>
+</div>
+""", unsafe_allow_html=True)
 
-st.markdown("<h1 style='text-align: center; color: #EF4444; font-weight: 800; letter-spacing: -1px; margin-bottom: 0;'>FACEFOODCHEF <span style='font-size: 16px; background: #36393F; color: #fff; padding: 4px 10px; border-radius: 4px; vertical-align: middle; border: 1px solid #4F545C;'>PRO</span></h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #A0AEC0; font-size: 15px; margin-bottom: 30px;'>Diagramas de cocina escalables + Sommelier Virtual</p>", unsafe_allow_html=True)
+col_izq, col_der = st.columns([1, 1.15])
 
-# Entrada de Datos
-st.subheader("📥 Entrada de Receta")
-entrada_principal = st.text_area(
-    "Pega la URL de la receta o el texto completo:", 
-    height=130, 
-    placeholder="https://www.ejemplo.com/receta\nO pega directamente el texto de la receta aquí..."
-)
-
-with st.expander("📁 Adjuntar archivo (PDF, Word, PPT o Imagen)"):
-    archivo_subido = st.file_uploader("Subir documento:", type=["pdf", "docx", "pptx", "txt", "jpg", "jpeg", "png", "webp"])
-
-receta_texto_input = ""
-url_origen_detectada = ""
-archivo_multimodal = None
-tipo_multimodal = None
-
-if entrada_principal.strip():
-    texto_limpio = entrada_principal.strip()
-    if texto_limpio.startswith("http://") or texto_limpio.startswith("https://"):
-        url_origen_detectada = texto_limpio
+with col_izq:
+    st.subheader("📝 Entrada de Receta")
+    
+    opcion_entrada = st.radio("Selecciona origen de la receta:", ["Subir Archivo (PDF, DOCX, TXT, PNG/JPG)", "Pegar Texto Manualmente"])
+    
+    receta_contenido = None
+    tipo_entrada = "texto"
+    
+    if opcion_entrada == "Subir Archivo (PDF, DOCX, TXT, PNG/JPG)":
+        archivo_subido = st.file_uploader(
+            "Arrastra o selecciona el archivo de la receta:",
+            type=["txt", "pdf", "docx", "png", "jpg", "jpeg", "webp"]
+        )
+        if archivo_subido is not None:
+            try:
+                receta_contenido, tipo_entrada = extraer_contenido_archivo(archivo_subido)
+                if tipo_entrada == "texto":
+                    st.text_area("Texto extraído del documento:", value=receta_contenido, height=250, disabled=True)
+                else:
+                    st.image(receta_contenido, caption="Vista previa de la receta subida", use_column_width=True)
+            except Exception as e:
+                st.error(f"Error al leer el archivo: {e}")
     else:
-        receta_texto_input = texto_limpio
+        receta_input = st.text_area(
+            "Pega aquí el texto de la receta:",
+            height=350,
+            placeholder="Ejemplo:\n- 2 huevos\n- 100g de harina...\n\nPasos:\n1. Mezclar ingredientes..."
+        )
+        if receta_input.strip():
+            receta_contenido = receta_input
+            tipo_entrada = "texto"
+            
+    btn_procesar = st.button("🚀 Generar Diagrama y Estudio de Cocina", use_container_width=True, type="primary")
 
-if archivo_subido:
-    ext = archivo_subido.name.split('.')[-1].lower()
-    if ext == "txt":
-        receta_texto_input = archivo_subido.getvalue().decode("utf-8")
-    elif ext == "docx" and HAS_DOCX:
-        doc = docx.Document(BytesIO(archivo_subido.getvalue()))
-        receta_texto_input = "\n".join([p.text for p in doc.paragraphs if p.text.strip()])
-    elif ext == "pptx" and HAS_PPTX:
-        prs = Presentation(BytesIO(archivo_subido.getvalue()))
-        receta_texto_input = "\n".join([p.text for slide in prs.slides for shape in slide.shapes if shape.has_text_frame for p in shape.text_frame.paragraphs])
-    elif ext in ["pdf", "jpg", "jpeg", "png", "webp"]:
-        archivo_multimodal = archivo_subido.getvalue()
-        tipo_multimodal = "application/pdf" if ext == "pdf" else archivo_subido.type
-
-def extraer_texto_de_url(url):
-    url = url.strip()
-    try:
-        scraper = scrape_me(url)
-        texto = f"Receta de {url}:\nIngredientes: {', '.join(scraper.ingredients())}\nPasos:\n{'\n'.join(scraper.instructions())}"
-        return texto, url
-    except Exception:
-        try:
-            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
-            response = requests.get(url, headers=headers, timeout=10)
-            response.raise_for_status()
-            soup = BeautifulSoup(response.text, 'html.parser')
-            for element in soup(["script", "style", "nav", "footer", "header", "aside"]):
-                element.decompose()
-            return f"Contenido de {url}:\n{soup.get_text(separator='\n', strip=True)}", url
-        except Exception as e:
-            raise Exception(f"Error al procesar la URL: {e}")
-
-def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_previos, bloques_proceso, recomendaciones, texto_voz, maridaje, comensales):
+with col_der:
+    st.subheader("📊 Panel de Ejecución y Visualización")
     
-    html_header = f"""
-    <div style="background: linear-gradient(180deg, #36393F 0%, #2F3136 100%); border-radius: 8px; padding: 30px; text-align: center; margin-bottom: 24px; border-left: 6px solid #EF4444; border: 1px solid #4F545C; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-        <span style="font-size: 11px; font-weight: 800; color: #FFFFFF; text-transform: uppercase; letter-spacing: 2px; background: #EF4444; padding: 6px 14px; border-radius: 4px; display: inline-block;">Diagrama de Producción Culinaria</span>
-        <h1 style="color: #ffffff; font-size: 30px; margin: 16px 0 8px 0; font-weight: 800;">{nombre_receta}</h1>
-        <p style="color: #A0AEC0; font-size: 14px; margin: 0;">Calculado y escalado para <b>{comensales} comensales</b>.</p>
-    </div>
-    """
-
-    html_ing = f"""
-    <div style="background-color: #36393F; border: 1px solid #4F545C; border-radius: 8px; padding: 22px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
-        <h3 style="color: #EF4444; margin-top: 0; font-size: 18px; font-weight: 700;">🛒 1. Ingredientes ({comensales} pax)</h3>
-        <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px;">
-    """
-    for ing in ingredientes:
-        html_ing += f"<span style='background-color: #2F3136; color: #E2E8F0; padding: 8px 16px; border-radius: 20px; font-size: 13px; border: 1px solid #5C626B; font-weight: 500;'> {ing}</span>"
-    html_ing += "</div></div>"
-
-    html_prev = """
-    <div style="background-color: #36393F; border: 1px solid #4F545C; border-radius: 8px; padding: 22px; margin-bottom: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
-        <h3 style="color: #FBBF24; margin-top: 0; font-size: 18px; font-weight: 700;">🔪 2. Mise en Place (Preparación Previa)</h3>
-        <ul style='margin: 12px 0 0 0; padding-left: 20px; color: #CBD5E0; font-size: 14px; line-height: 1.8;'>
-    """
-    for prep in pasos_previos:
-        html_prev += f"<li>{prep}</li>"
-    html_prev += "</ul></div>"
-
-    html_diagrama = """
-    <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-        <h3 style="color: #ffffff; font-size: 20px; font-weight: 800; margin-bottom: 22px;">3. Diagrama de Ejecución</h3>
-    """
-    
-    BG_BLOQUE = "#36393F"
-    BORDER_BLOQUE = "#4F545C"
-    
-    for i, bloque in enumerate(bloques_proceso):
-        tipo = bloque.get("tipo", "secuencial")
-        duracion_min = bloque.get("duracion_minutos", 5)
-        utensilios = bloque.get("utensilios", [])
-        utensilios_str = ", ".join(utensilios) if utensilios else "Sin utensilios específicos"
-        
-        if tipo == "paralelo":
-            ramas = bloque.get("ramas", [])
-            html_diagrama += '<div style="display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap;">'
-            for idx, rama in enumerate(ramas):
-                nombre_rama = rama.get("nombre", f"Rama {idx+1}").upper()
-                accion = rama.get("accion", "")
-                tiempo = rama.get("tiempo", "")
-                temp = rama.get("temperatura", "")
-                utensilios_rama = ", ".join(rama.get("utensilios", []))
-                dur_rama = rama.get("duracion_minutos", 5)
-                timer_id = f"timer_par_{i}_{idx}"
-                
-                color_franja_paralelo = "#F59E0B"
-                
-                html_diagrama += f"""
-                <div style="flex: 1; min-width: 280px; background-color: {BG_BLOQUE}; border: 1px solid {BORDER_BLOQUE}; border-left: 6px solid {color_franja_paralelo}; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-                    <div style="margin-bottom: 12px;"><span style="font-size: 11px; font-weight: 800; color: #FFFFFF; background-color: {color_franja_paralelo}; padding: 5px 12px; border-radius: 4px; display: inline-block; text-transform: uppercase;">⚙️ PARALELO: {nombre_rama}</span></div>
-                    <div style="font-size: 15px; font-weight: 600; color: #ffffff; margin: 12px 0;">{accion}</div>
-                    <div style="font-size: 12px; color: #A0AEC0; margin-bottom: 14px; background: rgba(0,0,0,0.3); padding: 6px 10px; border-radius: 4px;">🛠️ <b>Utensilios:</b> {utensilios_rama}</div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.4); padding: 10px 14px; border-radius: 6px;">
-                        <div style="font-size: 13px; color: #ffffff;">⏱️ <span id="{timer_id}" style="font-weight: bold; color: #FBBF24;">{tiempo}</span> | 🌡️ {temp}</div>
-                        <button onclick="iniciarTemporizador('{timer_id}', {dur_rama})" style="background-color: #EF4444; color: white; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 700;">⏳ Iniciar</button>
-                    </div>
-                </div>
-                """
-            html_diagrama += '</div>'
+    if btn_procesar:
+        if not api_key_input:
+            st.error("⚠️ Introduce tu API Key de Gemini en el panel lateral para continuar.")
+        elif receta_contenido is None:
+            st.warning("⚠️ Debes proporcionar una receta (subiendo un archivo o pegando texto).")
         else:
-            es_convergencia = tipo == "convergencia"
-            left_border = "#10B981" if es_convergencia else "#EF4444"
-            badge_bg = "#10B981" if es_convergencia else "#EF4444"
-            etiqueta = "CONVERGENCIA / UNIÓN" if es_convergencia else f"PASO {i+1}"
-            timer_id = f"timer_seq_{i}"
+            with st.spinner("👨‍🍳 Procesando el documento, estructurando los pasos y generando el diagrama..."):
+                try:
+                    resultado = procesar_receta_con_gemini(
+                        api_key=api_key_input,
+                        modelo_nombre=modelo_opcion,
+                        contenido=receta_contenido,
+                        tipo_contenido=tipo_entrada,
+                        nivel_detalle=nivel_detalle
+                    )
+                    st.session_state["resultado_gastronomico"] = resultado
+                    st.success("¡Diagrama y análisis técnico generados con éxito!")
+                except Exception as e:
+                    st.error(f"❌ Error durante el análisis del proceso: {str(e)}")
 
-            html_diagrama += f"""
-            <div style="background-color: {BG_BLOQUE}; border: 1px solid {BORDER_BLOQUE}; border-left: 6px solid {left_border}; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-                <div style="margin-bottom: 12px;"><span style="font-size: 11px; font-weight: 800; color: #FFFFFF; background-color: {badge_bg}; padding: 5px 12px; border-radius: 4px; display: inline-block; text-transform: uppercase;">{etiqueta}</span></div>
-                <div style="font-size: 15px; font-weight: 600; color: #ffffff; margin: 12px 0;">{bloque.get('accion')}</div>
-                <div style="font-size: 12px; color: #A0AEC0; margin-bottom: 14px; background: rgba(0,0,0,0.3); padding: 6px 10px; border-radius: 4px;">🛠️ <b>Utensilios:</b> {utensilios_str}</div>
-                <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.4); padding: 10px 14px; border-radius: 6px;">
-                    <div style="font-size: 13px; color: #ffffff;">⏱️ <span id="{timer_id}" style="font-weight: bold; color: #FBBF24;">{bloque.get('tiempo')}</span> | 🌡️ {bloque.get('temperatura')}</div>
-                    <button onclick="iniciarTemporizador('{timer_id}', {duracion_min})" style="background-color: #EF4444; color: white; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 700;">⏳ Iniciar</button>
-                </div>
-            </div>
-            """
+    if "resultado_gastronomico" in st.session_state:
+        res = st.session_state["resultado_gastronomico"]
+        
+        # Tarjetas métricas
+        resumen = res.get("resumen_ejecutivo", {})
+        m1, m2, m3 = st.columns(3)
+        with m1:
+            st.markdown(f'<div class="metric-container"><div class="metric-value">{resumen.get("tiempo_total_estimado_min", "N/A")} min</div><div class="metric-label">Tiempo Total</div></div>', unsafe_allow_html=True)
+        with m2:
+            st.markdown(f'<div class="metric-container"><div class="metric-value">{resumen.get("tiempo_manos_a_la_obra_min", "N/A")} min</div><div class="metric-label">Tiempo Activo</div></div>', unsafe_allow_html=True)
+        with m3:
+            st.markdown(f'<div class="metric-container"><div class="metric-value">{resumen.get("dificultad_tecnica", "Media")}</div><div class="metric-label">Dificultad</div></div>', unsafe_allow_html=True)
             
-        if i < len(bloques_proceso) - 1:
-            html_diagrama += """
-            <div style="display: flex; flex-direction: column; align-items: center; margin: 6px 0 20px 0;">
-                <div style="width: 4px; height: 16px; background: #ffffff; box-shadow: 0 0 8px rgba(255,255,255,0.6);"></div>
-                <div style="background-color: #ffffff; color: #2C2F33; border: 2px solid #ffffff; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 900; box-shadow: 0 0 12px rgba(255,255,255,0.8);">👇</div>
-                <div style="width: 4px; height: 16px; background: #ffffff; box-shadow: 0 0 8px rgba(255,255,255,0.6);"></div>
-            </div>
-            """
-    
-    html_diagrama += "</div>"
-
-    html_recom = """
-    <div style="background-color: #36393F; border: 1px solid #4F545C; border-left: 6px solid #FBBF24; border-radius: 8px; padding: 22px; margin-top: 24px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-        <h3 style="color: #FBBF24; margin-top: 0; font-size: 18px; font-weight: 700;">💡 4. Recomendaciones del Chef</h3>
-        <ul style='margin: 12px 0 0 0; padding-left: 20px; color: #CBD5E0; font-size: 14px; line-height: 1.8;'>
-    """
-    for rec in recomendaciones:
-        html_recom += f"<li>{rec}</li>"
-    html_recom += "</ul></div>"
-
-    html_maridaje = f"""
-    <div style="background-color: #36393F; border: 1px solid #4F545C; border-left: 6px solid #9D4EDD; border-radius: 8px; padding: 22px; margin-top: 20px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-        <h3 style="color: #9D4EDD; margin-top: 0; font-size: 18px; font-weight: 700;">🍷 5. Sommelier Virtual (Maridaje)</h3>
-        <div style="margin-top: 12px; color: #CBD5E0; font-size: 15px; line-height: 1.6;">
-            <p style="margin-bottom: 12px;"><b>🍇 Sugerencia de Vino:</b><br>{maridaje.get('vino', 'Sin sugerencia disponible.')}</p>
-            <p><b>🍺 Sugerencia de Cerveza:</b><br>{maridaje.get('cerveza', 'Sin sugerencia disponible.')}</p>
-        </div>
-    </div>
-    """
-
-    origen_html = f'<a href="{origen_receta}" target="_blank" style="color: #EF4444; text-decoration: underline;">{origen_receta}</a>' if origen_receta.startswith("http") else f'<span style="color: #A0AEC0;">{origen_receta}</span>'
-    texto_voz_seguro = json.dumps(texto_voz)
-
-    return f"""
-    <!DOCTYPE html>
-    <html lang="es">
-    <head>
-        <meta charset="utf-8">
-        <style>
-            body {{ background-color: #2C2F33; color: #E2E8F0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 16px; margin: 0; }}
-            .container-hub {{ max-width: 900px; margin: auto; }}
-            .widget-box {{ background-color: #36393F; border: 1px solid #4F545C; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }}
-            .btn-control {{ background-color: #EF4444; color: white; border: none; padding: 10px 22px; font-size: 13px; font-weight: 700; border-radius: 4px; cursor: pointer; margin: 4px; }}
-            .btn-stop {{ background-color: #4F545C; color: #ffffff; }}
-        </style>
-    </head>
-    <body>
-        <div class="container-hub">
-            {html_header}
-            <div class="widget-box">
-                <p style="color: #A0AEC0; font-size: 13px; margin: 0 0 12px 0; font-weight: 600;">👨‍🍳💬 Asistente de Voz de Cocina</p>
-                <button id="btnVoz" class="btn-control" onclick="reproducir(this)">🎧 Asistente Manos Libres</button>
-                <button class="btn-control btn-stop" onclick="detener()">🔇 Oído Cocina (Silenciar)</button>
-            </div>
-            {html_ing}
-            {html_prev}
-            {html_diagrama}
-            {html_recom}
-            {html_maridaje}
-            <div style="text-align: center; color: #718096; font-size: 13px; margin-top: 35px; border-top: 1px solid #4F545C; padding-top: 20px;">
-                🎬 <b>FaceFoodChef.com</b> | Fuente: {origen_html}
-            </div>
-        </div>
-        <script>
-            const textoVoz = {texto_voz_seguro};
-            let currentUtterance = null;
-
-            function reproducir(btn) {{
-                if (!('speechSynthesis' in window)) return alert("Sintetizador no soportado.");
-                window.speechSynthesis.cancel();
-                currentUtterance = new SpeechSynthesisUtterance(textoVoz);
-                currentUtterance.lang = 'es-ES';
-                currentUtterance.rate = 0.95;
-                btn.innerText = "🔊 Reproduciendo Guía...";
-                currentUtterance.onend = () => btn.innerText = "🎧 Asistente Manos Libres";
-                currentUtterance.onerror = () => btn.innerText = "🎧 Asistente Manos Libres";
-                window.speechSynthesis.speak(currentUtterance);
-            }}
-
-            function detener() {{
-                if ('speechSynthesis' in window) {{
-                    window.speechSynthesis.cancel();
-                    const btn = document.getElementById('btnVoz');
-                    if (btn) btn.innerText = "🎧 Asistente Manos Libres";
-                }}
-            }}
-
-            function iniciarTemporizador(elementId, minutos) {{
-                const elemento = document.getElementById(elementId);
-                let segundosRestantes = minutos * 60;
-                if (window[elementId + "_interval"]) clearInterval(window[elementId + "_interval"]);
-
-                window[elementId + "_interval"] = setInterval(() => {{
-                    if (segundosRestantes <= 0) {{
-                        clearInterval(window[elementId + "_interval"]);
-                        elemento.innerText = "¡TIEMPO CUMPLIDO! ⏰";
-                        sonarAlerta();
-                    }} else {{
-                        segundosRestantes--;
-                        const m = Math.floor(segundosRestantes / 60);
-                        const s = segundosRestantes % 60;
-                        elemento.innerText = `${{m}}m ${{s < 10 ? '0' : ''}}${{s}}s`;
-                    }}
-                }}, 1000);
-            }}
-
-            function sonarAlerta() {{
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const oscillator = audioCtx.createOscillator();
-                const gainNode = audioCtx.createGain();
-                oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime);
-                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                oscillator.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-                oscillator.start();
-                setTimeout(() => {{ oscillator.stop(); }}, 1200);
-            }}
-        </script>
-    </body>
-    </html>
-    """
-
-# Procesamiento principal
-procesar_accion = False
-contenido_ia = None
-
-if url_origen_detectada:
-    try:
-        with st.spinner("🌐 Obteniendo datos de la URL..."):
-            contenido_ia, url_origen_detectada = extraer_texto_de_url(url_origen_detectada)
-            procesar_accion = True
-    except Exception as e:
-        st.error(f"{e}")
-elif receta_texto_input:
-    contenido_ia = receta_texto_input
-    procesar_accion = True
-elif archivo_multimodal:
-    procesar_accion = True
-
-if st.button("🎬 GENERAR DIAGRAMA Y MARIDAJE"):
-    if not API_KEY:
-        st.error("⚠️ Es necesaria una API Key de Google Gemini para procesar la receta.")
-    elif not procesar_accion:
-        st.warning("⚠️ Introduce una URL, un texto o adjunta un archivo antes de continuar.")
-    else:
-        try:
-            client = genai.Client(api_key=API_KEY)
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        # Pestañas principales
+        tab_diagrama, tab_secuencia, tab_chef, tab_codigo = st.tabs([
+            "📌 Diagrama de Flujo (Mermaid)",
+            "📋 Secuencia de Pasos Paralelos",
+            "👨‍🍳 Recomendaciones del Chef",
+            "💻 Código Fuente Mermaid"
+        ])
+        
+        with tab_diagrama:
+            st.markdown("#### Grafo Dirigido Ejecutable de la Receta")
+            st.caption("💡 Sigue las flechas. Los bloques paralelos muestran tareas simultáneas.")
             
-            prompt_sistema = f"""
-            Eres un experto en gastronomía, sommelier y programador de flujos de trabajo en cocina. 
-            Transforma la siguiente receta en un esquema estructurado JSON para renderizar un diagrama de bloques técnico y recomendar un maridaje.
-
-            ¡IMPORTANTE! El usuario requiere que la receta sea para {comensales_objetivo} COMENSALES. 
-            Debes ajustar matemáticamente las cantidades de la lista de 'ingredientes' para que correspondan exactamente a {comensales_objetivo} raciones. Si la receta original no indica raciones, asume que era para 2 personas y escala desde ahí.
-
-            REGLAS ESTRICTAS:
-            1. Devuelve EXCLUSIVAMENTE un JSON válido sin marcas ni textos adicionales fuera del JSON.
-            2. 'ingredientes': Unidades métricas exactas (g, ml, ud) recalculadas para {comensales_objetivo} comensales.
-            3. 'temperatura': Grados Celsius (°C).
-            4. 'origen_receta': Asigna exactamente ({url_origen_detectada if url_origen_detectada else 'Texto/Archivo aportado por el usuario'}).
-            5. 'bloques_proceso': Asigna 'paralelo' para acciones simultáneas y 'convergencia' para las uniones.
-            6. 'maridaje': Analiza el perfil organoléptico y sugiere un vino y una cerveza con justificación técnica.
-
-            JSON Schema esperado:
-            {{
-              "nombre_receta": "String",
-              "origen_receta": "String",
-              "ingredientes": ["400 g de harina", "10 g de sal"],
-              "pasos_previos": ["Mise en place..."],
-              "bloques_proceso": [
-                {{"tipo": "secuencial", "accion": "Paso 1", "utensilios": ["Olla"], "tiempo": "5 min", "duracion_minutos": 5, "temperatura": "100°C"}},
-                {{
-                  "tipo": "paralelo",
-                  "ramas": [
-                    {{"nombre": "Sartén 1", "accion": "Sofreír...", "utensilios": ["Sartén"], "tiempo": "10 min", "duracion_minutos": 10, "temperatura": "90°C"}},
-                    {{"nombre": "Olla 2", "accion": "Cocer...", "utensilios": ["Olla"], "tiempo": "8 min", "duracion_minutos": 8, "temperatura": "100°C"}}
-                  ]
-                }},
-                {{"tipo": "convergencia", "accion": "Unir mezclas", "utensilios": ["Sartén grande"], "tiempo": "2 min", "duracion_minutos": 2, "temperatura": "80°C"}}
-              ],
-              "recomendaciones": ["Tip 1"],
-              "texto_voz": "Texto descriptivo completo de la receta",
-              "maridaje": {{
-                "vino": "Recomendación de vino y justificación",
-                "cerveza": "Recomendación de cerveza y justificación"
-              }}
-            }}
-            """
-
-            contents_payload = [prompt_sistema]
-            if archivo_multimodal:
-                contents_payload.append(types.Part.from_bytes(data=archivo_multimodal, mime_type=tipo_multimodal))
-                contents_payload.append(f"Analiza el archivo adjunto para extraer la receta, escalar a {comensales_objetivo} comensales y recomendar maridaje.")
+            codigo_mermaid = res.get("diagrama_mermaid", "")
+            try:
+                st.mermaid(codigo_mermaid)
+            except Exception:
+                st.code(codigo_mermaid, language="mermaid")
+                
+        with tab_secuencia:
+            st.markdown("#### Desglose Técnico de Tareas")
+            pasos = res.get("secuencia_pasos", [])
+            if pasos:
+                df_pasos = pd.DataFrame(pasos)
+                st.dataframe(df_pasos, use_container_width=True)
             else:
-                contents_payload.append(f"Receta:\n{contenido_ia}")
-
-            with st.spinner(f"⚙️ Procesando diagrama (Escalando a {comensales_objetivo} pax) y sommelier con {modelo_seleccionado}..."):
-                response = client.models.generate_content(
-                    model=modelo_seleccionado,
-                    contents=contents_payload,
-                    config=types.GenerateContentConfig(
-                        response_mime_type="application/json",
-                        temperature=0.1
-                    ),
-                )
-
-            if response:
-                texto_respuesta = response.text.strip()
-                if texto_respuesta.startswith("```json"):
-                    texto_respuesta = texto_respuesta[7:]
-                elif texto_respuesta.startswith("```"):
-                    texto_respuesta = texto_respuesta[3:]
-                if texto_respuesta.endswith("```"):
-                    texto_respuesta = texto_respuesta[:-3]
+                st.info("No se devolvió desglose en formato tabla.")
                 
-                datos = json.loads(texto_respuesta.strip())
-                origen_final = url_origen_detectada if url_origen_detectada else datos.get("origen_receta", "Texto aportado por el usuario")
-
-                html_final = generar_html_dashboard(
-                    datos.get("nombre_receta", "Receta Culinaria Pro"),
-                    origen_final,
-                    datos.get("ingredientes", []),
-                    datos.get("pasos_previos", []),
-                    datos.get("bloques_proceso", []),
-                    datos.get("recomendaciones", []),
-                    datos.get("texto_voz", ""),
-                    datos.get("maridaje", {}),
-                    comensales_objetivo
-                )
-                
-                st.markdown("<br>", unsafe_allow_html=True)
-                st.download_button(
-                    label="📥 Descargar Diagrama HTML Autónomo",
-                    data=html_final,
-                    file_name="diagrama_facefoodchef_pro.html",
-                    mime="text/html"
-                )
-                
-                components.html(html_final, height=1450, scrolling=True)
-                
-        except Exception as e:
-            st.error(f"Error durante el procesamiento: {e}")
+        with tab_chef:
+            chef_data = res.get("recomendaciones_chef", {})
+            
+            st.markdown('<div class="chef-recommendation-card">', unsafe_allow_html=True)
+            st.markdown("### 🎓 Técnicas Clave de Cocina")
+            for tec in chef_data.get("tecnicas_clave", []):
+                st.markdown(f"* **{tec}**")
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+            st.markdown('<div class="critical-alert-card">', unsafe_allow_html=True)
+            st.markdown("### ⚠️ Alertas y Puntos Críticos")
+            for alt in chef_data.get("puntos_criticos_alerta", []):
+                st.markdown(f"* {alt}")
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+            col_m1, col_m2 = st.columns(2)
+            with col_m1:
+                st.markdown("#### 🍷 Maridaje Recomendado")
+                st.write(chef_data.get("maridaje_sugerido", "No especificado"))
+            with col_m2:
+                st.markdown("#### 🔄 Sustituciones de Ingredientes")
+                for sust in chef_data.get("sustituciones_posibles", []):
+                    st.markdown(f"* {sust}")
+                    
+        with tab_codigo:
+            st.markdown("#### Código Fuente .mmd")
+            st.code(res.get("diagrama_mermaid", ""), language="mermaid")
+            st.download_button(
+                label="📥 Descargar Diagrama (.mmd)",
+                data=res.get("diagrama_mermaid", ""),
+                file_name="diagrama_receta.mmd",
+                mime="text/plain"
+            )
