@@ -2,8 +2,6 @@ streamlit>=1.35.0
 google-genai>=0.1.0
 python-dotenv>=1.0.0
 pandas>=2.0.0
-
-# Procesamiento de documentos de texto e imágenes
 pypdf>=4.0.0
 python-docx>=1.1.0
 Pillow>=10.0.0
