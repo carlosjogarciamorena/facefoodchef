@@ -4,10 +4,9 @@ import requests
 from bs4 import BeautifulSoup
 import streamlit as st
 from recipe_scrapers import scrape_me
-from google import genai
-from google.genai import types
+import google.generativeai as genai
 
-# Importaciones opcionales para lectura de documentos locales
+# Importaciones opcionales para lectura de documentos
 try:
     import docx
     HAS_DOCX = True
@@ -20,14 +19,14 @@ try:
 except ImportError:
     HAS_PPTX = False
 
-# Configuración de página de Streamlit
+# Configuración de página
 st.set_page_config(
     page_title="FaceFoodChef.com - Motor de Diagramas Culinarios", 
     layout="wide", 
     page_icon="🍳"
 )
 
-# ESTILOS VISUALES - DISEÑO PROFESIONAL
+# ESTILOS VISUALES
 st.markdown("""
     <style>
     .stApp, .block-container, [data-testid="stSidebar"] {
@@ -73,7 +72,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Panel de Control Lateral
+# Panel de Control
 st.sidebar.header("⚙️ Panel de Control")
 
 API_KEY = st.sidebar.text_input(
@@ -84,7 +83,7 @@ API_KEY = st.sidebar.text_input(
 
 modelo_seleccionado = st.sidebar.selectbox(
     "Modelo Gemini:",
-    options=["gemini-2.5-flash", "gemini-1.5-flash"],
+    options=["gemini-1.5-flash", "gemini-1.5-pro"],
     index=0
 )
 
@@ -93,21 +92,19 @@ comensales_objetivo = st.sidebar.number_input(
     min_value=1,
     max_value=100,
     value=2,
-    step=1,
-    help="El sistema recalculará automáticamente las proporciones de los ingredientes."
+    step=1
 )
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("""
 ### 🎬 FaceFoodChef.com
 - **Métricas:** Escalado adaptativo (g, ml, ud)
-- **Estructura:** Flujos secuenciales, paralelos y de convergencia
-- **Sommelier:** Maridaje automático de vino y cerveza
+- **Estructura:** Flujos secuenciales y paralelos
+- **Sommelier:** Maridaje automático
 """)
 
-# Cabecera Principal
-st.markdown("<h1 style='text-align: center; color: #EF4444; font-weight: 800; letter-spacing: -1px; margin-bottom: 0;'>FACEFOODCHEF <span style='font-size: 16px; background: #36393F; color: #fff; padding: 4px 10px; border-radius: 4px; vertical-align: middle; border: 1px solid #4F545C;'>PRO</span></h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #A0AEC0; font-size: 15px; margin-bottom: 30px;'>Diagramas de flujo culinario y optimización de procesos de cocina</p>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: #EF4444; font-weight: 800; letter-spacing: -1px; margin-bottom: 0;'>FACEFOODCHEF <span style='font-size: 16px; background: #36393F; color: #fff; padding: 4px 10px; border-radius: 4px; border: 1px solid #4F545C;'>PRO</span></h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #A0AEC0; font-size: 15px; margin-bottom: 30px;'>Diagramas de cocina escalables + Sommelier Virtual</p>", unsafe_allow_html=True)
 
 # Entrada de Datos
 st.subheader("📥 Entrada de Receta")
@@ -117,12 +114,12 @@ entrada_principal = st.text_area(
     placeholder="https://www.ejemplo.com/receta\nO pega directamente el texto de la receta aquí..."
 )
 
-with st.expander("📁 Adjuntar archivo (PDF, Word, PPT o Imagen)"):
-    archivo_subido = st.file_uploader("Subir documento:", type=["pdf", "docx", "pptx", "txt", "jpg", "jpeg", "png", "webp"])
+with st.expander("📁 Adjuntar archivo (TXT, PDF, Word, PPT o Imagen)"):
+    archivo_subido = st.file_uploader("Subir documento:", type=["pdf", "docx", "pptx", "txt", "jpg", "jpeg", "png"])
 
 receta_texto_input = ""
 url_origen_detectada = ""
-archivo_multimodal = None
+datos_archivo = None
 
 if entrada_principal.strip():
     texto_limpio = entrada_principal.strip()
@@ -141,206 +138,145 @@ if archivo_subido:
     elif ext == "pptx" and HAS_PPTX:
         prs = Presentation(BytesIO(archivo_subido.getvalue()))
         receta_texto_input = "\n".join([p.text for slide in prs.slides for shape in slide.shapes if shape.has_text_frame for p in shape.text_frame.paragraphs])
-    elif ext in ["pdf", "jpg", "jpeg", "png", "webp"]:
-        archivo_multimodal = archivo_subido
+    else:
+        datos_archivo = {"mime_type": archivo_subido.type, "data": archivo_subido.getvalue()}
 
 def extraer_texto_de_url(url):
-    url = url.strip()
     try:
         scraper = scrape_me(url)
-        texto = f"Receta de {url}:\nIngredientes: {', '.join(scraper.ingredients())}\nPasos:\n{'\n'.join(scraper.instructions())}"
-        return texto, url
+        return f"Ingredientes: {', '.join(scraper.ingredients())}\nPasos:\n{'\n'.join(scraper.instructions())}", url
     except Exception:
-        try:
-            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
-            response = requests.get(url, headers=headers, timeout=10)
-            response.raise_for_status()
-            soup = BeautifulSoup(response.text, 'html.parser')
-            for element in soup(["script", "style", "nav", "footer", "header", "aside"]):
-                element.decompose()
-            return f"Contenido de {url}:\n{soup.get_text(separator='\n', strip=True)}", url
-        except Exception as e:
-            raise Exception(f"No se pudo extraer el contenido de la URL: {e}")
+        headers = {'User-Agent': 'Mozilla/5.0'}
+        response = requests.get(url, headers=headers, timeout=10)
+        soup = BeautifulSoup(response.text, 'html.parser')
+        for element in soup(["script", "style", "nav", "footer"]):
+            element.decompose()
+        return soup.get_text(separator='\n', strip=True), url
 
-def renderizar_dashboard_nativo(datos, comensales, origen_receta):
-    nombre = datos.get("nombre_receta", "Receta Culinaria Pro")
-    ingredientes = datos.get("ingredientes", [])
-    pasos_previos = datos.get("pasos_previos", [])
-    bloques_proceso = datos.get("bloques_proceso", [])
-    recomendaciones = datos.get("recomendaciones", [])
-    maridaje = datos.get("maridaje", {})
-
+def renderizar_dashboard(datos, comensales, origen):
     st.markdown(f"""
     <div style="background: linear-gradient(180deg, #36393F 0%, #2F3136 100%); border-radius: 8px; padding: 25px; text-align: center; margin-bottom: 20px; border-left: 6px solid #EF4444; border: 1px solid #4F545C;">
-        <span style="font-size: 11px; font-weight: 800; color: #FFFFFF; text-transform: uppercase; letter-spacing: 2px; background: #EF4444; padding: 5px 12px; border-radius: 4px;">Diagrama de Producción Culinaria</span>
-        <h2 style="color: #ffffff; margin: 12px 0 6px 0; font-weight: 800;">{nombre}</h2>
-        <p style="color: #A0AEC0; font-size: 14px; margin: 0;">Calculado y escalado para <b>{comensales} comensales</b>.</p>
+        <h2 style="color: #ffffff; margin: 0;">{datos.get("nombre_receta", "Receta")}</h2>
+        <p style="color: #A0AEC0; font-size: 14px; margin: 5px 0 0 0;">Escalado para <b>{comensales} comensales</b>.</p>
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown(f"### 🛒 1. Ingredientes ({comensales} pax)")
-    cols_ing = st.columns(2)
-    for idx, ing in enumerate(ingredientes):
-        cols_ing[idx % 2].markdown(f"- {ing}")
-
-    if pasos_previos:
-        st.markdown("### 🔪 2. Mise en Place (Preparación Previa)")
-        for prev in pasos_previos:
-            st.markdown(f"- {prev}")
+    st.markdown("### 🛒 1. Ingredientes")
+    for ing in datos.get("ingredientes", []):
+        st.markdown(f"- {ing}")
 
     st.markdown("### 3. Diagrama de Ejecución")
-    for i, bloque in enumerate(bloques_proceso):
+    for i, bloque in enumerate(datos.get("bloques_proceso", [])):
         tipo = bloque.get("tipo", "secuencial")
-        utensilios_str = ", ".join(bloque.get("utensilios", [])) or "Sin utensilios específicos"
         
         if tipo == "paralelo":
             st.markdown("#### ⚙️ Bloque en Paralelo")
             ramas = bloque.get("ramas", [])
-            cols_ramas = st.columns(len(ramas) if ramas else 1)
-            for r_idx, rama in enumerate(ramas):
-                with cols_ramas[r_idx]:
+            cols = st.columns(len(ramas) if ramas else 1)
+            for idx, rama in enumerate(ramas):
+                with cols[idx]:
                     st.markdown(f"""
-                    <div style="background-color: #36393F; border: 1px solid #4F545C; border-left: 5px solid #F59E0B; border-radius: 6px; padding: 15px; margin-bottom: 10px;">
-                        <b style="color: #F59E0B;">{rama.get('nombre', f'Rama {r_idx+1}')}</b><br>
-                        <p style="margin: 8px 0; color: #E2E8F0; font-size: 14px;">{rama.get('accion')}</p>
-                        <hr style="border-color: #4F545C; margin: 8px 0;">
-                        <span style="font-size: 12px; color: #A0AEC0;">🛠️ {', '.join(rama.get('utensilios', []))}</span><br>
-                        <span style="font-size: 12px; color: #FBBF24;">⏱️ {rama.get('tiempo')} | 🌡️ {rama.get('temperatura')}</span>
+                    <div style="background-color: #36393F; border: 1px solid #4F545C; border-left: 5px solid #F59E0B; padding: 15px; border-radius: 6px;">
+                        <b style="color: #F59E0B;">{rama.get('nombre', 'Rama')}</b><br>
+                        <p style="margin: 8px 0; font-size: 14px;">{rama.get('accion')}</p>
+                        <span style="font-size: 12px; color: #A0AEC0;">⏱️ {rama.get('tiempo')} | 🌡️ {rama.get('temperatura')}</span>
                     </div>
                     """, unsafe_allow_html=True)
         else:
             es_conv = tipo == "convergencia"
-            b_color = "#10B981" if es_conv else "#EF4444"
-            etiqueta = "CONVERGENCIA / UNIÓN" if es_conv else f"PASO {i+1}"
+            color = "#10B981" if es_conv else "#EF4444"
+            etiqueta = "CONVERGENCIA" if es_conv else f"PASO {i+1}"
             
             st.markdown(f"""
-            <div style="background-color: #36393F; border: 1px solid #4F545C; border-left: 6px solid {b_color}; border-radius: 6px; padding: 16px; margin-bottom: 15px;">
-                <span style="font-size: 10px; font-weight: 800; background: {b_color}; color: white; padding: 3px 8px; border-radius: 3px; text-transform: uppercase;">{etiqueta}</span>
-                <p style="margin: 10px 0; font-size: 15px; font-weight: 600; color: #ffffff;">{bloque.get('accion')}</p>
-                <div style="font-size: 13px; color: #A0AEC0; background: rgba(0,0,0,0.2); padding: 6px 10px; border-radius: 4px;">
-                    🛠️ <b>Utensilios:</b> {utensilios_str} &nbsp;|&nbsp; ⏱️ <b style="color: #FBBF24;">{bloque.get('tiempo')}</b> &nbsp;|&nbsp; 🌡️ {bloque.get('temperatura')}
+            <div style="background-color: #36393F; border: 1px solid #4F545C; border-left: 6px solid {color}; padding: 16px; border-radius: 6px; margin-bottom: 15px;">
+                <span style="font-size: 10px; font-weight: bold; background: {color}; color: white; padding: 3px 8px; border-radius: 3px;">{etiqueta}</span>
+                <p style="margin: 10px 0; font-weight: bold;">{bloque.get('accion')}</p>
+                <div style="font-size: 13px; color: #A0AEC0;">
+                    🛠️ {", ".join(bloque.get('utensilios', []))} | ⏱️ {bloque.get('tiempo')} | 🌡️ {bloque.get('temperatura')}
                 </div>
             </div>
             """, unsafe_allow_html=True)
-            
-        if i < len(bloques_proceso) - 1:
-            st.markdown("<div style='text-align: center; color: #ffffff; font-size: 18px; margin: -5px 0 10px 0;'>⬇️</div>", unsafe_allow_html=True)
+        
+        if i < len(datos.get("bloques_proceso", [])) - 1:
+            st.markdown("<div style='text-align: center;'>⬇️</div>", unsafe_allow_html=True)
 
-    if recomendaciones:
-        st.markdown("### 💡 4. Recomendaciones del Chef")
-        for rec in recomendaciones:
-            st.markdown(f"- {rec}")
-
-    if maridaje:
-        st.markdown("### 🍷 5. Sommelier Virtual (Maridaje)")
-        col_vino, col_cerveza = st.columns(2)
-        with col_vino:
-            st.info(f"**🍇 Sugerencia de Vino:**\n\n{maridaje.get('vino', 'N/D')}")
-        with col_cerveza:
-            st.warning(f"**🍺 Sugerencia de Cerveza:**\n\n{maridaje.get('cerveza', 'N/D')}")
-
-    st.markdown("---")
-    st.markdown(f"<div style='text-align: center; color: #718096; font-size: 12px;'>🎬 <b>FaceFoodChef.com</b> | Fuente: {origen_receta}</div>", unsafe_allow_html=True)
+    if datos.get("maridaje"):
+        st.markdown("### 🍷 4. Sommelier Virtual")
+        c1, c2 = st.columns(2)
+        c1.info(f"**Vino:** {datos['maridaje'].get('vino', '')}")
+        c2.warning(f"**Cerveza:** {datos['maridaje'].get('cerveza', '')}")
 
 procesar_accion = False
-contenido_ia = None
+contenido_ia = ""
 
 if url_origen_detectada:
     try:
         with st.spinner("🌐 Obteniendo datos de la URL..."):
-            contenido_ia, url_origen_detectada = extraer_texto_de_url(url_origen_detectada)
+            contenido_ia, _ = extraer_texto_de_url(url_origen_detectada)
             procesar_accion = True
     except Exception as e:
-        st.error(f"{e}")
+        st.error("Error al leer la URL.")
 elif receta_texto_input:
     contenido_ia = receta_texto_input
     procesar_accion = True
-elif archivo_multimodal:
+elif datos_archivo:
     procesar_accion = True
 
-if st.button("🎬 GENERAR DIAGRAMA Y MARIDAJE"):
+if st.button("🎬 GENERAR DIAGRAMA"):
     if not API_KEY:
-        st.error("⚠️ Es necesaria una API Key de Google Gemini para procesar la receta. Introdúcela en el menú lateral.")
+        st.error("⚠️ Introduce tu API Key de Google Gemini en el panel izquierdo.")
     elif not procesar_accion:
-        st.warning("⚠️ Introduce una URL, un texto o adjunta un archivo antes de continuar.")
+        st.warning("⚠️ Introduce una receta (texto, URL o archivo).")
     else:
         try:
-            # Inicialización correcta y limpia del cliente moderno de la API de Gemini
-            client = genai.Client(api_key=API_KEY.strip())
+            # Configuración estable (Estilo Clásico)
+            genai.configure(api_key=API_KEY.strip())
+            
+            prompt = f"""
+            Analiza esta receta y conviértela en JSON.
+            Recalcula las cantidades de ingredientes EXACTAMENTE para {comensales_objetivo} COMENSALES.
 
-            prompt_sistema = f"""
-            Eres un experto en gastronomía, sommelier y programador de flujos de trabajo en cocina. 
-            Transforma la siguiente receta en un esquema estructurado JSON para renderizar un diagrama de bloques técnico y recomendar un maridaje.
-
-            ¡IMPORTANTE! El usuario requiere que la receta sea para {comensales_objetivo} COMENSALES. 
-            Debes ajustar matemáticamente las cantidades de la lista de 'ingredientes' para que correspondan exactamente a {comensales_objetivo} raciones. Si la receta original no indica raciones, asume que era para 2 personas y escala desde ahí.
-
-            REGLAS ESTRICTAS:
-            1. Devuelve EXCLUSIVAMENTE un JSON válido sin marcas ni textos adicionales fuera del JSON.
-            2. 'ingredientes': Unidades métricas exactas (g, ml, ud) recalculadas para {comensales_objetivo} comensales.
-            3. 'temperatura': Grados Celsius (°C).
-            4. 'origen_receta': Asigna exactamente ({url_origen_detectada if url_origen_detectada else 'Texto/Archivo aportado por el usuario'}).
-            5. 'bloques_proceso': Asigna 'paralelo' para acciones simultáneas y 'convergencia' para las uniones.
-            6. 'maridaje': Analiza el perfil organoléptico y sugiere un vino y una cerveza con justificación técnica.
-
-            JSON Schema esperado:
+            Estructura JSON obligatoria:
             {{
-              "nombre_receta": "String",
-              "origen_receta": "String",
-              "ingredientes": ["400 g de harina", "10 g de sal"],
-              "pasos_previos": ["Mise en place..."],
+              "nombre_receta": "Nombre",
+              "ingredientes": ["Lista escalada para {comensales_objetivo} pax"],
               "bloques_proceso": [
-                {{"tipo": "secuencial", "accion": "Paso 1", "utensilios": ["Olla"], "tiempo": "5 min", "duracion_minutos": 5, "temperatura": "100°C"}},
+                {{"tipo": "secuencial", "accion": "Hervir agua", "utensilios": ["Olla"], "tiempo": "10 min", "temperatura": "100°C"}},
                 {{
                   "tipo": "paralelo",
                   "ramas": [
-                    {{"nombre": "Sartén 1", "accion": "Sofreír...", "utensilios": ["Sartén"], "tiempo": "10 min", "duracion_minutos": 10, "temperatura": "90°C"}},
-                    {{"nombre": "Olla 2", "accion": "Cocer...", "utensilios": ["Olla"], "tiempo": "8 min", "duracion_minutos": 8, "temperatura": "100°C"}}
+                    {{"nombre": "Sartén", "accion": "Freír", "tiempo": "5 min", "temperatura": "Alta"}},
+                    {{"nombre": "Olla", "accion": "Cocer", "tiempo": "5 min", "temperatura": "Media"}}
                   ]
                 }},
-                {{"tipo": "convergencia", "accion": "Unir mezclas", "utensilios": ["Sartén grande"], "tiempo": "2 min", "duracion_minutos": 2, "temperatura": "80°C"}}
+                {{"tipo": "convergencia", "accion": "Mezclar todo", "utensilios": ["Bol"], "tiempo": "2 min", "temperatura": "Ambiente"}}
               ],
-              "recomendaciones": ["Tip 1"],
-              "texto_voz": "Texto descriptivo completo de la receta",
               "maridaje": {{
-                "vino": "Recomendación de vino y justificación",
-                "cerveza": "Recomendación de cerveza y justificación"
+                "vino": "Recomendación y por qué",
+                "cerveza": "Recomendación y por qué"
               }}
             }}
+            Solo responde con código JSON puro, sin bloques ```json.
             """
 
-            contents_payload = [prompt_sistema]
-            if archivo_multimodal:
-                bytes_data = archivo_multimodal.getvalue()
-                mime_t = archivo_multimodal.type
-                contents_payload.append(types.Part.from_bytes(data=bytes_data, mime_type=mime_t))
-                contents_payload.append(f"Analiza el archivo adjunto para extraer la receta, escalar a {comensales_objetivo} comensales y recomendar maridaje.")
+            model = genai.GenerativeModel(modelo_seleccionado)
+            
+            payload = [prompt]
+            if datos_archivo:
+                payload.append({"mime_type": datos_archivo["mime_type"], "data": datos_archivo["data"]})
             else:
-                contents_payload.append(f"Receta:\n{contenido_ia}")
+                payload.append(contenido_ia)
 
-            with st.spinner(f"⚙️ Procesando diagrama (Escalando a {comensales_objetivo} pax) y sommelier con {modelo_seleccionado}..."):
-                response = client.models.generate_content(
-                    model=modelo_seleccionado,
-                    contents=contents_payload,
-                    config=types.GenerateContentConfig(
-                        response_mime_type="application/json",
-                        temperature=0.1
-                    )
-                )
-
-            if response and response.text:
-                texto_respuesta = response.text.strip()
-                if texto_respuesta.startswith("```json"):
-                    texto_respuesta = texto_respuesta[7:]
-                elif texto_respuesta.startswith("```"):
-                    texto_respuesta = texto_respuesta[3:]
-                if texto_respuesta.endswith("```"):
-                    texto_respuesta = texto_respuesta[:-3]
+            with st.spinner(f"⚙️ Procesando diagrama para {comensales_objetivo} pax..."):
+                response = model.generate_content(payload)
                 
-                datos = json.loads(texto_respuesta.strip())
-                origen_final = url_origen_detectada if url_origen_detectada else datos.get("origen_receta", "Texto aportado por el usuario")
-
-                renderizar_dashboard_nativo(datos, comensales_objetivo, origen_final)
+                texto_json = response.text.strip()
+                if texto_json.startswith("```json"): texto_json = texto_json[7:]
+                if texto_json.startswith("```"): texto_json = texto_json[3:]
+                if texto_json.endswith("```"): texto_json = texto_json[:-3]
+                
+                datos = json.loads(texto_json.strip())
+                renderizar_dashboard(datos, comensales_objetivo, "Fuente")
                 
         except Exception as e:
-            st.error(f"Error durante el procesamiento: {e}")
+            st.error(f"Error al generar con Gemini: {e}")
