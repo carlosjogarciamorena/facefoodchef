@@ -1,5 +1,6 @@
 import os
 import json
+import re
 import time
 from io import BytesIO
 import requests
@@ -117,11 +118,10 @@ else:
 
 modelo_seleccionado = st.sidebar.selectbox(
     "Modelo Gemini:",
-    options=["gemini-3.6-flash", "gemini-2.5-flash", "gemini-1.5-flash"],
+    options=["gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-pro"],
     index=0
 )
 
-# NUEVO: Selector de comensales para escalar la receta
 comensales_objetivo = st.sidebar.number_input(
     "👥 Número de comensales:",
     min_value=1,
@@ -147,7 +147,7 @@ st.subheader("📥 Entrada de Receta")
 entrada_principal = st.text_area(
     "Pega la URL de la receta o el texto completo:", 
     height=130, 
-    placeholder="https://www.ejemplo.com/receta\nO pega directamente el texto de la receta aquí..."
+    placeholder="[https://www.ejemplo.com/receta](https://www.ejemplo.com/receta)\nO pega directamente el texto de la receta aquí..."
 )
 
 with st.expander("📁 Adjuntar archivo (PDF, Word, PPT o Imagen)"):
@@ -196,6 +196,13 @@ def extraer_texto_de_url(url):
             return f"Contenido de {url}:\n{soup.get_text(separator='\n', strip=True)}", url
         except Exception as e:
             raise Exception(f"Error al procesar la URL: {e}")
+
+def limpiar_json_string(texto_bruto):
+    patron = r"```(?:json)?\s*([\s\S]*?)\s*```"
+    coincidencia = re.search(patron, texto_bruto)
+    if coincidencia:
+        return coincidencia.group(1).strip()
+    return texto_bruto.strip()
 
 def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_previos, bloques_proceso, recomendaciones, texto_voz, maridaje, comensales):
     
@@ -443,7 +450,7 @@ if st.button("🎬 GENERAR DIAGRAMA Y MARIDAJE"):
             REGLAS ESTRICTAS:
             1. Devuelve EXCLUSIVAMENTE un JSON válido sin marcas ni textos adicionales fuera del JSON.
             2. 'ingredientes': Unidades métricas exactas (g, ml, ud) recalculadas para {comensales_objetivo} comensales.
-            3. 'temperatura': Grados Celsius (°C).
+            3. 'temperatura': Grados Celsius (°C) o 'Ambiente' / 'T° Controlada' si no requiere fuego.
             4. 'origen_receta': Asigna exactamente ({url_origen_detectada if url_origen_detectada else 'Texto/Archivo aportado por el usuario'}).
             5. 'bloques_proceso': Asigna 'paralelo' para acciones simultáneas y 'convergencia' para las uniones.
             6. 'maridaje': Analiza el perfil organoléptico y sugiere un vino y una cerveza con justificación técnica.
@@ -492,15 +499,8 @@ if st.button("🎬 GENERAR DIAGRAMA Y MARIDAJE"):
                 )
 
             if response:
-                texto_respuesta = response.text.strip()
-                if texto_respuesta.startswith("```json"):
-                    texto_respuesta = texto_respuesta[7:]
-                elif texto_respuesta.startswith("```"):
-                    texto_respuesta = texto_respuesta[3:]
-                if texto_respuesta.endswith("```"):
-                    texto_respuesta = texto_respuesta[:-3]
-                
-                datos = json.loads(texto_respuesta.strip())
+                texto_limpio = limpiar_json_string(response.text)
+                datos = json.loads(texto_limpio)
                 origen_final = url_origen_detectada if url_origen_detectada else datos.get("origen_receta", "Texto aportado por el usuario")
 
                 html_final = generar_html_dashboard(
@@ -515,6 +515,10 @@ if st.button("🎬 GENERAR DIAGRAMA Y MARIDAJE"):
                     comensales_objetivo
                 )
                 
+                # Cálculo de altura dinámica estimada para la vista previa
+                num_bloques = len(datos.get("bloques_proceso", []))
+                altura_calculada = max(1000, 700 + (num_bloques * 180))
+
                 st.markdown("<br>", unsafe_allow_html=True)
                 st.download_button(
                     label="📥 Descargar Diagrama HTML Autónomo",
@@ -523,7 +527,9 @@ if st.button("🎬 GENERAR DIAGRAMA Y MARIDAJE"):
                     mime="text/html"
                 )
                 
-                components.html(html_final, height=1450, scrolling=True)
+                components.html(html_final, height=altura_calculada, scrolling=True)
                 
+        except json.JSONDecodeError:
+            st.error("Error al procesar la respuesta del modelo: El formato JSON recibido no es válido. Inténtalo de nuevo.")
         except Exception as e:
             st.error(f"Error durante el procesamiento: {e}")
