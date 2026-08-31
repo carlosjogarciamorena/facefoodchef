@@ -1,3 +1,4 @@
+import os
 import json
 import time
 from io import BytesIO
@@ -99,7 +100,9 @@ API_KEY = st.sidebar.text_input(
 )
 
 if API_KEY:
-    st.sidebar.success("✅ API Key introducida.")
+    # Forzar la clave en el entorno para evitar errores 401 de OAuth en el SDK moderno
+    os.environ["GEMINI_API_KEY"] = API_KEY.strip()
+    st.sidebar.success("✅ API Key configurada correctamente.")
 
 modelo_seleccionado = st.sidebar.selectbox(
     "Modelo Gemini:",
@@ -417,8 +420,8 @@ if st.button("🎬 GENERAR DIAGRAMA Y MARIDAJE"):
         st.warning("⚠️ Introduce una URL, un texto o adjunta un archivo antes de continuar.")
     else:
         try:
-            # Corrección de autenticación para API Key mediante http_options v1beta
-            client = genai.Client(api_key=API_KEY, http_options={'api_version': 'v1beta'})
+            # Inicialización estándar del cliente moderno leyendo automáticamente os.environ["GEMINI_API_KEY"]
+            client = genai.Client()
             
             prompt_sistema = f"""
             Eres un experto en gastronomía, sommelier y programador de flujos de trabajo en cocina. 
