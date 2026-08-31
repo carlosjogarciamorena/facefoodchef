@@ -108,7 +108,6 @@ st.markdown(CSS_CUSTOM, unsafe_allow_html=True)
 # ==========================================
 # 2. PROMPTS DE INGENIERÍA Y GASTRONOMÍA
 # ==========================================
-# Se construye usando concatenación estricta para evitar conflictos de llaves en f-strings
 PROMPT_INGENIERIA_PROCESOS = (
     "Eres un Chef Ejecutivo Michelin e Ingeniero de Procesos Industriales Gastronómicos.\n"
     "Tu objetivo es convertir el texto de una receta en un Grafo Dirigido Acíclico (DAG) que describa la ejecución de la cocina.\n\n"
@@ -217,7 +216,6 @@ def procesar_receta_con_gemini(api_key: str, modelo_nombre: str, receta_texto: s
     
     response = model.generate_content(prompt_completo)
     
-    # Limpieza de bloque de código Markdown si la IA lo envuelve en ```json ... ```
     raw_text = response.text.strip()
     if raw_text.startswith("```json"):
         raw_text = raw_text[7:]
@@ -232,8 +230,7 @@ def procesar_receta_con_gemini(api_key: str, modelo_nombre: str, receta_texto: s
 # ==========================================
 # 5. BARRA LATERAL (CENTRO DE CONTROL)
 # ==========================================
-st.sidebar.image("[https://img.icons8.com/emoji/96/chef-hat-emoji.png](https://img.icons8.com/emoji/96/chef-hat-emoji.png)", width=75)
-st.sidebar.title("🎛️ Control de Procesos")
+st.sidebar.markdown("## 👨‍🍳 Control de Procesos")
 
 api_key_env = os.getenv("GEMINI_API_KEY", "")
 api_key_input = st.sidebar.text_input(
@@ -383,7 +380,7 @@ with col_der:
                 st.markdown("#### 🍷 Maridaje Recomendado")
                 st.write(chef_data.get("maridaje_sugerido", "No especificado"))
             with col_m2:
-                #### 🔄 Sustituciones de Ingredientes
+                st.markdown("#### 🔄 Sustituciones de Ingredientes")
                 for sust in chef_data.get("sustituciones_posibles", []):
                     st.markdown(f"* {sust}")
                     
