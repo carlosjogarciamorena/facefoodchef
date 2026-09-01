@@ -1,4 +1,3 @@
-import os
 import json
 import time
 from io import BytesIO
@@ -97,23 +96,10 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Autenticación API Key
-API_KEY = None
-if "GEMINI_API_KEY" in st.secrets:
-    API_KEY = st.secrets["GEMINI_API_KEY"]
-elif os.getenv("GEMINI_API_KEY"):
-    API_KEY = os.getenv("GEMINI_API_KEY")
+# Autenticación API Key (Vinculación eliminada de la interfaz)
+API_KEY = st.secrets.get("GEMINI_API_KEY") if "GEMINI_API_KEY" in st.secrets else None
 
 st.sidebar.header("⚙️ Panel de Control")
-
-if API_KEY:
-    st.sidebar.success("🔑 API Key vinculada.")
-else:
-    API_KEY = st.sidebar.text_input(
-        "API Key de Google Gemini:", 
-        type="password", 
-        help="Introduce la clave manualmente o configúrala en secretos."
-    )
 
 modelo_seleccionado = st.sidebar.selectbox(
     "Modelo Gemini:",
@@ -121,7 +107,7 @@ modelo_seleccionado = st.sidebar.selectbox(
     index=0
 )
 
-# NUEVO: Selector de comensales para escalar la receta
+# Selector de comensales para escalar la receta
 comensales_objetivo = st.sidebar.number_input(
     "👥 Número de comensales:",
     min_value=1,
@@ -426,7 +412,7 @@ elif archivo_multimodal:
 
 if st.button("🎬 GENERAR DIAGRAMA Y MARIDAJE"):
     if not API_KEY:
-        st.error("⚠️ Es necesaria una API Key de Google Gemini para procesar la receta.")
+        st.error("⚠️ Es necesaria una API Key de Google Gemini configurada en los secretos de Streamlit (st.secrets).")
     elif not procesar_accion:
         st.warning("⚠️ Introduce una URL, un texto o adjunta un archivo antes de continuar.")
     else:
