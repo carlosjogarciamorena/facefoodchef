@@ -1,548 +1,115 @@
 import os
-import json
-import time
-from io import BytesIO
-import requests
-from bs4 import BeautifulSoup
 import streamlit as st
 import streamlit.components.v1 as components
-from recipe_scrapers import scrape_me
-from google import genai
-from google.genai import types
+import google.generativeai as genai
 
-# Cargar variables de entorno si usas .env
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass
+# 1. CONFIGURACIÓN DE PÁGINA Y ESTILOS
+st.set_page_config(page_title="FaceFoodChef - Diagramas", page_icon="🍳", layout="wide")
 
-# Importaciones seguras para documentos opcionales
-try:
-    import docx
-    HAS_DOCX = True
-except ImportError:
-    HAS_DOCX = False
+ESTILO_NETFLIX = """
+<style>
+    .stApp { background-color: #141414; color: #E5E5E5; }
+    h1, h2, h3 { color: #FFFFFF !important; font-weight: 700; }
+    .brand-title { color: #E50914; font-size: 2.5rem; font-weight: 900; text-transform: uppercase; margin-bottom: 0px; }
+    .brand-subtitle { color: #A3A3A3; font-size: 1.1rem; margin-bottom: 20px; }
+    div.stButton > button { background-color: #E50914 !important; color: white !important; font-weight: bold !important; border: none !important; padding: 0.5rem 1rem !important; }
+    div.stButton > button:hover { background-color: #F40612 !important; }
+    .stTextArea textarea, .stTextInput input { background-color: #232323 !important; color: white !important; border: 1px solid #3d3d3d !important; }
+</style>
+"""
+st.markdown(ESTILO_NETFLIX, unsafe_allow_html=True)
 
-try:
-    from pptx import Presentation
-    HAS_PPTX = True
-except ImportError:
-    HAS_PPTX = False
+# 2. LÓGICA DE INTELIGENCIA ARTIFICIAL
+PROMPT_SISTEMA = """
+Eres un experto en procesos gastronómicos. Convierte la receta facilitada en un diagrama de flujo en sintaxis Mermaid.js (graph TD).
+Reglas:
+1. Usa 'graph TD'.
+2. Ingredientes como nodos iniciales: [Ingrediente].
+3. Técnicas como procesos con tiempos y temperaturas: (Hornear | 180°C - 20 min).
+4. Agrupa visualmente tareas en paralelo.
+5. Termina en el plato final: ((Plato Servido)).
+6. Aplica estos estilos exactos:
+   classDef ing fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#fff;
+   classDef proc fill:#262626,stroke:#ffffff,stroke-width:1px,color:#fff;
+   classDef final fill:#7f1d1d,stroke:#ef4444,stroke-width:2px,color:#fff;
+7. Devuelve ÚNICAMENTE el código puro de Mermaid. Sin explicaciones ni etiquetas markdown (```).
+"""
 
-st.set_page_config(page_title="FaceFoodChef Pro - Motor de Diagramas Culinarios", layout="centered", page_icon="🍳")
-
-# --- SISTEMA DE CARGA AUTOMÁTICA DE API KEY ---
-API_KEY = None
-if "GEMINI_API_KEY" in st.secrets:
-    API_KEY = st.secrets["GEMINI_API_KEY"]
-elif os.getenv("GEMINI_API_KEY"):
-    API_KEY = os.getenv("GEMINI_API_KEY")
-
-st.sidebar.header("⚙️ Panel de Control")
-
-if API_KEY:
-    st.sidebar.success("🔑 API Key cargada automáticamente.")
-else:
-    API_KEY = st.sidebar.text_input(
-        "API Key de Google Gemini:", 
-        type="password", 
-        help="Consíguela gratis en aistudio.google.com o configúrala en secrets.toml"
-    )
-
-st.sidebar.markdown("---")
-st.sidebar.markdown("### 📂 Formatos Compatibles\n- **Web:** Cualquier URL (Blogs, Periódicos, etc.).\n- **Documentos:** PDF, Word (.docx), PPT (.pptx).\n- **Imágenes:** JPG, PNG, WEBP.\n- **Texto:** Directo o apuntes.")
-
-# Estilos visuales Dark Glassmorphism Pro
-st.markdown("""
-    <style>
-    .main { background-color: #07090e; }
-    .stTextArea textarea, .stFileUploader {
-        background-color: #0d1117; color: #f0f6fc;
-        border-radius: 16px; border: 1px solid #30363d; font-size: 15px;
-    }
-    h1, h2, h3 { color: #f0f6fc; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
-    </style>
-""", unsafe_allow_html=True)
-
-st.markdown("<h1 style='text-align: center; color: #ff7b72;'>🍳 FaceFoodChef Pro <span style='font-size: 16px; background: #1f6feb; color: white; padding: 4px 10px; border-radius: 20px; vertical-align: middle;'>Diagram Engine</span></h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #8b949e;'>Transforma recetas en diagramas de flujo lógicos con cantidades exactas, utensilios y temporizadores.</p>", unsafe_allow_html=True)
-
-# Pestañas de entrada para el usuario
-tab1, tab2, tab3 = st.tabs(["🌐 URL o Texto", "📁 Subir Archivo (PDF, Word, PPT)", "🖼️ Subir Imagen de Receta"])
-
-receta_texto_input = ""
-archivo_multimodal = None
-tipo_multimodal = None
-
-with tab1:
-    entrada_usuario = st.text_area(
-        "📝 Pega la URL de una receta web o escribe los pasos manualmente:", 
-        height=100, 
-        placeholder="Ej: https://misrecetas.com/paella o escribe tu receta..."
-    )
-    if entrada_usuario:
-        receta_texto_input = entrada_usuario
-
-with tab2:
-    archivo_doc = st.file_uploader("📂 Sube un documento con tu receta:", type=["pdf", "docx", "pptx", "txt"])
-    if archivo_doc:
-        ext = archivo_doc.name.split('.')[-1].lower()
-        if ext == "txt":
-            receta_texto_input = archivo_doc.getvalue().decode("utf-8")
-        elif ext == "docx":
-            if HAS_DOCX:
-                doc = docx.Document(BytesIO(archivo_doc.getvalue()))
-                receta_texto_input = "\n".join([p.text for p in doc.paragraphs if p.text.strip()])
-            else:
-                st.error("⚠️ La librería 'python-docx' no está instalada.")
-        elif ext == "pptx":
-            if HAS_PPTX:
-                prs = Presentation(BytesIO(archivo_doc.getvalue()))
-                texto_slides = []
-                for slide in prs.slides:
-                    for shape in slide.shapes:
-                        if shape.has_text_frame:
-                            for paragraph in shape.text_frame.paragraphs:
-                                texto_slides.append(paragraph.text)
-                receta_texto_input = "\n".join(texto_slides)
-            else:
-                st.error("⚠️ La librería 'python-pptx' no está instalada.")
-        elif ext == "pdf":
-            archivo_multimodal = archivo_doc.getvalue()
-            tipo_multimodal = "application/pdf"
-
-with tab3:
-    archivo_img = st.file_uploader("📸 Sube una foto de receta o captura de pantalla:", type=["jpg", "jpeg", "png", "webp"])
-    if archivo_img:
-        archivo_multimodal = archivo_img.getvalue()
-        tipo_multimodal = archivo_img.type
-
-def extraer_texto_de_url(url):
-    url = url.strip()
+def generar_diagrama(receta: str, api_key: str) -> str:
+    genai.configure(api_key=api_key)
+    
+    # Actualizado a la versión requerida por la API actual
+    nombre_modelo = "models/gemini-3.6-flash" 
+    
     try:
-        scraper = scrape_me(url)
-        return f"Receta extraída de {url}:\nIngredientes: {', '.join(scraper.ingredients())}\nInstrucciones:\n{'\n'.join(scraper.instructions())}"
-    except Exception:
-        try:
-            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
-            response = requests.get(url, headers=headers, timeout=10)
-            response.raise_for_status()
-            soup = BeautifulSoup(response.text, 'html.parser')
-            for element in soup(["script", "style", "nav", "footer", "header", "aside"]):
-                element.decompose()
-            texto_limpio = soup.get_text(separator='\n', strip=True)
-            return f"Contenido extraído de la URL ({url}):\n{texto_limpio}"
-        except Exception as e_general:
-            raise Exception(f"No se pudo leer la URL. Comprueba que sea accesible. Detalle: {e_general}")
-
-def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_previos, bloques_proceso, recomendaciones, texto_voz):
-    html_header = f"""
-    <div style="background: linear-gradient(135deg, #1f242d 0%, #111418 100%); border: 1px solid #30363d; border-bottom: 4px solid #ff7b72; border-radius: 20px; padding: 28px; text-align: center; margin-bottom: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-        <span style="font-size: 12px; font-weight: 800; color: #ff7b72; text-transform: uppercase; letter-spacing: 1.5px; background: rgba(255,123,114,0.15); padding: 6px 14px; border-radius: 20px;">📜 Receta Magistral</span>
-        <h1 style="color: #f0f6fc; font-size: 28px; margin: 16px 0 8px 0; font-weight: 800; letter-spacing: -0.5px;">{nombre_receta}</h1>
-        <p style="color: #8b949e; font-size: 14px; margin: 0;">Diagrama de ejecución paso a paso para un cocinado perfecto</p>
-    </div>
-    """
-
-    html_ing = """
-    <div style="background: linear-gradient(135deg, #0d1117 0%, #161b22 100%); border: 1px solid #30363d; border-radius: 18px; padding: 22px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);">
-        <h3 style="color: #ff7b72; margin-top: 0; font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
-            <span>🛒</span> 1. Despensa e Ingredientes (Cantidades Exactas)
-        </h3>
-        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px;">
-    """
-    for ing in ingredientes:
-        html_ing += f"<span style='background: #21262d; color: #c9d1d9; padding: 6px 14px; border-radius: 10px; font-size: 13px; border: 1px solid #30363d; font-weight: 500;'>⚖️ {ing}</span>"
-    html_ing += "</div></div>"
-
-    html_prev = """
-    <div style="background: linear-gradient(135deg, #0d1117 0%, #161b22 100%); border: 1px solid #30363d; border-radius: 18px; padding: 22px; margin-bottom: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);">
-        <h3 style="color: #58a6ff; margin-top: 0; font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
-            <span>🔪</span> 2. Mise en Place (Preparación Previa)
-        </h3>
-        <ul style='margin: 10px 0 0 0; padding-left: 20px; color: #8b949e; font-size: 14px; line-height: 1.7;'>
-    """
-    for prep in pasos_previos:
-        html_prev += f"<li style='margin-bottom: 6px; color: #c9d1d9;'>{prep}</li>"
-    html_prev += "</ul></div>"
-
-    html_diagrama = """
-    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 100%; margin: auto;">
-        <h3 style="color: #3fb950; font-size: 18px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
-            <span>📊</span> 3. Diagrama de Flujo Lógico y Ejecutable
-        </h3>
-    """
-    
-    for i, bloque in enumerate(bloques_proceso):
-        tipo = bloque.get("tipo", "secuencial")
-        duracion_min = bloque.get("duracion_minutos", 5)
-        utensilios = bloque.get("utensilios", [])
-        utensilios_str = ", ".join(utensilios) if utensilios else "Ninguno específico"
+        modelo = genai.GenerativeModel(nombre_modelo) 
+        respuesta = modelo.generate_content(
+            f"{PROMPT_SISTEMA}\n\nRECETA:\n{receta}", 
+            generation_config={"temperature": 0.1}
+        )
         
-        if tipo == "paralelo":
-            ramas = bloque.get("ramas", [])
-            html_diagrama += '<div style="display: flex; gap: 14px; margin-bottom: 18px; flex-wrap: wrap;">'
-            for idx, rama in enumerate(ramas):
-                nombre_rama = rama.get("nombre", f"Rama {idx+1}").upper()
-                accion = rama.get("accion", "")
-                tiempo = rama.get("tiempo", "")
-                temp = rama.get("temperatura", "")
-                utensilios_rama = ", ".join(rama.get("utensilios", []))
-                dur_rama = rama.get("duracion_minutos", 5)
-                timer_id = f"timer_par_{i}_{idx}"
-                
-                html_diagrama += f"""
-                <div style="flex: 1; min-width: 270px; background: linear-gradient(135deg, #1f1a3a 0%, #11112b 100%); border: 1px solid #483699; border-left: 5px solid #8957e5; border-radius: 16px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.5);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <span style="font-size: 11px; font-weight: 800; color: #d2a8ff; letter-spacing: 0.5px; background: rgba(137,87,229,0.2); padding: 4px 10px; border-radius: 6px;">🔀 RAMA PARALELA: {nombre_rama}</span>
-                    </div>
-                    <div style="font-size: 15px; font-weight: 600; color: #ffffff; margin-bottom: 10px; line-height: 1.5;">
-                        {accion}
-                    </div>
-                    <div style="font-size: 12px; color: #a5d6ff; margin-bottom: 12px; background: rgba(0,0,0,0.2); padding: 6px 10px; border-radius: 8px;">
-                        🛠️ <b>Utensilios:</b> {utensilios_rama}
-                    </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px; background: rgba(0,0,0,0.3); padding: 10px 14px; border-radius: 10px;">
-                        <div style="font-size: 13px; color: #c9d1d9;">⏱️ <span id="{timer_id}" style="font-weight: bold; color: #58a6ff;">{tiempo}</span> | 🌡️ {temp}</div>
-                        <button onclick="iniciarTemporizador('{timer_id}', {dur_rama})" style="background: #238636; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;">▶️ Iniciar</button>
-                    </div>
-                </div>
-                """
-            html_diagrama += '</div>'
-        else:
-            es_convergencia = tipo == "convergencia"
-            if es_convergencia:
-                bg = "linear-gradient(135deg, #0d2818 0%, #081a10 100%)"
-                border_color = "#2ea043"
-                left_border = "#3fb950"
-                badge_bg = "rgba(46,160,67,0.2)"
-                icono = "🔗"
-                etiqueta = "CONVERGENCIA / UNIÓN FINAL"
-            else:
-                bg = "linear-gradient(135deg, #161b22 0%, #0d1117 100%)"
-                border_color = "#30363d"
-                left_border = "#ff7b72"
-                badge_bg = "rgba(255,123,114,0.15)"
-                icono = "🔥"
-                etiqueta = f"BLOQUE SECUENCIAL {i+1}"
-            
-            timer_id = f"timer_seq_{i}"
-            html_diagrama += f"""
-            <div style="background: {bg}; border: 1px solid {border_color}; border-left: 5px solid {left_border}; border-radius: 16px; padding: 20px; margin-bottom: 18px; box-shadow: 0 8px 24px rgba(0,0,0,0.5);">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                    <span style="font-size: 11px; font-weight: 800; color: #8b949e; letter-spacing: 0.5px; background: {badge_bg}; padding: 4px 10px; border-radius: 6px;">{icono} {etiqueta}</span>
-                </div>
-                <div style="font-size: 15px; font-weight: 600; color: #ffffff; margin-bottom: 10px; line-height: 1.5;">
-                    {bloque.get('accion')}
-                </div>
-                <div style="font-size: 12px; color: #a5d6ff; margin-bottom: 12px; background: rgba(0,0,0,0.2); padding: 6px 10px; border-radius: 8px;">
-                    🛠️ <b>Utensilios:</b> {utensilios_str}
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.25); padding: 10px 14px; border-radius: 10px;">
-                    <div style="font-size: 13px; color: #c9d1d9;">⏱️ <span id="{timer_id}" style="font-weight: bold; color: #58a6ff;">{bloque.get('tiempo')}</span> | 🌡️ {bloque.get('temperatura')}</div>
-                    <button onclick="iniciarTemporizador('{timer_id}', {duracion_min})" style="background: #238636; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;">▶️ Iniciar Timer</button>
-                </div>
-            </div>
-            """
-            
-        if i < len(bloques_proceso) - 1:
-            html_diagrama += '<div style="text-align: center; color: #3fb950; font-size: 24px; margin: -4px 0 4px 0; font-weight: bold; text-shadow: 0 0 10px rgba(63,185,80,0.4);">⬇️</div>'
-    
-    html_diagrama += "</div>"
+        codigo = respuesta.text.strip()
+        if "```" in codigo:
+            codigo = "\n".join([linea for linea in codigo.split("\n") if not linea.strip().startswith("```")])
+        return codigo.strip()
+        
+    except Exception as e:
+        # Si falla, listamos los modelos disponibles para diagnóstico
+        modelos_disponibles = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+        raise ValueError(f"Error con el modelo {nombre_modelo}. Modelos soportados por tu API Key:\n" + "\n".join(modelos_disponibles))
 
-    html_recom = """
-    <div style="background: linear-gradient(135deg, #1f1f11 0%, #12120a 100%); border: 1px solid #d29922; border-radius: 18px; padding: 22px; margin-top: 24px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);">
-        <h3 style="color: #e3b341; margin-top: 0; font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
-            <span>💡</span> 4. Recomendaciones, Trucos y Aclaraciones de Chef
-        </h3>
-        <ul style='margin: 10px 0 0 0; padding-left: 20px; color: #e6edf3; font-size: 14px; line-height: 1.7;'>
-    """
-    for rec in recomendaciones:
-        html_recom += f"<li style='margin-bottom: 6px;'>{rec}</li>"
-    html_recom += "</ul></div>"
-
-    html_footer = f"""
-    <div style="text-align: center; color: #8b949e; font-size: 13px; margin-top: 35px; border-top: 1px solid #30363d; padding-top: 20px;">
-        🌍 <b>Origen de la Receta:</b> {origen_receta} | Creado con FaceFoodChef Pro Diagram Engine
-    </div>
-    """
-
-    texto_voz_seguro = json.dumps(texto_voz)
-
-    documento_completo = f"""
+# 3. LÓGICA DE RENDERIZADO VISUAL
+def mostrar_diagrama(codigo_mermaid: str):
+    html = f"""
     <!DOCTYPE html>
-    <html lang="es">
+    <html>
     <head>
-        <meta charset="utf-8">
-        <style>
-            body {{ background-color: #07090e; color: #f0f6fc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 16px; margin: 0; }}
-            .container-hub {{ display: grid; grid-template-columns: 1fr; gap: 20px; max-width: 900px; margin: auto; }}
-            .widget-box {{ background: linear-gradient(135deg, #161b22 0%, #0d1117 100%); border: 1px solid #30363d; border-radius: 18px; padding: 18px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); text-align: center; }}
-            .btn-control {{ background-color: #238636; color: white; border: none; padding: 10px 20px; font-size: 13px; font-weight: 700; border-radius: 10px; cursor: pointer; margin: 4px; transition: all 0.2s; box-shadow: 0 4px 12px rgba(35,134,54,0.4); }}
-            .btn-control:hover {{ opacity: 0.9; transform: translateY(-1px); }}
-            .btn-stop {{ background-color: #da3633; box-shadow: 0 4px 12px rgba(218,54,51,0.4); }}
-        </style>
-    </head>
-    <body>
-        <div class="container-hub">
-            {html_header}
-
-            <div class="widget-box">
-                <p style="color: #8b949e; font-size: 13px; margin: 0 0 10px 0; font-weight: 600;">🎧 Tu Música Favorita para Cocinar (Spotify)</p>
-                <iframe style="border-radius:12px" src="https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M?utm_source=generator&theme=0" width="100%" height="80" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
-            </div>
-
-            <div class="widget-box">
-                <p style="color: #8b949e; font-size: 13px; margin: 0 0 10px 0; font-weight: 600;">🎙️ Asistente de Voz Integrado</p>
-                <button id="btnVoz" class="btn-control" onclick="reproducir(this)">▶️ Escuchar Guía de Cocina</button>
-                <button class="btn-control btn-stop" onclick="detener()">⏹️ Silenciar</button>
-            </div>
-
-            {html_ing}
-            {html_prev}
-            {html_diagrama}
-            {html_recom}
-            {html_footer}
-        </div>
-
-        <script>
-            const textoVoz = {texto_voz_seguro};
-            let currentUtterance = null;
-            let vocesDisponibles = [];
-
-            function cargarVoces() {{
-                if ('speechSynthesis' in window) {{
-                    vocesDisponibles = window.speechSynthesis.getVoices();
-                }}
-            }}
-
-            if ('speechSynthesis' in window) {{
-                cargarVoces();
-                if (window.speechSynthesis.onvoiceschanged !== undefined) {{
-                    window.speechSynthesis.onvoiceschanged = cargarVoces;
-                }}
-            }}
-
-            function reproducir(btn) {{
-                if (!('speechSynthesis' in window)) {{
-                    alert("Tu navegador no soporta síntesis de voz.");
-                    return;
-                }}
-
-                window.speechSynthesis.cancel();
-                
-                currentUtterance = new SpeechSynthesisUtterance(textoVoz);
-                currentUtterance.lang = 'es-ES'; 
-                currentUtterance.rate = 0.95;
-
-                if (vocesDisponibles.length === 0) {{
-                    vocesDisponibles = window.speechSynthesis.getVoices();
-                }}
-                
-                const vozSpanish = vocesDisponibles.find(v => v.lang.startsWith('es') || v.lang.includes('es'));
-                if (vozSpanish) {{
-                    currentUtterance.voice = vozSpanish;
-                }}
-
-                btn.innerText = "🔊 Reproduciendo...";
-
-                currentUtterance.onend = function() {{
-                    btn.innerText = "▶️ Escuchar Guía de Cocina";
-                }};
-
-                currentUtterance.onerror = function() {{
-                    btn.innerText = "▶️ Escuchar Guía de Cocina";
-                }};
-
-                window.speechSynthesis.speak(currentUtterance);
-
-                if (window.speechSynthesis.paused) {{
-                    window.speechSynthesis.resume();
-                }}
-            }}
-
-            function detener() {{
-                if ('speechSynthesis' in window) {{ 
-                    window.speechSynthesis.cancel(); 
-                    const btn = document.getElementById('btnVoz');
-                    if (btn) btn.innerText = "▶️ Escuchar Guía de Cocina";
-                }}
-            }}
-
-            function iniciarTemporizador(elementId, minutos) {{
-                const elemento = document.getElementById(elementId);
-                let segundosRestantes = minutos * 60;
-                
-                if (window[elementId + "_interval"]) {{
-                    clearInterval(window[elementId + "_interval"]);
-                }}
-
-                window[elementId + "_interval"] = setInterval(() => {{
-                    if (segundosRestantes <= 0) {{
-                        clearInterval(window[elementId + "_interval"]);
-                        elemento.innerText = "¡TIEMPO CUMPLIDO! 🎉";
-                        sonarAlerta();
-                    }} else {{
-                        segundosRestantes--;
-                        const m = Math.floor(segundosRestantes / 60);
-                        const s = segundosRestantes % 60;
-                        elemento.innerText = `${{m}}m ${{s < 10 ? '0' : ''}}${{s}}s`;
-                    }}
-                }}, 1000);
-            }}
-
-            function sonarAlerta() {{
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const oscillator = audioCtx.createOscillator();
-                const gainNode = audioCtx.createGain();
-                oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime);
-                gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                oscillator.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-                oscillator.start();
-                setTimeout(() => {{ oscillator.stop(); }}, 1200);
-            }}
+        <script type="module">
+            import mermaid from '[https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs](https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs)';
+            mermaid.initialize({{ startOnLoad: true, theme: 'dark', themeVariables: {{ background: '#181818', primaryColor: '#E50914' }} }});
         </script>
-    </body>
+        <style>body {{ background: #141414; margin: 0; display: flex; justify-content: center; }} .mermaid {{ width: 100%; text-align: center; }}</style>
+    </head>
+    <body><div class="mermaid">{codigo_mermaid}</div></body>
     </html>
     """
-    return documento_completo
+    components.html(html, height=600, scrolling=True)
 
-# Procesamiento principal
-procesar_accion = False
-contenido_ia = None
+# 4. INTERFAZ DE USUARIO
+st.markdown('<p class="brand-title">FaceFoodChef</p>', unsafe_allow_html=True)
+st.markdown('<p class="brand-subtitle">Traductor directo de recetas a diagramas de bloques.</p>', unsafe_allow_html=True)
 
-if API_KEY:
-    if receta_texto_input.strip().startswith("http://") or receta_texto_input.strip().startswith("https://"):
-        try:
-            with st.spinner("🌐 Extrayendo datos de la web..."):
-                contenido_ia = extraer_texto_de_url(receta_texto_input.strip())
-                procesar_accion = True
-        except Exception as e:
-            st.error(f"{e}")
-    elif receta_texto_input.strip():
-        contenido_ia = receta_texto_input
-        procesar_accion = True
-    elif archivo_multimodal:
-        procesar_accion = True
+# Panel de API Key
+with st.sidebar:
+    st.header("⚙️ Configuración")
+    api_key_input = st.text_input("Google AI Studio API Key", type="password", help="Pega aquí tu API Key de Gemini.")
 
-if procesar_accion and API_KEY:
-    try:
-        client = genai.Client(api_key=API_KEY)
-        
-        prompt_sistema = """
-        Eres un chef ejecutivo e ingeniero de procesos culinarios de alta precisión. Analiza la receta aportada y estructúrala en un objeto JSON con la siguiente estructura exacta:
-        
-        {
-          "nombre_receta": "Nombre oficial o comercial de la receta",
-          "origen_receta": "Tradicional de España / México / Italia, o fuente cultural estimada",
-          "ingredientes": ["200g de harina de trigo", "3 gramos de sal fina"],
-          "pasos_previos": ["Sacar los huevos 20 minutos antes."],
-          "bloques_proceso": [
-            {"tipo": "secuencial", "accion": "Primer paso secuencial...", "utensilios": ["Bol de acero"], "tiempo": "5 min", "duracion_minutos": 5, "temperatura": "Ambiente"},
-            {
-              "tipo": "paralelo",
-              "ramas": [
-                {"nombre": "Sartén A", "accion": "Sofreír las verduras simultáneamente...", "utensilios": ["Sartén"], "tiempo": "10 min", "duracion_minutos": 10, "temperatura": "Fuego medio"},
-                {"nombre": "Olla B", "accion": "Cocer la pasta simultáneamente...", "utensilios": ["Olla"], "tiempo": "8 min", "duracion_minutos": 8, "temperatura": "Fuego alto"}
-              ]
-            },
-            {"tipo": "convergencia", "accion": "Unir las dos preparaciones anteriores y mezclar...", "utensilios": ["Sartén grande", "Espátula"], "tiempo": "2 min", "duracion_minutos": 2, "temperatura": "Fuego bajo"}
-          ],
-          "recomendaciones": [
-            "Evita calentar demasiado rápido la mantequilla para que no se queme.",
-            "Prueba el punto de sal antes de servir."
-          ],
-          "texto_voz": "Resumen claro guiado por voz de la receta completa."
-        }
-        
-        REGLAS DE ORO OBLIGATORIAS:
-        1. Devuelve ÚNICAMENTE un objeto JSON válido (que empiece con '{' y termine con '}').
-        2. 'nombre_receta': Extrae el nombre más adecuado de la receta.
-        3. 'origen_receta': Identifica la región, país o tipo de tradición culinaria de la receta.
-        4. 'ingredientes': Lista detallada con CANTIDADES EXACTAS y métricas concretas (ej. '3 gramos de sal').
-        5. 'pasos_previos': Lista con la preparación previa (mise en place).
-        6. 'bloques_proceso': OBLIGATORIO modelar el flujo de forma inteligente. Si la receta realiza dos acciones al mismo tiempo, debes usar obligatoriamente un bloque de tipo "paralelo" con sus respectivas ramas y luego un bloque de tipo "convergencia" cuando se unan.
-        7. 'recomendaciones': De 3 a 5 trucos de chef.
-        8. 'texto_voz': Resumen detallado para lectura en voz alta.
-        """
+# Interfaz Principal a dos columnas
+col_izq, col_der = st.columns(2, gap="large")
 
-        contents_payload = [prompt_sistema]
-        if archivo_multimodal:
-            contents_payload.append(types.Part.from_bytes(data=archivo_multimodal, mime_type=tipo_multimodal))
-            contents_payload.append("Analiza esta fuente adjunta y extrae la receta completa detectando paralelismos y convergencias, capturando su nombre y origen exacto.")
+with col_izq:
+    st.subheader("📋 Pega tu Receta")
+    receta_texto = st.text_area("Ingredientes y Pasos:", height=350, placeholder="Ej: 2 huevos, 1 patata. 1. Pelar patata. 2. Freír. 3. Batir huevos. 4. Mezclar y cuajar.")
+    btn_procesar = st.button("🚀 CREAR DIAGRAMA", use_container_width=True)
+
+with col_der:
+    st.subheader("📊 Diagrama de Cocina")
+    
+    if btn_procesar:
+        if not api_key_input:
+            st.error("❌ Falta la API Key en la barra lateral.")
+        elif not receta_texto:
+            st.warning("⚠️ Escribe una receta primero.")
         else:
-            contents_payload.append(f"Información a procesar (Aplica bloques paralelos y de convergencia si la receta realiza tareas simultáneas):\n{contenido_ia}")
+            with st.spinner("Procesando receta..."):
+                try:
+                    codigo = generar_diagrama(receta_texto, api_key_input)
+                    st.session_state["diagrama"] = codigo
+                except Exception as e:
+                    st.error(f"Error en la API: {e}")
 
-        response = None
-        max_intentos = 3
-        
-        for intento in range(max_intentos):
-            try:
-                with st.spinner(f"⚙️ Generando diagrama lógico completo con IA (Intento {intento+1}/{max_intentos})..."):
-                    response = client.models.generate_content(
-                        model='gemini-3.6-flash',
-                        contents=contents_payload,
-                        config=types.GenerateContentConfig(
-                            response_mime_type="application/json",
-                            temperature=0.2
-                        ),
-                    )
-                break
-            except Exception as api_err:
-                err_str = str(api_err)
-                if ("503" in err_str or "UNAVAILABLE" in err_str) and intento < max_intentos - 1:
-                    time.sleep(3 * (intento + 1))
-                    continue
-                else:
-                    raise api_err
-
-        if response:
-            texto_respuesta = response.text.strip()
-            if texto_respuesta.startswith("```json"):
-                texto_respuesta = texto_respuesta[7:]
-            if texto_respuesta.endswith("```"):
-                texto_respuesta = texto_respuesta[:-3]
-            
-            datos = json.loads(texto_respuesta.strip())
-            
-            if isinstance(datos, list):
-                datos = {
-                    "nombre_receta": "Receta Culinaria",
-                    "origen_receta": "Desconocido",
-                    "ingredientes": ["Revisar texto original"],
-                    "pasos_previos": ["Preparación general"],
-                    "bloques_proceso": datos,
-                    "recomendaciones": ["Sigue los bloques secuencialmente."],
-                    "texto_voz": "Aquí tienes tu guía de cocina generada por bloques."
-                }
-            elif not isinstance(datos, dict):
-                datos = {}
-            
-            html_final = generar_html_dashboard(
-                datos.get("nombre_receta", "Receta Culinaria Pro"),
-                datos.get("origen_receta", "Cocina Tradicional"),
-                datos.get("ingredientes", []),
-                datos.get("pasos_previos", []),
-                datos.get("bloques_proceso", []),
-                datos.get("recomendaciones", []),
-                datos.get("texto_voz", "")
-            )
-            
-            st.download_button(
-                label="📥 Descargar Diagrama Pro Completo (HTML)",
-                data=html_final,
-                file_name="facefoodchef_diagrama.html",
-                mime="text/html"
-            )
-            
-            components.html(html_final, height=1350, scrolling=True)
-            
-    except Exception as e:
-        st.error(f"Error procesando con la IA: {e}")
-elif not API_KEY:
-    st.info("👈 Introduce tu API Key de Google Gemini en la barra lateral o configúrala en secrets.toml para comenzar.")
-else:
-    st.info("👆 Selecciona una de las pestañas superiores para introducir una URL, subir un documento (PDF, Word, PPT) o una foto de tu receta.")
+    # Mostrar diagrama si ya existe en la sesión
+    if "diagrama" in st.session_state:
+        mostrar_diagrama(st.session_state["diagrama"])
+        with st.expander("Ver código Mermaid"):
+            st.code(st.session_state["diagrama"], language="mermaid")
