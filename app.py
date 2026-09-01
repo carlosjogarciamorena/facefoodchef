@@ -106,9 +106,10 @@ API_KEY_INPUT = st.sidebar.text_input(
     help="Introduce tu clave de API de Google Gemini manualmente."
 )
 
+# Corrección de modelo actualizado para evitar errores 404 NOT_FOUND
 modelo_seleccionado = st.sidebar.selectbox(
     "Modelo Gemini:",
-    options=["gemini-2.5-flash", "gemini-1.5-flash"],
+    options=["gemini-3.6-flash", "gemini-2.5-flash", "gemini-1.5-flash"],
     index=0
 )
 
@@ -520,3 +521,4 @@ if st.button("🎬 GENERAR DIAGRAMA Y MARIDAJE"):
                 
         except Exception as e:
             st.error(f"Error durante el procesamiento: {e}")
+            
