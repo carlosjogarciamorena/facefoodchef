@@ -32,7 +32,7 @@ except ImportError:
 
 # Configuración de página
 st.set_page_config(
-    page_title="FaceFoodChef.com - Motor de Diagramas Culinarios Pro V4", 
+    page_title="FaceFoodChef.com - Motor de Diagramas Culinarios Pro V5", 
     layout="wide", 
     page_icon="🍳"
 )
@@ -107,10 +107,10 @@ API_KEY_INPUT = st.sidebar.text_input(
     help="Introduce tu clave de API de Google Gemini manualmente."
 )
 
-# Selector de modelo actualizado con gemini-3.6-flash por defecto (soluciona el error 404)
+# Selector de modelo optimizado con identificadores vigentes para evitar errores 404
 modelo_seleccionado = st.sidebar.selectbox(
-    "Modelo Gemini (con fallback automático):",
-    options=["gemini-3.6-flash", "gemini-1.5-flash", "gemini-1.5-pro"],
+    "Modelo Gemini:",
+    options=["gemini-3.6-flash", "gemini-2.5-flash"],
     index=0
 )
 
@@ -126,8 +126,8 @@ comensales_objetivo = st.sidebar.number_input(
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("""
-### 🎬 Mejoras V4 Aplicadas
-- **Modelo Actualizado:** Uso directo de `gemini-3.6-flash` (evita errores 404).
+### 🎬 Mejoras V5 Aplicadas
+- **Modelos Actualizados:** Limpieza de modelos deprecados (soluciona errores 404).
 - **Cantidades exactas sin vaguedades:** Sin "al gusto".
 - **Unidades abreviadas estándar:** g, ml, °C permitidas; palabras como cuchara/cucharadita enteras sin abreviar.
 - **Utensilios y Menaje Manual:** Cuchillos, espumaderas, pinzas, paletas, etc. integrados.
@@ -135,8 +135,8 @@ st.sidebar.markdown("""
 - **Sommelier Experto:** Vinos con D.O. española prioritaria y cervezas artesanales específicas.
 """)
 
-st.markdown("<h1 style='text-align: center; color: #EF4444; font-weight: 800; letter-spacing: -1px; margin-bottom: 0;'>FACEFOODCHEF <span style='font-size: 16px; background: #36393F; color: #fff; padding: 4px 10px; border-radius: 4px; vertical-align: middle; border: 1px solid #4F545C;'>PRO v4</span></h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #A0AEC0; font-size: 15px; margin-bottom: 30px;'>Diagramas de bloques con IA optimizada (gemini-3.6-flash), menaje manual y sommelier</p>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: #EF4444; font-weight: 800; letter-spacing: -1px; margin-bottom: 0;'>FACEFOODCHEF <span style='font-size: 16px; background: #36393F; color: #fff; padding: 4px 10px; border-radius: 4px; vertical-align: middle; border: 1px solid #4F545C;'>PRO v5</span></h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #A0AEC0; font-size: 15px; margin-bottom: 30px;'>Diagramas de bloques con IA optimizada, unidades científicas abreviadas y sommelier</p>", unsafe_allow_html=True)
 
 # Entrada de Datos
 st.subheader("📥 Entrada de Receta")
@@ -197,9 +197,9 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
     
     html_header = f"""
     <div style="background: linear-gradient(180deg, #36393F 0%, #2F3136 100%); border-radius: 8px; padding: 30px; text-align: center; margin-bottom: 24px; border-left: 6px solid #EF4444; border: 1px solid #4F545C; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-        <span style="font-size: 11px; font-weight: 800; color: #FFFFFF; text-transform: uppercase; letter-spacing: 2px; background: #EF4444; padding: 6px 14px; border-radius: 4px; display: inline-block;">Diagrama de Producción Culinaria V4</span>
+        <span style="font-size: 11px; font-weight: 800; color: #FFFFFF; text-transform: uppercase; letter-spacing: 2px; background: #EF4444; padding: 6px 14px; border-radius: 4px; display: inline-block;">Diagrama de Producción Culinaria V5</span>
         <h1 style="color: #ffffff; font-size: 30px; margin: 16px 0 8px 0; font-weight: 800;">{nombre_receta}</h1>
-        <p style="color: #A0AEC0; font-size: 14px; margin: 0;">Calculado y escalado para <b>{comensales} comensales</b> (Unidades abreviadas: g, ml, °C).</p>
+        <p style="color: #A0AEC0; font-size: 14px; margin: 0;">Calculado y escalado para <b>{comensales} comensales</b> (Unidades científicas abreviadas: g, ml, °C).</p>
     </div>
     """
 
@@ -340,7 +340,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
             {html_recom}
             {html_maridaje}
             <div style="text-align: center; color: #718096; font-size: 13px; margin-top: 35px; border-top: 1px solid #4F545C; padding-top: 20px;">
-                🎬 <b>FaceFoodChef.com v4</b> | Fuente: {origen_html}
+                🎬 <b>FaceFoodChef.com v5</b> | Fuente: {origen_html}
             </div>
         </div>
         <script>
@@ -389,7 +389,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
             // Alarma polifónica de 5 tonos secuenciales para asegurar aviso claro en cocina
             function sonarAlertaPolifonica() {{
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const frecuencias = [523.25, 659.25, 783.99, 1046.50, 1318.51]; // C5, E5, G5, C6, E6 (5 tonos)
+                const frecuencias = [523.25, 659.25, 783.99, 1046.50, 1318.51]; // C5, E5, G5, C6, E6
                 
                 frecuencias.forEach((freq, index) => {{
                     setTimeout(() => {{
@@ -431,7 +431,7 @@ elif receta_texto_input:
 elif archivo_multimodal:
     procesar_accion = True
 
-if st.button("🎬 GENERAR DIAGRAMA Y SOMMELIER PRO V4"):
+if st.button("🎬 GENERAR DIAGRAMA Y SOMMELIER PRO V5"):
     api_key_activa = API_KEY_INPUT.strip()
     
     if not api_key_activa:
@@ -490,14 +490,14 @@ if st.button("🎬 GENERAR DIAGRAMA Y SOMMELIER PRO V4"):
             else:
                 contents_payload.append(f"Receta:\n{contenido_ia}")
 
-            # Usar modelo actualizado gemini-3.6-flash y backups
-            modelos_a_probar = [modelo_seleccionado, "gemini-3.6-flash", "gemini-1.5-flash"]
+            # Lista optimizada de modelos vigentes
+            modelos_a_probar = [modelo_seleccionado, "gemini-3.6-flash", "gemini-2.5-flash"]
             modelos_a_probar = list(dict.fromkeys(modelos_a_probar))
             
             response = None
             exito = False
             
-            with st.spinner(f"⚙️ Procesando diagrama con gemini-3.6-flash, abreviaturas (g, ml, °C) y sommelier V4..."):
+            with st.spinner(f"⚙️ Procesando diagrama con {modelo_seleccionado}, abreviaturas (g, ml, °C) y sommelier V5..."):
                 for mod in modelos_a_probar:
                     intentos = 2
                     for intento in range(intentos):
@@ -514,13 +514,13 @@ if st.button("🎬 GENERAR DIAGRAMA Y SOMMELIER PRO V4"):
                                 exito = True
                                 break
                         except APIError as api_err:
-                            if api_err.code == 503 or "503" in str(api_err) or "UNAVAILABLE" in str(api_err) or api_err.code == 404 or "404" in str(api_err):
+                            if api_err.code == 503 or api_err.code == 404 or "503" in str(api_err) or "404" in str(api_err) or "UNAVAILABLE" in str(api_err) or "NOT_FOUND" in str(api_err):
                                 if intento < intentos - 1:
                                     time.sleep(2)
                                     continue
                             raise api_err
                         except Exception as e:
-                            if "503" in str(e) or "UNAVAILABLE" in str(e) or "404" in str(e):
+                            if "503" in str(e) or "404" in str(e) or "UNAVAILABLE" in str(e) or "NOT_FOUND" in str(e):
                                 if intento < intentos - 1:
                                     time.sleep(2)
                                     continue
@@ -541,7 +541,7 @@ if st.button("🎬 GENERAR DIAGRAMA Y SOMMELIER PRO V4"):
                 origen_final = url_origen_detectada if url_origen_detectada else datos.get("origen_receta", "Texto aportado por el usuario")
 
                 html_final = generar_html_dashboard(
-                    datos.get("nombre_receta", "Receta Culinaria Pro V4"),
+                    datos.get("nombre_receta", "Receta Culinaria Pro V5"),
                     origen_final,
                     datos.get("ingredientes", []),
                     datos.get("pasos_previos", []),
@@ -554,15 +554,15 @@ if st.button("🎬 GENERAR DIAGRAMA Y SOMMELIER PRO V4"):
                 
                 st.markdown("<br>", unsafe_allow_html=True)
                 st.download_button(
-                    label="📥 Descargar Diagrama HTML Autónomo V4",
+                    label="📥 Descargar Diagrama HTML Autónomo V5",
                     data=html_final,
-                    file_name="diagrama_facefoodchef_pro_v4.html",
+                    file_name="diagrama_facefoodchef_pro_v5.html",
                     mime="text/html"
                 )
                 
                 components.html(html_final, height=1450, scrolling=True)
             else:
-                st.error("⚠️ El servicio de Gemini está experimentando una alta demanda temporal o error de modelo. Por favor, pulsa de nuevo el botón de generar.")
+                st.error("⚠️ El servicio de Gemini ha devuelto un error o no está disponible con el modelo seleccionado. Por favor, cambia de modelo en el panel izquierdo.")
                 
         except Exception as e:
-            st.error(f"Error durante el procesamiento: {e}\n\n*Nota: Verifica tu clave de API y asegúrate de utilizar el modelo gemini-3.6-flash.*")
+            st.error(f"Error durante el procesamiento: {e}\n\n*Nota: Verifica tu clave de API y asegúrate de utilizar un modelo válido como gemini-3.6-flash.*")
