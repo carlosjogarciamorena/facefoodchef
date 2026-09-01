@@ -32,7 +32,7 @@ except ImportError:
 
 # Configuración de página
 st.set_page_config(
-    page_title="FaceFoodChef.com - Motor de Diagramas Culinarios Pro", 
+    page_title="FaceFoodChef.com - Motor de Diagramas Culinarios Pro V3", 
     layout="wide", 
     page_icon="🍳"
 )
@@ -126,15 +126,16 @@ comensales_objetivo = st.sidebar.number_input(
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("""
-### 🎬 Mejoras Incorporadas V2
-- **Cantidades exactas:** Sin "al gusto" y con "cucharada/cucharadita" escritas completas.
-- **Utensilios manuales:** Inclusión de cuchillos, espumaderas, pinzas, paletas, etc.
-- **Alarma polifónica:** Alarma de 5 tonos para temporizadores.
-- **Sommelier Avanzado:** Denominaciones de origen españolas prioritarias y variedad de cervezas.
+### 🎬 Mejoras V3 Aplicadas
+- **Cantidades exactas sin vaguedades:** Sin "al gusto".
+- **Abreviaturas permitidas:** Uso permitido de símbolos/abreviaturas estándar (g, ml, °C), manteniendo palabras completas para cucharas/cucharaditas.
+- **Utensilios y Menaje Manual:** Cuchillos, espumaderas, pinzas, paletas, etc. integrados.
+- **Alarma polifónica:** 5 tonos secuenciales al finalizar temporizadores.
+- **Sommelier Experto:** Vinos con D.O. española prioritaria y cervezas artesanales específicas.
 """)
 
-st.markdown("<h1 style='text-align: center; color: #EF4444; font-weight: 800; letter-spacing: -1px; margin-bottom: 0;'>FACEFOODCHEF <span style='font-size: 16px; background: #36393F; color: #fff; padding: 4px 10px; border-radius: 4px; vertical-align: middle; border: 1px solid #4F545C;'>PRO v2</span></h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #A0AEC0; font-size: 15px; margin-bottom: 30px;'>Diagramas de cocina escalables con control de menaje manual y sommelier experto</p>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: #EF4444; font-weight: 800; letter-spacing: -1px; margin-bottom: 0;'>FACEFOODCHEF <span style='font-size: 16px; background: #36393F; color: #fff; padding: 4px 10px; border-radius: 4px; vertical-align: middle; border: 1px solid #4F545C;'>PRO v3</span></h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #A0AEC0; font-size: 15px; margin-bottom: 30px;'>Diagramas de bloques con unidades abreviadas (g, ml, °C), menaje manual y sommelier</p>", unsafe_allow_html=True)
 
 # Entrada de Datos
 st.subheader("📥 Entrada de Receta")
@@ -195,9 +196,9 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
     
     html_header = f"""
     <div style="background: linear-gradient(180deg, #36393F 0%, #2F3136 100%); border-radius: 8px; padding: 30px; text-align: center; margin-bottom: 24px; border-left: 6px solid #EF4444; border: 1px solid #4F545C; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-        <span style="font-size: 11px; font-weight: 800; color: #FFFFFF; text-transform: uppercase; letter-spacing: 2px; background: #EF4444; padding: 6px 14px; border-radius: 4px; display: inline-block;">Diagrama de Producción Culinaria V2</span>
+        <span style="font-size: 11px; font-weight: 800; color: #FFFFFF; text-transform: uppercase; letter-spacing: 2px; background: #EF4444; padding: 6px 14px; border-radius: 4px; display: inline-block;">Diagrama de Producción Culinaria V3</span>
         <h1 style="color: #ffffff; font-size: 30px; margin: 16px 0 8px 0; font-weight: 800;">{nombre_receta}</h1>
-        <p style="color: #A0AEC0; font-size: 14px; margin: 0;">Calculado y escalado para <b>{comensales} comensales</b> (Cantidades exactas sin vaguedades).</p>
+        <p style="color: #A0AEC0; font-size: 14px; margin: 0;">Calculado y escalado para <b>{comensales} comensales</b> (Unidades científicas abreviadas: g, ml, °C).</p>
     </div>
     """
 
@@ -338,7 +339,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
             {html_recom}
             {html_maridaje}
             <div style="text-align: center; color: #718096; font-size: 13px; margin-top: 35px; border-top: 1px solid #4F545C; padding-top: 20px;">
-                🎬 <b>FaceFoodChef.com v2</b> | Fuente: {origen_html}
+                🎬 <b>FaceFoodChef.com v3</b> | Fuente: {origen_html}
             </div>
         </div>
         <script>
@@ -384,10 +385,10 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
                 }}, 1000);
             }}
 
-            // Alarma polifónica de 5 tonos secuenciales para asegurar aviso claro en cocina
+            // Alarma polifónica de 5 tonos secuenciales
             function sonarAlertaPolifonica() {{
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const frecuencias = [523.25, 659.25, 783.99, 1046.50, 1318.51]; // C5, E5, G5, C6, E6 (5 tonos)
+                const frecuencias = [523.25, 659.25, 783.99, 1046.50, 1318.51]; // C5, E5, G5, C6, E6
                 
                 frecuencias.forEach((freq, index) => {{
                     setTimeout(() => {{
@@ -429,7 +430,7 @@ elif receta_texto_input:
 elif archivo_multimodal:
     procesar_accion = True
 
-if st.button("🎬 GENERAR DIAGRAMA Y SOMMELIER PRO"):
+if st.button("🎬 GENERAR DIAGRAMA Y SOMMELIER PRO V3"):
     api_key_activa = API_KEY_INPUT.strip()
     
     if not api_key_activa:
@@ -447,33 +448,35 @@ if st.button("🎬 GENERAR DIAGRAMA Y SOMMELIER PRO"):
             ¡IMPORTANTE! El usuario requiere que la receta sea exactamente para {comensales_objetivo} COMENSALES. 
             Ajusta matemáticamente las cantidades para {comensales_objetivo} raciones.
 
-            REGLAS ESTRICTAS DE MEJORA:
-            1. INGREDIENTES: Quedan TOTALMENTE PROHIBIDAS expresiones vagas como "al gusto". Toda cantidad debe ser precisa y numérica (ej: gramos, mililitros, unidades). Las palabras "cucharada" y "cucharadita" deben estar escritas COMPLETAS, sin abreviaturas (ej: prohibido "cda" o "cdita").
-            2. UTENSILIOS Y MENAJE MANUAL: En cada bloque de proceso e ingredientes, debes incluir explícitamente tanto el menaje pesado (sartén, cazuela, horno) como el MENAJE MANUAL esencial para la ejecución (cuchillo de cocinero, espumadera, pinzas de cocina, paleta de madera, espátula de silicona, batidor de varillas, rallador, colador, etc.).
-            3. SOMMELIER EXPERTO: En la sección 'maridaje', debes proponer vinos especificando su Denominación de Origen (D.O., priorizando denominaciones españolas como D.O. Ca. Rioja, D.O. Ribera del Duero, D.O. Rías Baixas, D.O. Rueda, D.O. Penedès, etc.) junto con la variedad de uva. En cuanto a la cerveza, evita sugerencias genéricas y propone estilos artesanos específicos (ej: IPA, Stout, Pale Ale, Trigo Belga, Amber Ale) adaptados al plato.
+            REGLAS ESTRICTAS DE FORMATO Y CONTENIDO:
+            1. INGREDIENTES Y CANTIDADES: Quedan TOTALMENTE PROHIBIDAS expresiones vagas como "al gusto". Toda cantidad debe ser precisa y numérica. 
+               - Para las unidades de medida científicas/técnicas, SÍ utilizaremos abreviaturas estándar: gramos = "g", mililitros = "ml", grados celsius = "°C".
+               - Para las palabras de utensilios o medidas de volumen culinario como "cuchara" o "cucharadita", deben escribirse COMPLETAS y enteras, SIN abreviaturas (prohibido usar "cda" o "cdita").
+            2. UTENSILIOS Y MENAJE MANUAL: En cada bloque de proceso y pasos previos, incluye explícitamente tanto menaje pesado (sartén, cazuela, horno) como el MENAJE MANUAL esencial (cuchillo de cocinero, espumadera, pinzas de cocina, paleta de madera, espátula de silicona, batidor de varillas, rallador, colador, etc.).
+            3. SOMMELIER EXPERTO: En la sección 'maridaje', propone vinos especificando su Denominación de Origen (D.O., priorizando denominaciones españolas como D.O. Ca. Rioja, D.O. Ribera del Duero, D.O. Rías Baixas, D.O. Rueda, etc.) junto con la variedad de uva. Propón estilos de cerveza artesana específicos (ej: IPA, Stout, Pale Ale, Trigo Belga) adaptados al plato.
             4. Devuelve EXCLUSIVAMENTE un JSON válido sin marcas ni textos adicionales fuera del JSON.
 
             JSON Schema esperado:
             {{
               "nombre_receta": "String",
               "origen_receta": "String",
-              "ingredientes": ["400 gramos de harina de trigo", "10 gramos de sal fina", "2 cucharadas de aceite de oliva virgen extra"],
+              "ingredientes": ["400 g de harina de trigo", "10 g de sal fina", "2 cucharadas de aceite de oliva virgen extra"],
               "pasos_previos": ["Mise en place utilizando cuchillo de cocinero para picar y espátula de silicona..."],
               "bloques_proceso": [
-                {{"tipo": "secuencial", "accion": "Paso 1 detallado", "utensilios": ["Cazuela de acero inoxidable", "Cuchillo de cocinero", "Paleta de madera"], "tiempo": "5 minutos", "duracion_minutos": 5, "temperatura": "100 grados Celsius"}},
+                {{"tipo": "secuencial", "accion": "Paso 1 detallado", "utensilios": ["Cazuela de acero inoxidable", "Cuchillo de cocinero", "Paleta de madera"], "tiempo": "5 minutos", "duracion_minutos": 5, "temperatura": "100 °C"}},
                 {{
                   "tipo": "paralelo",
                   "ramas": [
-                    {{"nombre": "Sartén 1", "accion": "Sofreír...", "utensilios": ["Sartén antiadherente", "Pinzas de cocina"], "tiempo": "10 minutos", "duracion_minutos": 10, "temperatura": "90 grados Celsius"}},
-                    {{"nombre": "Olla 2", "accion": "Cocer...", "utensilios": ["Olla", "Espumadera"], "tiempo": "8 minutos", "duracion_minutos": 8, "temperatura": "100 grados Celsius"}}
+                    {{"nombre": "Sartén 1", "accion": "Sofreír...", "utensilios": ["Sartén antiadherente", "Pinzas de cocina"], "tiempo": "10 minutos", "duracion_minutos": 10, "temperatura": "90 °C"}},
+                    {{"nombre": "Olla 2", "accion": "Cocer...", "utensilios": ["Olla", "Espumadera"], "tiempo": "8 minutos", "duracion_minutos": 8, "temperatura": "100 °C"}}
                   ]
                 }},
-                {{"tipo": "convergencia", "accion": "Unir mezclas", "utensilios": ["Bol grande de cristal", "Batidor de varillas manual"], "tiempo": "2 minutos", "duracion_minutos": 2, "temperatura": "80 grados Celsius"}}
+                {{"tipo": "convergencia", "accion": "Unir mezclas", "utensilios": ["Bol grande de cristal", "Batidor de varillas manual"], "tiempo": "2 minutos", "duracion_minutos": 2, "temperatura": "80 °C"}}
               ],
               "recomendaciones": ["Tip 1 con detalle técnico"],
               "texto_voz": "Texto descriptivo completo y guiado de la receta",
               "maridaje": {{
-                "vino": "Vino tinto D.O. Ca. Rioja (Tempranillo / Graciano), crianza de 12 meses, ideal por sus taninos...",
+                "vino": "Vino tinto D.O. Ca. Rioja (Tempranillo / Graciano), crianza de 12 meses...",
                 "cerveza": "Cerveza artesana estilo Double IPA de alta graduación y notas cítricas..."
               }}
             }}
@@ -482,7 +485,7 @@ if st.button("🎬 GENERAR DIAGRAMA Y SOMMELIER PRO"):
             contents_payload = [prompt_sistema]
             if archivo_multimodal:
                 contents_payload.append(types.Part.from_bytes(data=archivo_multimodal, mime_type=tipo_multimodal))
-                contents_payload.append(f"Analiza el archivo adjunto para extraer la receta, escalar a {comensales_objetivo} comensales con menaje manual y sommelier experto.")
+                contents_payload.append(f"Analiza el archivo adjunto para extraer la receta, escalar a {comensales_objetivo} comensales con unidades abreviadas (g, ml, °C), menaje manual y sommelier.")
             else:
                 contents_payload.append(f"Receta:\n{contenido_ia}")
 
@@ -493,7 +496,7 @@ if st.button("🎬 GENERAR DIAGRAMA Y SOMMELIER PRO"):
             response = None
             exito = False
             
-            with st.spinner(f"⚙️ Procesando diagrama con menaje manual y sommelier V2... (Soporte anti-saturación activo)"):
+            with st.spinner(f"⚙️ Procesando diagrama con abreviaturas (g, ml, °C) y sommelier V3... (Soporte anti-saturación activo)"):
                 for mod in modelos_a_probar:
                     intentos = 2
                     for intento in range(intentos):
@@ -537,7 +540,7 @@ if st.button("🎬 GENERAR DIAGRAMA Y SOMMELIER PRO"):
                 origen_final = url_origen_detectada if url_origen_detectada else datos.get("origen_receta", "Texto aportado por el usuario")
 
                 html_final = generar_html_dashboard(
-                    datos.get("nombre_receta", "Receta Culinaria Pro V2"),
+                    datos.get("nombre_receta", "Receta Culinaria Pro V3"),
                     origen_final,
                     datos.get("ingredientes", []),
                     datos.get("pasos_previos", []),
@@ -550,9 +553,9 @@ if st.button("🎬 GENERAR DIAGRAMA Y SOMMELIER PRO"):
                 
                 st.markdown("<br>", unsafe_allow_html=True)
                 st.download_button(
-                    label="📥 Descargar Diagrama HTML Autónomo V2",
+                    label="📥 Descargar Diagrama HTML Autónomo V3",
                     data=html_final,
-                    file_name="diagrama_facefoodchef_pro_v2.html",
+                    file_name="diagrama_facefoodchef_pro_v3.html",
                     mime="text/html"
                 )
                 
