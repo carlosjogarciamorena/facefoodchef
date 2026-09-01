@@ -8,6 +8,7 @@ import streamlit.components.v1 as components
 from recipe_scrapers import scrape_me
 from google import genai
 from google.genai import types
+from google.genai.errors import APIError
 
 # Cargar variables de entorno locales (.env)
 try:
@@ -106,10 +107,10 @@ API_KEY_INPUT = st.sidebar.text_input(
     help="Introduce tu clave de API de Google Gemini manualmente."
 )
 
-# Corrección de modelo actualizado para evitar errores 404 NOT_FOUND
+# Lista ampliada de modelos compatibles para tolerancia a fallos por alta demanda
 modelo_seleccionado = st.sidebar.selectbox(
-    "Modelo Gemini:",
-    options=["gemini-3.6-flash", "gemini-2.5-flash", "gemini-1.5-flash"],
+    "Modelo Gemini (con fallback automático):",
+    options=["gemini-2.5-flash", "gemini-3.6-flash", "gemini-1.5-flash", "gemini-1.5-pro"],
     index=0
 )
 
@@ -132,7 +133,7 @@ st.sidebar.markdown("""
 """)
 
 st.markdown("<h1 style='text-align: center; color: #EF4444; font-weight: 800; letter-spacing: -1px; margin-bottom: 0;'>FACEFOODCHEF <span style='font-size: 16px; background: #36393F; color: #fff; padding: 4px 10px; border-radius: 4px; vertical-align: middle; border: 1px solid #4F545C;'>PRO</span></h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #A0AEC0; font-size: 15px; margin-bottom: 30px;'>Diagramas de cocina escalables + Sommelier Virtual</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #A0AEC0; font-size: 15px; margin-bottom: 30px;'>Diagramas de cocina escalables + Sommelier Virtual (Con reintentos automáticos anti-503)</p>", unsafe_allow_html=True)
 
 # Entrada de Datos
 st.subheader("📥 Entrada de Receta")
@@ -475,17 +476,46 @@ if st.button("🎬 GENERAR DIAGRAMA Y MARIDAJE"):
             else:
                 contents_payload.append(f"Receta:\n{contenido_ia}")
 
-            with st.spinner(f"⚙️ Procesando diagrama (Escalando a {comensales_objetivo} pax) y sommelier con {modelo_seleccionado}..."):
-                response = client.models.generate_content(
-                    model=modelo_seleccionado,
-                    contents=contents_payload,
-                    config=types.GenerateContentConfig(
-                        response_mime_type="application/json",
-                        temperature=0.1
-                    ),
-                )
+            # Lógica de reintentos automáticos y fallback ante errores de saturación (503 UNAVAILABLE)
+            modelos_a_probar = [modelo_seleccionado, "gemini-2.5-flash", "gemini-1.5-flash"]
+            # Eliminar duplicados manteniendo orden
+            modelos_a_probar = list(dict.fromkeys(modelos_a_probar))
+            
+            response = None
+            exito = False
+            
+            with st.spinner(f"⚙️ Procesando diagrama y sommelier... (Soporte anti-saturación activo)"):
+                for mod in modelos_a_probar:
+                    intentos = 2
+                    for intento in range(intentos):
+                        try:
+                            response = client.models.generate_content(
+                                model=mod,
+                                contents=contents_payload,
+                                config=types.GenerateContentConfig(
+                                    response_mime_type="application/json",
+                                    temperature=0.1
+                                ),
+                            )
+                            if response and response.text:
+                                exito = True
+                                break
+                        except APIError as api_err:
+                            if api_err.code == 503 or "503" in str(api_err) or "UNAVAILABLE" in str(api_err):
+                                if intento < intentos - 1:
+                                    time.sleep(2) # Espera breve antes de reintentar
+                                    continue
+                            raise api_err
+                        except Exception as e:
+                            if "503" in str(e) or "UNAVAILABLE" in str(e):
+                                if intento < intentos - 1:
+                                    time.sleep(2)
+                                    continue
+                            raise e
+                    if exito:
+                        break
 
-            if response:
+            if response and exito:
                 texto_respuesta = response.text.strip()
                 if texto_respuesta.startswith("```json"):
                     texto_respuesta = texto_respuesta[7:]
@@ -518,7 +548,8 @@ if st.button("🎬 GENERAR DIAGRAMA Y MARIDAJE"):
                 )
                 
                 components.html(html_final, height=1450, scrolling=True)
+            else:
+                st.error("⚠️ El servicio de Gemini está experimentando una alta demanda temporal (Error 503). Por favor, pulsa de nuevo el botón de generar en unos segundos.")
                 
         except Exception as e:
-            st.error(f"Error durante el procesamiento: {e}")
-            
+            st.error(f"Error durante el procesamiento: {e}\n\n*Nota: Si persiste el error 503 de alta demanda, prueba a cambiar de modelo en el panel izquierdo o reintenta en unos instantes.*")
