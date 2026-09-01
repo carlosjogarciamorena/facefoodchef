@@ -1,8 +1,2 @@
-streamlit
-google-genai
-recipe-scrapers
-beautifulsoup4
-requests
-python-dotenv
-python-docx
-python-pptx
+streamlit>=1.30.0
+google-generativeai>=0.4.0
