@@ -14,145 +14,133 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # ==========================================
-# 1. CONFIGURACIÓN DE LA PÁGINA Y ESTILOS
+# 1. CONFIGURACIÓN Y ESTILO CLARO Y LIMPIO
 # ==========================================
 st.set_page_config(
-    page_title="Kitchen Process Studio & Diagram Translator",
+    page_title="Generador de Diagramas de Procesos Gastronómicos",
     page_icon="👨‍🍳",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
+# Estilo editorial moderno, profesional y sobre fondo claro (sin estética semáforo/oscura)
 CSS_CUSTOM = """
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     
     html, body, [class*="css"] {
         font-family: 'Inter', sans-serif;
+        color: #1E293B;
     }
+    
     .main-header {
-        background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
-        padding: 1.8rem 2rem;
-        border-radius: 12px;
-        color: white;
-        margin-bottom: 1.5rem;
-        border-bottom: 4px solid #F59E0B;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    }
-    .main-header h1 {
-        font-weight: 800;
-        font-size: 2.2rem;
-        margin: 0;
-        color: #F8FAFC;
-    }
-    .main-header p {
-        color: #94A3B8;
-        font-size: 1rem;
-        margin-top: 0.4rem;
-        margin-bottom: 0;
-    }
-    .chef-recommendation-card {
         background-color: #FFFFFF;
-        border: 1px solid #E2E8F0;
-        border-left: 6px solid #D97706;
-        border-radius: 8px;
-        padding: 1.5rem;
-        margin-bottom: 1.2rem;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        padding: 1.5rem 0rem;
+        border-bottom: 2px solid #E2E8F0;
+        margin-bottom: 2rem;
     }
-    .critical-alert-card {
-        background-color: #FEF2F2;
-        border: 1px solid #FECACA;
-        border-left: 6px solid #EF4444;
-        border-radius: 8px;
-        padding: 1.2rem;
-        margin-bottom: 1rem;
+    
+    .main-header h1 {
+        font-weight: 700;
+        font-size: 2rem;
+        color: #0F172A;
+        margin: 0;
     }
-    .metric-container {
+    
+    .main-header p {
+        color: #64748B;
+        font-size: 1rem;
+        margin-top: 0.3rem;
+    }
+
+    .stButton>button {
+        background-color: #2563EB;
+        color: white;
+        font-weight: 600;
+        border-radius: 6px;
+        border: none;
+        padding: 0.6rem 1.2rem;
+    }
+    
+    .stButton>button:hover {
+        background-color: #1D4ED8;
+        color: white;
+    }
+
+    .info-card {
         background-color: #F8FAFC;
         border: 1px solid #E2E8F0;
         border-radius: 8px;
         padding: 1rem;
-        text-align: center;
-    }
-    .metric-value {
-        font-size: 1.8rem;
-        font-weight: 800;
-        color: #0F172A;
-    }
-    .metric-label {
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: #64748B;
-        font-weight: 600;
+        margin-bottom: 1rem;
     }
 </style>
 """
 st.markdown(CSS_CUSTOM, unsafe_allow_html=True)
 
 # ==========================================
-# 2. PROMPT DE INGENIERÍA Y GASTRONOMÍA
+# 2. PROMPT ORIENTADO A DIAGRAMA OPERATIVO
 # ==========================================
-PROMPT_INGENIERIA_PROCESOS = (
-    "Eres un Chef Ejecutivo e Ingeniero de Procesos Industriales Gastronómicos.\n"
-    "Tu objetivo es convertir la receta facilitada en un Grafo Dirigido Acíclico (DAG) ejecutable.\n\n"
-    "DEBES DEVOLVER TU RESPUESTA EN UN ÚNICO BLOQUE JSON VÁLIDO CON LA SIGUIENTE ESTRUCTURA:\n\n"
+PROMPT_DIAGRAMADOR_RECETAS = (
+    "Eres un Ingeniero de Procesos y Chef Ejecutivo especializado en diagramación industrial de recetas.\n"
+    "Tu tarea es transformar el texto de una receta en un Grafo Dirigido (DAG) claro y preciso para que un cocinero pueda ejecutar el plato siguiendo únicamente el diagrama.\n\n"
+    "DEBES DEVOLVER TU RESPUESTA EXCLUSIVAMENTE EN UN BLOQUE JSON VÁLIDO CON LA SIGUIENTE ESTRUCTURA:\n\n"
     "{\n"
-    '  "resumen_ejecutivo": {\n'
-    '    "nombre_plato": "Nombre del plato",\n'
-    '    "tiempo_total_estimado_min": 0,\n'
-    '    "tiempo_manos_a_la_obra_min": 0,\n'
-    '    "dificultad_tecnica": "Baja / Media / Alta / Profesional",\n'
-    '    "herramientas_clave": ["utensilio 1", "utensilio 2"]\n'
-    '  },\n'
-    '  "diagrama_mermaid": "graph TD\\n A([Ingrediente]) --> B[Acción]",\n'
-    '  "secuencia_pasos": [\n'
+    '  "nombre_plato": "Nombre del plato",\n'
+    '  "tiempo_total_min": 0,\n'
+    '  "diagrama_mermaid": "graph TD\\n...",\n'
+    '  "resumen_pasos": [\n'
     '    {\n'
-    '      "id": "A1",\n'
-    '      "fase": "Mise en Place / Preparación / Cocción / Emplatado",\n'
-    '      "accion": "Descripción de la acción",\n'
-    '      "ingredientes_involucrados": ["Ingrediente 1"],\n'
-    '      "tiempo_min": 10,\n'
-    '      "es_paralelo": true,\n'
-    '      "puede_hacerse_durante": "Mientras se fríe la patata",\n'
-    '      "temperatura_o_fuego": "Fuego medio / 180°C / N/A"\n'
+    '      "paso": 1,\n'
+    '      "fase": "Mise en place / Preparación / Cocción / Emplatado",\n'
+    '      "descripcion": "Detalle operativo",\n'
+    '      "tiempo": "10 min"\n'
     '    }\n'
-    '  ],\n'
-    '  "recomendaciones_chef": {\n'
-    '    "tecnicas_clave": ["Consejo técnico 1"],\n'
-    '    "puntos_criticos_alerta": ["Punto crítico a evitar 1"],\n'
-    '    "maridaje_sugerido": "Vino o bebida ideal",\n'
-    '    "sustituciones_posibles": ["Sustitución para alergias o falta de stock"]\n'
-    '  }\n'
-    '}\n\n'
-    "REGLAS DEL DIAGRAMA MERMAID:\n"
+    '  ]\n'
+    "}\n\n"
+    "REGLAS ESTRUCTURALES DEL DIAGRAMA MERMAID:\n"
     "1. Usa sintaxis `graph TD`.\n"
-    "2. Identifica ingredientes de entrada con nodos redondeados: `id([Ingrediente / Cantidad])`.\n"
-    "3. Identifica acciones de procesado con rectángulos: `id[Acción / Tiempo / Fuego]`.\n"
-    "4. Identifica puntos de decisión/control con rombos: `id{¿Verificación?}`.\n"
-    "5. NO USES caracteres especiales conflictivos (comillas dobles, comillas simples dentro del texto del nodo).\n"
+    "2. Nodos de Ingredientes de Entrada: Usa bordes redondeados `id([Ingrediente + Cantidad])`.\n"
+    "3. Nodos de Acciones / Tareas: Usa rectángulos `id[Acción + Herramienta]`.\n"
+    "4. Nodos de Tiempos / Temperaturas / Control: Usa rombos `id{Tiempo / Fuego / Condición}`.\n"
+    "5. Nodo Final: Usa `id[[Resultado final: Nombre del Plato]]`.\n"
+    "6. Conecta adecuadamente cómo convergen los ingredientes en recipientes compartidos.\n"
+    "7. Agrega los siguientes estilos de colores funcionales al final del diagrama:\n"
+    "   classDef ingrediente fill:#E6F4EA,stroke:#34A853,stroke-width:1px,color:#137333;\n"
+    "   classDef accion fill:#E8F0FE,stroke:#4285F4,stroke-width:1px,color:#174EA6;\n"
+    "   classDef control fill:#FEF7E0,stroke:#FBBC04,stroke-width:1px,color:#B06000;\n"
+    "   classDef final fill:#FCE8E6,stroke:#EA4335,stroke-width:2px,color:#C5221F;\n"
+    "8. Aplica las clases a los nodos correspondientes mediante `class ID_NODE ingrediente;`, etc.\n"
+    "9. NO USES comillas dobles ni caracteres especiales dentro de los nombres de los nodos.\n"
 )
 
 # ==========================================
-# 3. HELPER RENDERIZADOR HTML / JS DE MERMAID
+# 3. COMPONENTE HTML/JS NATIVO PARA MERMAID
 # ==========================================
-def renderizar_mermaid_html(codigo_mermaid: str, alto: int = 500):
-    """Renderiza sintaxis Mermaid en un canvas HTML/JS embebido localmente."""
+def renderizar_diagrama_mermaid(codigo_mermaid: str, alto: int = 600):
+    """Renderiza el diagrama Mermaid de forma limpia usando el motor JS oficial."""
     codigo_limpio = codigo_mermaid.replace("```mermaid", "").replace("```", "").strip()
-    html_code = f"""
+    
+    html_content = f"""
     <!DOCTYPE html>
     <html>
     <head>
+        <meta charset="utf-8">
         <script type="module">
             import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.mjs';
-            mermaid.initialize({{ startOnLoad: true, theme: 'default' }});
+            mermaid.initialize({{
+                startOnLoad: true,
+                theme: 'neutral',
+                securityLevel: 'loose',
+                flowchart: {{ useMaxWidth: true, htmlLabels: true, curve: 'basis' }}
+            }});
         </script>
         <style>
             body {{
+                font-family: 'Inter', sans-serif;
                 margin: 0;
                 padding: 10px;
-                background-color: transparent;
+                background-color: #FFFFFF;
                 display: flex;
                 justify-content: center;
             }}
@@ -168,189 +156,159 @@ def renderizar_mermaid_html(codigo_mermaid: str, alto: int = 500):
     </body>
     </html>
     """
-    components.html(html_code, height=alto, scrolling=True)
+    components.html(html_content, height=alto, scrolling=True)
 
 # ==========================================
-# 4. EXTRACCIÓN DE TEXTO Y MULTIFORMATO
+# 4. EXTRACCIÓN Y LECTURA MULTIFORMATO
 # ==========================================
-def extraer_contenido_archivo(uploaded_file):
+def extraer_texto_de_archivo(uploaded_file):
     nombre = uploaded_file.name.lower()
     if nombre.endswith(".txt"):
         return uploaded_file.read().decode("utf-8"), "texto"
     elif nombre.endswith(".pdf"):
         reader = PdfReader(uploaded_file)
-        texto_completo = ""
-        for page in reader.pages:
-            texto_completo += page.extract_text() + "\n"
-        return texto_completo, "texto"
+        texto = "".join([page.extract_text() + "\n" for page in reader.pages])
+        return texto, "texto"
     elif nombre.endswith(".docx"):
         doc = docx.Document(uploaded_file)
         return "\n".join([p.text for p in doc.paragraphs]), "texto"
     elif nombre.endswith((".png", ".jpg", ".jpeg", ".webp")):
         return Image.open(uploaded_file), "imagen"
     else:
-        raise ValueError("Formato no soportado.")
+        raise ValueError("Formato de archivo no compatible.")
 
 # ==========================================
-# 5. CONEXIÓN API CON SDK OFFICIAL
+# 5. LLAMADA A LA API DE GEMINI (SDK GenAI)
 # ==========================================
-def procesar_receta_con_gemini(api_key: str, modelo_nombre: str, contenido, tipo_contenido: str, nivel_detalle: str):
+def generar_diagrama_receta(api_key: str, modelo: str, contenido, tipo_contenido: str):
     client = genai.Client(api_key=api_key)
-    instrucciones = f"{PROMPT_INGENIERIA_PROCESOS}\n\nNIVEL DE DETALLE REQUERIDO: {nivel_detalle}"
     
-    contents = [instrucciones, "\n\nRECETA A ANALIZAR:\n" + contenido] if tipo_contenido == "texto" else [instrucciones, "\n\nRECETA EN IMAGEN:", contenido]
-    
+    if tipo_contenido == "texto":
+        contents = [PROMPT_DIAGRAMADOR_RECETAS, "\n\nTEXTO DE LA RECETA:\n" + contenido]
+    else:
+        contents = [PROMPT_DIAGRAMADOR_RECETAS, "\n\nIMAGEN DE LA RECETA:", contenido]
+        
     response = client.models.generate_content(
-        model=modelo_nombre,
+        model=modelo,
         contents=contents,
         config=types.GenerateContentConfig(
             response_mime_type="application/json",
-            temperature=0.2,
+            temperature=0.1,
         ),
     )
     return json.loads(response.text)
 
 # ==========================================
-# 6. BARRA LATERAL
+# 6. PANEL LATERAL DE CONFIGURACIÓN
 # ==========================================
-st.sidebar.markdown("## 👨‍🍳 Control de Procesos")
+st.sidebar.title("⚙️ Configuración")
 
 api_key_env = os.getenv("GEMINI_API_KEY", "")
-api_key_input = st.sidebar.text_input(
-    "API Key de Google Gemini:",
+api_key = st.sidebar.text_input(
+    "Gemini API Key:",
     value=api_key_env,
     type="password",
-    help="Consigue tu API Key en https://aistudio.google.com/"
+    help="Introduce tu clave API de Google AI Studio"
 )
 
-modelo_opcion = st.sidebar.selectbox(
-    "Motor de Inteligencia Artificial:",
+modelo_seleccionado = st.sidebar.selectbox(
+    "Modelo IA:",
     options=["gemini-3.6-flash", "gemini-3.6-pro"],
     index=0
 )
 
 st.sidebar.divider()
-nivel_detalle = st.sidebar.select_slider(
-    "Nivel de desglose técnico:",
-    options=["Básico (Consolidado)", "Estándar (Recomendado)", "Avanzado (Micro-pasos)"],
-    value="Estándar (Recomendado)"
-)
+st.sidebar.markdown("""
+**Leyenda del Diagrama:**
+* 🟢 **Verde:** Ingredientes / Entradas
+* 🔵 **Azul:** Acciones / Meclas / Cortar
+* 🟧 **Amarillo/Naranja:** Tiempos / Fuego / Control
+* 🔴 **Rojo:** Producto Final
+""")
 
 # ==========================================
 # 7. INTERFAZ PRINCIPAL
 # ==========================================
 st.markdown("""
 <div class="main-header">
-    <h1>👨‍🍳 Kitchen Process Studio</h1>
-    <p>Traductor Inteligente de Recetas a Diagramas de Flujo Ejecutables</p>
+    <h1>👨‍🍳 Generador de Diagramas de Bloques para Recetas</h1>
+    <p>Convierte cualquier texto o imagen de receta en un diagrama de flujo operativo ejecutable en cocina.</p>
 </div>
 """, unsafe_allow_html=True)
 
-col_izq, col_der = st.columns([1, 1.15])
+col_entrada, col_salida = st.columns([1, 1.3])
 
-with col_izq:
-    st.subheader("📝 Entrada de Receta")
-    opcion_entrada = st.radio("Selecciona origen de la receta:", ["Subir Archivo (PDF, DOCX, TXT, PNG/JPG)", "Pegar Texto Manualmente"])
+with col_entrada:
+    st.subheader("1. Entrada de la Receta")
+    metodo_entrada = st.radio("Fuente de datos:", ["Escribir / Pegar Texto", "Cargar Archivo (PDF, DOCX, TXT, Imagen)"])
     
-    receta_contenido = None
+    contenido_receta = None
     tipo_entrada = "texto"
     
-    if opcion_entrada == "Subir Archivo (PDF, DOCX, TXT, PNG/JPG)":
-        archivo_subido = st.file_uploader("Arrastra el archivo de la receta:", type=["txt", "pdf", "docx", "png", "jpg", "jpeg", "webp"])
-        if archivo_subido is not None:
+    if metodo_entrada == "Cargar Archivo (PDF, DOCX, TXT, Imagen)":
+        archivo = st.file_uploader("Selecciona el archivo:", type=["txt", "pdf", "docx", "png", "jpg", "jpeg", "webp"])
+        if archivo:
             try:
-                receta_contenido, tipo_entrada = extraer_contenido_archivo(archivo_subido)
+                contenido_receta, tipo_entrada = extraer_texto_de_archivo(archivo)
                 if tipo_entrada == "texto":
-                    st.text_area("Texto extraído:", value=receta_contenido, height=200, disabled=True)
+                    st.text_area("Vista previa del texto:", value=contenido_receta, height=220, disabled=True)
                 else:
-                    st.image(receta_contenido, caption="Vista previa de la receta", use_container_width=True)
+                    st.image(contenido_receta, caption="Imagen cargada", use_container_width=True)
             except Exception as e:
-                st.error(f"Error al leer archivo: {e}")
+                st.error(f"Error al leer el archivo: {e}")
     else:
-        receta_input = st.text_area("Pega aquí la receta:", height=300, placeholder="Ejemplo:\n- 2 patatas\n- 4 huevos\n\nPasos:\n1. Cortar y freír las patatas...")
-        if receta_input.strip():
-            receta_contenido = receta_input
+        texto_manual = st.text_area(
+            "Pega la receta aquí:",
+            height=300,
+            placeholder="Ejemplo:\nIngredientes:\n- 400g de pasta\n- 200g de panceta\n- 4 yemas de huevo\n- 100g de queso pecorino\n\nPasos:\n1. Hervir agua con sal y cocer la pasta..."
+        )
+        if texto_manual.strip():
+            contenido_receta = texto_manual
             tipo_entrada = "texto"
             
-    btn_procesar = st.button("🚀 Generar Diagrama y Estudio de Cocina", use_container_width=True, type="primary")
+    btn_generar = st.button("🚀 Generar Diagrama de Bloques", use_container_width=True)
 
-with col_der:
-    st.subheader("📊 Panel de Ejecución y Visualización")
+with col_salida:
+    st.subheader("2. Diagrama Operativo de Ejecución")
     
-    if btn_procesar:
-        if not api_key_input:
-            st.error("⚠️ Introduce tu API Key de Gemini en el panel lateral.")
-        elif receta_contenido is None:
-            st.warning("⚠️ Proporciona una receta antes de procesar.")
+    if btn_generar:
+        if not api_key:
+            st.error("⚠️ Introduce tu API Key de Gemini en la barra lateral.")
+        elif not contenido_receta:
+            st.warning("⚠️ Debes ingresar el texto o cargar un archivo con la receta.")
         else:
-            with st.spinner("👨‍🍳 Generando el diagrama ejecutable..."):
+            with st.spinner("Analizando la receta y construyendo el diagrama de bloques..."):
                 try:
-                    resultado = procesar_receta_con_gemini(
-                        api_key=api_key_input,
-                        modelo_nombre=modelo_opcion,
-                        contenido=receta_contenido,
-                        tipo_contenido=tipo_entrada,
-                        nivel_detalle=nivel_detalle
-                    )
-                    st.session_state["resultado_gastronomico"] = resultado
-                    st.success("¡Diagrama renderizado con éxito!")
+                    resultado = generar_diagrama_receta(api_key, modelo_seleccionado, contenido_receta, tipo_entrada)
+                    st.session_state["resultado_receta"] = resultado
                 except Exception as e:
-                    st.error(f"❌ Error durante el proceso: {str(e)}")
+                    st.error(f"Error procesando la solicitud: {str(e)}")
 
-    if "resultado_gastronomico" in st.session_state:
-        res = st.session_state["resultado_gastronomico"]
-        resumen = res.get("resumen_ejecutivo", {})
+    if "resultado_receta" in st.session_state:
+        res = st.session_state["resultado_receta"]
         
-        m1, m2, m3 = st.columns(3)
-        with m1:
-            st.markdown(f'<div class="metric-container"><div class="metric-value">{resumen.get("tiempo_total_estimado_min", "N/A")} min</div><div class="metric-label">Tiempo Total</div></div>', unsafe_allow_html=True)
-        with m2:
-            st.markdown(f'<div class="metric-container"><div class="metric-value">{resumen.get("tiempo_manos_a_la_obra_min", "N/A")} min</div><div class="metric-label">Tiempo Activo</div></div>', unsafe_allow_html=True)
-        with m3:
-            st.markdown(f'<div class="metric-container"><div class="metric-value">{resumen.get("dificultad_tecnica", "Media")}</div><div class="metric-label">Dificultad</div></div>', unsafe_allow_html=True)
+        st.markdown(f"### 🍽️ {res.get('nombre_plato', 'Plato traducido')}")
+        if res.get("tiempo_total_min"):
+            st.caption(f"⏱️ Tiempo estimado total: {res.get('tiempo_total_min')} minutos")
             
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        tab_diagrama, tab_secuencia, tab_chef, tab_codigo = st.tabs([
-            "📌 Diagrama de Flujo Visual",
-            "📋 Secuencia de Pasos",
-            "👨‍🍳 Consejos del Chef",
-            "💻 Código Fuente Mermaid"
-        ])
+        tab_diagrama, tab_tabla, tab_codigo = st.tabs(["📌 Diagrama de Flujo", "📋 Desglose de Pasos", "💻 Código Mermaid"])
         
         with tab_diagrama:
-            st.markdown("#### Grafo Dirigido Ejecutable")
             codigo_mermaid = res.get("diagrama_mermaid", "")
-            
             if codigo_mermaid:
-                # Renderizado fluido en HTML/JS nativo
-                renderizar_mermaid_html(codigo_mermaid, alto=550)
+                renderizar_diagrama_mermaid(codigo_mermaid, alto=580)
             else:
-                st.warning("No se pudo generar el código del diagrama.")
+                st.warning("No se pudo estructurar el diagrama.")
                 
-        with tab_secuencia:
-            pasos = res.get("secuencia_pasos", [])
+        with tab_tabla:
+            pasos = res.get("resumen_pasos", [])
             if pasos:
                 st.dataframe(pd.DataFrame(pasos), use_container_width=True)
                 
-        with tab_chef:
-            chef_data = res.get("recomendaciones_chef", {})
-            st.markdown('<div class="chef-recommendation-card">', unsafe_allow_html=True)
-            st.markdown("### 🎓 Técnicas Clave")
-            for tec in chef_data.get("tecnicas_clave", []):
-                st.markdown(f"* **{tec}**")
-            st.markdown('</div>', unsafe_allow_html=True)
-            
-            st.markdown('<div class="critical-alert-card">', unsafe_allow_html=True)
-            st.markdown("### ⚠️ Puntos Críticos")
-            for alt in chef_data.get("puntos_criticos_alerta", []):
-                st.markdown(f"* {alt}")
-            st.markdown('</div>', unsafe_allow_html=True)
-            
         with tab_codigo:
             st.code(res.get("diagrama_mermaid", ""), language="mermaid")
             st.download_button(
-                label="📥 Descargar Diagrama (.mmd)",
+                label="Descargar sintaxis .mmd",
                 data=res.get("diagrama_mermaid", ""),
                 file_name="diagrama_receta.mmd",
                 mime="text/plain"
