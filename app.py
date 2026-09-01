@@ -1,5 +1,6 @@
 import os
 import json
+import time
 import pandas as pd
 import streamlit as st
 import streamlit.components.v1 as components
@@ -23,7 +24,6 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Estética de interfaz oscura (Dark UI) tipo pantalla de cocina industrial
 CSS_DARK_THEME = """
 <style>
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;800&display=swap');
@@ -64,7 +64,6 @@ CSS_DARK_THEME = """
         margin-top: 0.4rem;
     }
 
-    /* Ajuste de cajas de texto y componentes en tema oscuro */
     .stTextArea textarea, .stSelectbox select {
         background-color: #0F172A !important;
         color: #F8FAFC !important;
@@ -131,7 +130,7 @@ PROMPT_CORE_NEON = (
     "   classDef ingrediente fill:#0D1117,stroke:#00FF66,stroke-width:2px,color:#00FF66;\n"
     "   classDef accion fill:#0D1117,stroke:#00E5FF,stroke-width:2px,color:#00E5FF;\n"
     "   classDef control fill:#0D1117,stroke:#FFB300,stroke-width:2px,color:#FFB300;\n"
-    "   classDef Alerta fill:#0D1117,stroke:#FF3366,stroke-width:2px,color:#FF3366;\n"
+    "   classDef alerta fill:#0D1117,stroke:#FF3366,stroke-width:2px,color:#FF3366;\n"
     "   classDef final fill:#0D1117,stroke:#FFD700,stroke-width:3px,color:#FFD700;\n\n"
     "8. Asigna cada clase a sus nodos respetando la sintaxis:\n"
     "   class ING1,ING2 ingrediente;\n"
@@ -142,7 +141,7 @@ PROMPT_CORE_NEON = (
 )
 
 # ==========================================
-# 3. COMPONENTE HTML/JS (CANVAS NEGRO MERMAID)
+# 3. CANVA HTML/JS DE MERMAID (FONDO NEGRO)
 # ==========================================
 def renderizar_canvas_negro_mermaid(codigo_mermaid: str, alto: int = 620):
     """Renderiza el diagrama sobre un lienzo negro con Javascript nativo (tema oscuro)."""
@@ -194,7 +193,7 @@ def renderizar_canvas_negro_mermaid(codigo_mermaid: str, alto: int = 620):
     components.html(html_code, height=alto, scrolling=True)
 
 # ==========================================
-# 4. LECTURA MULTIFORMATO DE RECETAS
+# 4. EXTRACCIÓN MULTIFORMATO
 # ==========================================
 def extraer_contenido_archivo(uploaded_file):
     nombre = uploaded_file.name.lower()
@@ -212,25 +211,48 @@ def extraer_contenido_archivo(uploaded_file):
         raise ValueError("Formato de archivo no soportado.")
 
 # ==========================================
-# 5. INTEGRACIÓN GEMINI API (google-genai)
+# 5. INTEGRACIÓN GEMINI CON MANEJO DE 503
 # ==========================================
-def procesar_receta_core(api_key: str, modelo: str, contenido, tipo_contenido: str):
+def procesar_receta_core_con_retry(api_key: str, modelo_principal: str, contenido, tipo_contenido: str):
+    """Maneja reintentos con backoff exponencial y fallback en caso de errores 503 (saturación del servidor)."""
     client = genai.Client(api_key=api_key)
     
     if tipo_contenido == "texto":
         contents = [PROMPT_CORE_NEON, "\n\nRECETA EN TEXTO:\n" + contenido]
     else:
         contents = [PROMPT_CORE_NEON, "\n\nRECETA EN IMAGEN:", contenido]
-        
-    response = client.models.generate_content(
-        model=modelo,
-        contents=contents,
-        config=types.GenerateContentConfig(
-            response_mime_type="application/json",
-            temperature=0.1,
-        ),
-    )
-    return json.loads(response.text)
+
+    # Lista de modelos de respaldo en caso de 503 permanente
+    modelos_a_probar = [modelo_principal]
+    if modelo_principal == "gemini-3.6-flash":
+        modelos_a_probar.append("gemini-3.6-pro")
+    else:
+        modelos_a_probar.append("gemini-3.6-flash")
+
+    ultimo_error = None
+
+    for mod in modelos_a_probar:
+        # Intentar hasta 3 veces por modelo con pausa creciente
+        for intento in range(3):
+            try:
+                response = client.models.generate_content(
+                    model=mod,
+                    contents=contents,
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        temperature=0.1,
+                    ),
+                )
+                return json.loads(response.text)
+            except Exception as e:
+                ultimo_error = e
+                err_msg = str(e)
+                if "503" in err_msg or "UNAVAILABLE" in err_msg or "429" in err_msg:
+                    time.sleep(2 ** (intento + 1))  # Pausa exponencial: 2s, 4s...
+                else:
+                    raise e  # Si no es un problema de carga/límites, lanzar error directo
+
+    raise ultimo_error
 
 # ==========================================
 # 6. PANEL LATERAL (CONTROL BAR)
@@ -245,7 +267,7 @@ api_key = st.sidebar.text_input(
 )
 
 modelo_seleccionado = st.sidebar.selectbox(
-    "Modelo IA:",
+    "Modelo IA Principal:",
     options=["gemini-3.6-flash", "gemini-3.6-pro"],
     index=0
 )
@@ -267,7 +289,7 @@ st.sidebar.markdown("""
 st.markdown("""
 <div class="main-header">
     <h1>🎛️ KITCHEN PROCESS DIAGRAMMER</h1>
-    <p>Traductor de Recetas a Grafo Dirigido Ejecutable paso a paso (Modo Oscuro & Bordes de Color)</p>
+    <p>Traductor de Recetas a Grafo Dirigido Ejecutable paso a paso (Modo Oscuro & Bordes Neón)</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -312,12 +334,17 @@ with col_out:
         elif not contenido_receta:
             st.warning("⚠️ Debes proporcionar una receta (texto o archivo).")
         else:
-            with st.spinner("⚡ Compilando grafo de bloques con diseño neón..."):
+            with st.spinner("⚡ Compilando grafo de bloques (gestión de carga activa)..."):
                 try:
-                    resultado = procesar_receta_core(api_key, modelo_seleccionado, contenido_receta, tipo_entrada)
+                    resultado = procesar_receta_core_con_retry(
+                        api_key=api_key,
+                        modelo_principal=modelo_seleccionado,
+                        contenido=contenido_receta,
+                        tipo_contenido=tipo_entrada
+                    )
                     st.session_state["core_resultado"] = resultado
                 except Exception as e:
-                    st.error(f"❌ Error durante el procesamiento: {str(e)}")
+                    st.error(f"❌ No se pudo completar la solicitud por alta demanda del servidor: {str(e)}")
 
     if "core_resultado" in st.session_state:
         res = st.session_state["core_resultado"]
