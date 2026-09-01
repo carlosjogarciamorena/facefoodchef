@@ -96,14 +96,19 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Autenticación API Key (Vinculación eliminada de la interfaz)
-API_KEY = st.secrets.get("GEMINI_API_KEY") if "GEMINI_API_KEY" in st.secrets else None
-
+# Panel Lateral y Control de Credenciales Manuales
 st.sidebar.header("⚙️ Panel de Control")
+
+API_KEY_INPUT = st.sidebar.text_input(
+    "🔑 Clave de API Gemini:",
+    type="password",
+    value=st.secrets.get("GEMINI_API_KEY", "") if "GEMINI_API_KEY" in st.secrets else "",
+    help="Introduce tu clave de API de Google Gemini manualmente."
+)
 
 modelo_seleccionado = st.sidebar.selectbox(
     "Modelo Gemini:",
-    options=["gemini-3.6-flash", "gemini-2.5-flash", "gemini-1.5-flash"],
+    options=["gemini-2.5-flash", "gemini-1.5-flash"],
     index=0
 )
 
@@ -411,13 +416,15 @@ elif archivo_multimodal:
     procesar_accion = True
 
 if st.button("🎬 GENERAR DIAGRAMA Y MARIDAJE"):
-    if not API_KEY:
-        st.error("⚠️ Es necesaria una API Key de Google Gemini configurada en los secretos de Streamlit (st.secrets).")
+    api_key_activa = API_KEY_INPUT.strip()
+    
+    if not api_key_activa:
+        st.error("⚠️ Por favor, introduce una clave de API de Google Gemini en el panel lateral izquierdo.")
     elif not procesar_accion:
         st.warning("⚠️ Introduce una URL, un texto o adjunta un archivo antes de continuar.")
     else:
         try:
-            client = genai.Client(api_key=API_KEY)
+            client = genai.Client(api_key=api_key_activa)
             
             prompt_sistema = f"""
             Eres un experto en gastronomía, sommelier y programador de flujos de trabajo en cocina. 
