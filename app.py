@@ -491,15 +491,15 @@ if st.button("🎬 GENERAR DIAGRAMA Y SOMMELIER V3"):
             else:
                 contents_payload.append(f"Receta:\n{contenido_ia}")
 
-            modelos_a_probar = [modelo_seleccionado, "gemini-2.5-flash", "gemini-1.5-flash"]
+            modelos_a_probar = [modelo_seleccionado, "gemini-1.5-pro", "gemini-1.5-flash", "gemini-2.5-flash"]
             modelos_a_probar = list(dict.fromkeys(modelos_a_probar))
             
             response = None
             exito = False
             
-            with st.spinner(f"⚙️ Procesando diagrama V3 (Unidades abreviadas & Sommelier CLM)..."):
+            with st.spinner("⚙️ Procesando diagrama V3 (Optimizando conexión con IA)..."):
                 for mod in modelos_a_probar:
-                    intentos = 2
+                    intentos = 3
                     for intento in range(intentos):
                         try:
                             response = client.models.generate_content(
@@ -513,18 +513,15 @@ if st.button("🎬 GENERAR DIAGRAMA Y SOMMELIER V3"):
                             if response and response.text:
                                 exito = True
                                 break
-                        except APIError as api_err:
-                            if api_err.code == 503 or "503" in str(api_err) or "UNAVAILABLE" in str(api_err):
+                        except Exception as api_err:
+                            err_str = str(api_err)
+                            if "503" in err_str or "UNAVAILABLE" in err_str or "high demand" in err_str:
                                 if intento < intentos - 1:
-                                    time.sleep(2)
+                                    tiempo_espera = (intento + 1) * 3
+                                    time.sleep(tiempo_espera)
                                     continue
-                            raise api_err
-                        except Exception as e:
-                            if "503" in str(e) or "UNAVAILABLE" in str(e):
-                                if intento < intentos - 1:
-                                    time.sleep(2)
-                                    continue
-                            raise e
+                            if intento == intentos - 1:
+                                break
                     if exito:
                         break
 
