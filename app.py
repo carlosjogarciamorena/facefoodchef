@@ -10,14 +10,12 @@ from google import genai
 from google.genai import types
 from google.genai.errors import APIError
 
-# Cargar variables de entorno locales (.env)
 try:
     from dotenv import load_dotenv
     load_dotenv()
 except ImportError:
     pass
 
-# Importaciones opcionales para lectura de documentos
 try:
     import docx
     HAS_DOCX = True
@@ -30,14 +28,12 @@ try:
 except ImportError:
     HAS_PPTX = False
 
-# Configuración de página
 st.set_page_config(
-    page_title="FaceFoodChef.com - Motor de Diagramas Culinarios Pro", 
+    page_title="FaceFoodChef.com - Motor de Diagramas Culinarios Pro V3", 
     layout="wide", 
     page_icon="🍳"
 )
 
-# ESTILOS VISUALES - FONDO GRIS METÁLICO PROFESIONAL
 st.markdown("""
     <style>
     .stApp, .block-container, [data-testid="stSidebar"] {
@@ -97,8 +93,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Panel Lateral y Control de Credenciales Manuales
-st.sidebar.header("⚙️ Panel de Control")
+st.sidebar.header("⚙️ Panel de Control V3")
 
 API_KEY_INPUT = st.sidebar.text_input(
     "🔑 Clave de API Gemini:",
@@ -107,14 +102,12 @@ API_KEY_INPUT = st.sidebar.text_input(
     help="Introduce tu clave de API de Google Gemini manualmente."
 )
 
-# Lista ampliada de modelos compatibles para tolerancia a fallos por alta demanda
 modelo_seleccionado = st.sidebar.selectbox(
     "Modelo Gemini (con fallback automático):",
     options=["gemini-2.5-flash", "gemini-3.6-flash", "gemini-1.5-flash", "gemini-1.5-pro"],
     index=0
 )
 
-# Selector de comensales para escalar la receta
 comensales_objetivo = st.sidebar.number_input(
     "👥 Número de comensales:",
     min_value=1,
@@ -126,17 +119,15 @@ comensales_objetivo = st.sidebar.number_input(
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("""
-### 🎬 Mejoras Incorporadas V2
-- **Cantidades exactas:** Sin "al gusto" y con "cucharada/cucharadita" escritas completas.
-- **Utensilios manuales:** Inclusión de cuchillos, espumaderas, pinzas, paletas, etc.
-- **Alarma polifónica:** Alarma de 5 tonos para temporizadores.
-- **Sommelier Avanzado:** Denominaciones de origen españolas prioritarias y variedad de cervezas.
+### 🌟 Mejoras Aplicadas V3
+- **Unidades abreviadas:** Uso de `g`, `ml`, `l`, `kg`, `ºC`, etc., manteniendo siempre **cucharada** y **cucharadita** con nombre completo.
+- **Sommelier Manchego/Español Avanzado:** Mínimo **2 propuestas de vino** (priorizando D.O. de Castilla-La Mancha: *La Mancha, Valdepeñas, Almansa, Manchuela, Ribera del Júcar, Mondéjar, Uclés*) y **2 propuestas de cerveza** (artesanas y nacionales).
+- **Control de Menaje y Alarmas:** Herramientas manuales detalladas y alarma polifónica integrada.
 """)
 
-st.markdown("<h1 style='text-align: center; color: #EF4444; font-weight: 800; letter-spacing: -1px; margin-bottom: 0;'>FACEFOODCHEF <span style='font-size: 16px; background: #36393F; color: #fff; padding: 4px 10px; border-radius: 4px; vertical-align: middle; border: 1px solid #4F545C;'>PRO v2</span></h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #A0AEC0; font-size: 15px; margin-bottom: 30px;'>Diagramas de cocina escalables con control de menaje manual y sommelier experto</p>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: #EF4444; font-weight: 800; letter-spacing: -1px; margin-bottom: 0;'>FACEFOODCHEF <span style='font-size: 16px; background: #36393F; color: #fff; padding: 4px 10px; border-radius: 4px; vertical-align: middle; border: 1px solid #4F545C;'>PRO V3</span></h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #A0AEC0; font-size: 15px; margin-bottom: 30px;'>Diagramas de cocina escalables con unidades abreviadas y sommelier experto de Castilla-La Mancha</p>", unsafe_allow_html=True)
 
-# Entrada de Datos
 st.subheader("📥 Entrada de Receta")
 entrada_principal = st.text_area(
     "Pega la URL de la receta o el texto completo:", 
@@ -195,9 +186,9 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
     
     html_header = f"""
     <div style="background: linear-gradient(180deg, #36393F 0%, #2F3136 100%); border-radius: 8px; padding: 30px; text-align: center; margin-bottom: 24px; border-left: 6px solid #EF4444; border: 1px solid #4F545C; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-        <span style="font-size: 11px; font-weight: 800; color: #FFFFFF; text-transform: uppercase; letter-spacing: 2px; background: #EF4444; padding: 6px 14px; border-radius: 4px; display: inline-block;">Diagrama de Producción Culinaria V2</span>
+        <span style="font-size: 11px; font-weight: 800; color: #FFFFFF; text-transform: uppercase; letter-spacing: 2px; background: #EF4444; padding: 6px 14px; border-radius: 4px; display: inline-block;">Diagrama de Producción Culinaria V3</span>
         <h1 style="color: #ffffff; font-size: 30px; margin: 16px 0 8px 0; font-weight: 800;">{nombre_receta}</h1>
-        <p style="color: #A0AEC0; font-size: 14px; margin: 0;">Calculado y escalado para <b>{comensales} comensales</b> (Cantidades exactas sin vaguedades).</p>
+        <p style="color: #A0AEC0; font-size: 14px; margin: 0;">Calculado y escalado para <b>{comensales} comensales</b> (Unidades abreviadas).</p>
     </div>
     """
 
@@ -221,7 +212,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
 
     html_diagrama = """
     <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-        <h3 style="color: #ffffff; font-size: 20px; font-weight: 800; margin-bottom: 22px;">3. Diagrama de Ejecución con Utensilios y Menaje Manual</h3>
+        <h3 style="color: #ffffff; font-size: 20px; font-weight: 800; margin-bottom: 22px;">3. Diagrama de Ejecución con Utensilios y Unidades Abreviadas</h3>
     """
     
     BG_BLOQUE = "#36393F"
@@ -298,12 +289,20 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
         html_recom += f"<li>{rec}</li>"
     html_recom += "</ul></div>"
 
+    vinos_lista = maridaje.get('vinos', [])
+    cervezas_lista = maridaje.get('cervezas', [])
+    
+    vinos_html = "".join([f"<li style='margin-bottom: 6px;'>{v}</li>" for v in vinos_lista]) if vinos_lista else "<li>Sin propuestas de vino disponibles.</li>"
+    cervezas_html = "".join([f"<li style='margin-bottom: 6px;'>{c}</li>" for c in cervezas_lista]) if cervezas_lista else "<li>Sin propuestas de cerveza disponibles.</li>"
+
     html_maridaje = f"""
     <div style="background-color: #36393F; border: 1px solid #4F545C; border-left: 6px solid #9D4EDD; border-radius: 8px; padding: 22px; margin-top: 20px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-        <h3 style="color: #9D4EDD; margin-top: 0; font-size: 18px; font-weight: 700;">🍷 5. Sommelier Experto (Vinos con D.O. y Cervezas Especiales)</h3>
-        <div style="margin-top: 12px; color: #CBD5E0; font-size: 15px; line-height: 1.6;">
-            <p style="margin-bottom: 12px;"><b>🍇 Sugerencia de Vino (con Denominación de Origen):</b><br>{maridaje.get('vino', 'Sin sugerencia disponible.')}</p>
-            <p><b>🍺 Sugerencia de Cerveza Artesana/Especial:</b><br>{maridaje.get('cerveza', 'Sin sugerencia disponible.')}</p>
+        <h3 style="color: #9D4EDD; margin-top: 0; font-size: 18px; font-weight: 700;">🍷 5. Sommelier Experto (D.O. Castilla-La Mancha y España)</h3>
+        <div style="margin-top: 14px; color: #CBD5E0; font-size: 14px; line-height: 1.7;">
+            <p style="margin-bottom: 8px; color: #E2E8F0;"><b>🍇 Propuestas de Vinos (Mínimo 2, con prioridad en Castilla-La Mancha):</b></p>
+            <ul style="margin: 0 0 16px 0; padding-left: 20px;">{vinos_html}</ul>
+            <p style="margin-bottom: 8px; color: #E2E8F0;"><b>🍺 Propuestas de Cervezas (Mínimo 2, artesanas y nacionales):</b></p>
+            <ul style="margin: 0; padding-left: 20px;">{cervezas_html}</ul>
         </div>
     </div>
     """
@@ -338,7 +337,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
             {html_recom}
             {html_maridaje}
             <div style="text-align: center; color: #718096; font-size: 13px; margin-top: 35px; border-top: 1px solid #4F545C; padding-top: 20px;">
-                🎬 <b>FaceFoodChef.com v2</b> | Fuente: {origen_html}
+                🎬 <b>FaceFoodChef.com V3</b> | Fuente: {origen_html}
             </div>
         </div>
         <script>
@@ -379,7 +378,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
                         segundosRestantes--;
                         const m = Math.floor(segundosRestantes / 60);
                         const s = segundosRestantes % 60;
-                        elemento.innerText = `${{m}}m ${{s < 10 ? '0' : ''}}${{s}}s`;
+                        elemento.innerText = `${{m}}m ${{s < 10 ? '0' : ''}}${s}s`;
                     }}
                 }}, 1000);
             }}
@@ -411,7 +410,6 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
     </html>
     """
 
-# Procesamiento principal
 procesar_accion = False
 contenido_ia = None
 
@@ -428,7 +426,7 @@ elif receta_texto_input:
 elif archivo_multimodal:
     procesar_accion = True
 
-if st.button("🎬 GENERAR DIAGRAMA Y SOMMELIER PRO"):
+if st.button("🎬 GENERAR DIAGRAMA Y SOMMELIER V3"):
     api_key_activa = API_KEY_INPUT.strip()
     
     if not api_key_activa:
@@ -440,40 +438,48 @@ if st.button("🎬 GENERAR DIAGRAMA Y SOMMELIER PRO"):
             client = genai.Client(api_key=api_key_activa)
             
             prompt_sistema = f"""
-            Eres un maestro chef, sumiller experto y programador de flujos culinarios. 
+            Eres un maestro chef, sumiller experto de Castilla-La Mancha y programador de flujos culinarios. 
             Transforma la receta aportada en un esquema estructurado JSON avanzado bajo los siguientes criterios obligatorios:
 
             ¡IMPORTANTE! El usuario requiere que la receta sea exactamente para {comensales_objetivo} COMENSALES. 
             Ajusta matemáticamente las cantidades para {comensales_objetivo} raciones.
 
-            REGLAS ESTRICTAS DE MEJORA:
-            1. INGREDIENTES: Quedan TOTALMENTE PROHIBIDAS expresiones vagas como "al gusto". Toda cantidad debe ser precisa y numérica (ej: gramos, mililitros, unidades). Las palabras "cucharada" y "cucharadita" deben estar escritas COMPLETAS, sin abreviaturas (ej: prohibido "cda" o "cdita").
-            2. UTENSILIOS Y MENAJE MANUAL: En cada bloque de proceso e ingredientes, debes incluir explícitamente tanto el menaje pesado (sartén, cazuela, horno) como el MENAJE MANUAL esencial para la ejecución (cuchillo de cocinero, espumadera, pinzas de cocina, paleta de madera, espátula de silicona, batidor de varillas, rallador, colador, etc.).
-            3. SOMMELIER EXPERTO: En la sección 'maridaje', debes proponer vinos especificando su Denominación de Origen (D.O., priorizando denominaciones españolas como D.O. Ca. Rioja, D.O. Ribera del Duero, D.O. Rías Baixas, D.O. Rueda, D.O. Penedès, etc.) junto con la variedad de uva. En cuanto a la cerveza, evita sugerencias genéricas y propone estilos artesanos específicos (ej: IPA, Stout, Pale Ale, Trigo Belga, Amber Ale) adaptados al plato.
+            REGLAS ESTRICTAS DE FORMATO Y UNIDADES:
+            1. UNIDADES DE MEDIDA: Las unidades se deben expresar abreviadas siempre que sea posible (ej: g, kg, ml, l, ºC, cm, min, etc.). Sin embargo, la palabra "cucharada" y "cucharadita" deben mantenerse SIEMPRE escritas completas (prohibido usar "cda" o "cdita"). Quedan totalmente prohibidas expresiones vagas como "al gusto".
+            2. MENAJE MANUAL Y UTENSILIOS: En cada bloque de proceso o ingredientes, detalla el menaje pesado y el menaje manual necesario (cuchillo de cocinero, espumadera, pinzas de cocina, paleta de madera, espátula de silicona, batidor de varillas, etc.).
+            3. SOMMELIER (CASTILLA-LA MANCHA Y ESPAÑA): En la sección 'maridaje', debes proporcionar obligatoriamente:
+               - Al menos 2 propuestas de VINO, priorizando Denominaciones de Origen de Castilla-La Mancha (D.O. La Mancha, D.O. Valdepeñas, D.O. Almansa, D.O. Manchuela, D.O. Ribera del Júcar, D.O. Mondéjar, D.O. Uclés) indicando variedad de uva y maridaje técnico.
+               - Al menos 2 propuestas de CERVEZA, priorizando cervezas artesanas o de fabricación española.
             4. Devuelve EXCLUSIVAMENTE un JSON válido sin marcas ni textos adicionales fuera del JSON.
 
             JSON Schema esperado:
             {{
               "nombre_receta": "String",
               "origen_receta": "String",
-              "ingredientes": ["400 gramos de harina de trigo", "10 gramos de sal fina", "2 cucharadas de aceite de oliva virgen extra"],
-              "pasos_previos": ["Mise en place utilizando cuchillo de cocinero para picar y espátula de silicona..."],
+              "ingredientes": ["400 g de harina de trigo", "10 g de sal fina", "2 cucharadas de aceite de oliva virgen extra"],
+              "pasos_previos": ["Mise en place utilizando cuchillo de cocinero..."],
               "bloques_proceso": [
-                {{"tipo": "secuencial", "accion": "Paso 1 detallado", "utensilios": ["Cazuela de acero inoxidable", "Cuchillo de cocinero", "Paleta de madera"], "tiempo": "5 minutos", "duracion_minutos": 5, "temperatura": "100 grados Celsius"}},
+                {{"tipo": "secuencial", "accion": "Paso 1 detallado", "utensilios": ["Cazuela de acero inoxidable", "Cuchillo de cocinero"], "tiempo": "5 min", "duracion_minutos": 5, "temperatura": "100 ºC"}},
                 {{
                   "tipo": "paralelo",
                   "ramas": [
-                    {{"nombre": "Sartén 1", "accion": "Sofreír...", "utensilios": ["Sartén antiadherente", "Pinzas de cocina"], "tiempo": "10 minutos", "duracion_minutos": 10, "temperatura": "90 grados Celsius"}},
-                    {{"nombre": "Olla 2", "accion": "Cocer...", "utensilios": ["Olla", "Espumadera"], "tiempo": "8 minutos", "duracion_minutos": 8, "temperatura": "100 grados Celsius"}}
+                    {{"nombre": "Sartén 1", "accion": "Sofreír...", "utensilios": ["Sartén antiadherente", "Pinzas de cocina"], "tiempo": "10 min", "duracion_minutos": 10, "temperatura": "90 ºC"}},
+                    {{"nombre": "Olla 2", "accion": "Cocer...", "utensilios": ["Olla", "Espumadera"], "tiempo": "8 min", "duracion_minutos": 8, "temperatura": "100 ºC"}}
                   ]
                 }},
-                {{"tipo": "convergencia", "accion": "Unir mezclas", "utensilios": ["Bol grande de cristal", "Batidor de varillas manual"], "tiempo": "2 minutos", "duracion_minutos": 2, "temperatura": "80 grados Celsius"}}
+                {{"tipo": "convergencia", "accion": "Unir mezclas", "utensilios": ["Bol grande de cristal", "Batidor de varillas manual"], "tiempo": "2 min", "duracion_minutos": 2, "temperatura": "80 ºC"}}
               ],
-              "recomendaciones": ["Tip 1 con detalle técnico"],
+              "recomendaciones": ["Tip técnico 1"],
               "texto_voz": "Texto descriptivo completo y guiado de la receta",
               "maridaje": {{
-                "vino": "Vino tinto D.O. Ca. Rioja (Tempranillo / Graciano), crianza de 12 meses, ideal por sus taninos...",
-                "cerveza": "Cerveza artesana estilo Double IPA de alta graduación y notas cítricas..."
+                "vinos": [
+                  "1. Vino tinto D.O. La Mancha (Cencibel/Tempranillo)...",
+                  "2. Vino blanco D.O. Rueda (Verdejo)..."
+                ],
+                "cervezas": [
+                  "1. Cerveza artesana castellano-manchega tipo Pale Ale...",
+                  "2. Cerveza tostada española de marca nacional..."
+                ]
               }}
             }}
             """
@@ -481,7 +487,7 @@ if st.button("🎬 GENERAR DIAGRAMA Y SOMMELIER PRO"):
             contents_payload = [prompt_sistema]
             if archivo_multimodal:
                 contents_payload.append(types.Part.from_bytes(data=archivo_multimodal, mime_type=tipo_multimodal))
-                contents_payload.append(f"Analiza el archivo adjunto para extraer la receta, escalar a {comensales_objetivo} comensales con menaje manual y sommelier experto.")
+                contents_payload.append(f"Analiza el archivo adjunto para extraer la receta, escalar a {comensales_objetivo} comensales con unidades abreviadas y sommelier CLM.")
             else:
                 contents_payload.append(f"Receta:\n{contenido_ia}")
 
@@ -491,7 +497,7 @@ if st.button("🎬 GENERAR DIAGRAMA Y SOMMELIER PRO"):
             response = None
             exito = False
             
-            with st.spinner(f"⚙️ Procesando diagrama con menaje manual y sommelier V2... (Soporte anti-saturación activo)"):
+            with st.spinner(f"⚙️ Procesando diagrama V3 (Unidades abreviadas & Sommelier CLM)..."):
                 for mod in modelos_a_probar:
                     intentos = 2
                     for intento in range(intentos):
@@ -535,7 +541,7 @@ if st.button("🎬 GENERAR DIAGRAMA Y SOMMELIER PRO"):
                 origen_final = url_origen_detectada if url_origen_detectada else datos.get("origen_receta", "Texto aportado por el usuario")
 
                 html_final = generar_html_dashboard(
-                    datos.get("nombre_receta", "Receta Culinaria Pro V2"),
+                    datos.get("nombre_receta", "Receta Culinaria Pro V3"),
                     origen_final,
                     datos.get("ingredientes", []),
                     datos.get("pasos_previos", []),
@@ -548,9 +554,9 @@ if st.button("🎬 GENERAR DIAGRAMA Y SOMMELIER PRO"):
                 
                 st.markdown("<br>", unsafe_allow_html=True)
                 st.download_button(
-                    label="📥 Descargar Diagrama HTML Autónomo V2",
+                    label="📥 Descargar Diagrama HTML Autónomo V3",
                     data=html_final,
-                    file_name="diagrama_facefoodchef_pro_v2.html",
+                    file_name="diagrama_facefoodchef_pro_v3.html",
                     mime="text/html"
                 )
                 
