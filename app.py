@@ -378,7 +378,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
                         segundosRestantes--;
                         const m = Math.floor(segundosRestantes / 60);
                         const s = segundosRestantes % 60;
-                        elemento.innerText = `${{m}}m ${{s < 10 ? '0' : ''}}${s}s`;
+                        elemento.innerText = `${{m}}m ${{s < 10 ? '0' : ''}}${{s}}s`;
                     }}
                 }}, 1000);
             }}
