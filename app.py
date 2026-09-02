@@ -207,7 +207,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
         <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px;">
     """
     for ing in ingredientes:
-        html_ing += f"<span style='background-color: #2F3136; color: #E2E8F0; padding: 8px 16px; border-radius: 20px; font-size: 13px; border: 1px solid #5C626B; font-weight: 500;'> {ing}</span>"
+        html_ing += f"<span style='background-color: #2F3136; color: #E2E8F0; padding: 8px 16px; border-radius: 20px; font-size: 13px; border: 1px solid #5C626B; font-weight: 500;'>{ing}</span>"
     html_ing += "</div></div>"
 
     html_prev = """
@@ -384,10 +384,9 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
                 }}, 1000);
             }}
 
-            // Alarma polifónica de 5 tonos secuenciales para asegurar aviso claro en cocina
             function sonarAlertaPolifonica() {{
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const frecuencias = [523.25, 659.25, 783.99, 1046.50, 1318.51]; // C5, E5, G5, C6, E6 (5 tonos)
+                const frecuencias = [523.25, 659.25, 783.99, 1046.50, 1318.51];
                 
                 frecuencias.forEach((freq, index) => {{
                     setTimeout(() => {{
@@ -486,7 +485,6 @@ if st.button("🎬 GENERAR DIAGRAMA Y SOMMELIER PRO"):
             else:
                 contents_payload.append(f"Receta:\n{contenido_ia}")
 
-            # Lógica de reintentos automáticos y fallback ante errores de saturación (503 UNAVAILABLE)
             modelos_a_probar = [modelo_seleccionado, "gemini-2.5-flash", "gemini-1.5-flash"]
             modelos_a_probar = list(dict.fromkeys(modelos_a_probar))
             
