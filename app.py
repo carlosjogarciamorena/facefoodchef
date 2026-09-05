@@ -29,7 +29,7 @@ except ImportError:
     HAS_PPTX = False
 
 st.set_page_config(
-    page_title="FaceFoodChef.com - Motor de Diagramas Culinarios Pro V4", 
+    page_title="FaceFoodChef.com - Motor de Diagramas Culinarios Pro V4.1", 
     layout="wide", 
     page_icon="🍳"
 )
@@ -93,7 +93,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.sidebar.header("⚙️ Panel de Control V4")
+st.sidebar.header("⚙️ Panel de Control V4.1")
 
 API_KEY_INPUT = st.sidebar.text_input(
     "🔑 Clave de API Gemini:",
@@ -119,13 +119,13 @@ comensales_objetivo = st.sidebar.number_input(
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("""
-### 🌟 Mejoras Aplicadas V4
-- **Optimización de Modelos:** Integración nativa con los últimos pesos de `gemini-2.5`.
+### 🌟 Mejoras Aplicadas V4.1
+- **Reintento Exponencial con Jitter:** Tolerancia robusta frente a errores 503 de alta demanda.
 - **Unidades abreviadas:** Uso estricto de `g`, `ml`, `l`, `kg`, `ºC`, manteniendo **cucharada** y **cucharadita** completas.
 - **Sommelier Avanzado:** Propuestas certificadas de vino (D.O. Castilla-La Mancha) y cervezas artesanas/nacionales.
 """)
 
-st.markdown("<h1 style='text-align: center; color: #EF4444; font-weight: 800; letter-spacing: -1px; margin-bottom: 0;'>FACEFOODCHEF <span style='font-size: 16px; background: #36393F; color: #fff; padding: 4px 10px; border-radius: 4px; vertical-align: middle; border: 1px solid #4F545C;'>PRO V4</span></h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: #EF4444; font-weight: 800; letter-spacing: -1px; margin-bottom: 0;'>FACEFOODCHEF <span style='font-size: 16px; background: #36393F; color: #fff; padding: 4px 10px; border-radius: 4px; vertical-align: middle; border: 1px solid #4F545C;'>PRO V4.1</span></h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; color: #A0AEC0; font-size: 15px; margin-bottom: 30px;'>Diagramas de cocina escalables con unidades abreviadas y sommelier experto de Castilla-La Mancha</p>", unsafe_allow_html=True)
 
 st.subheader("📥 Entrada de Receta")
@@ -186,7 +186,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
     
     html_header = f"""
     <div style="background: linear-gradient(180deg, #36393F 0%, #2F3136 100%); border-radius: 8px; padding: 30px; text-align: center; margin-bottom: 24px; border-left: 6px solid #EF4444; border: 1px solid #4F545C; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-        <span style="font-size: 11px; font-weight: 800; color: #FFFFFF; text-transform: uppercase; letter-spacing: 2px; background: #EF4444; padding: 6px 14px; border-radius: 4px; display: inline-block;">Diagrama de Producción Culinaria V4</span>
+        <span style="font-size: 11px; font-weight: 800; color: #FFFFFF; text-transform: uppercase; letter-spacing: 2px; background: #EF4444; padding: 6px 14px; border-radius: 4px; display: inline-block;">Diagrama de Producción Culinaria V4.1</span>
         <h1 style="color: #ffffff; font-size: 30px; margin: 16px 0 8px 0; font-weight: 800;">{nombre_receta}</h1>
         <p style="color: #A0AEC0; font-size: 14px; margin: 0;">Calculado y escalado para <b>{comensales} comensales</b> (Unidades abreviadas).</p>
     </div>
@@ -337,7 +337,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
             {html_recom}
             {html_maridaje}
             <div style="text-align: center; color: #718096; font-size: 13px; margin-top: 35px; border-top: 1px solid #4F545C; padding-top: 20px;">
-                🎬 <b>FaceFoodChef.com V4</b> | Fuente: {origen_html}
+                🎬 <b>FaceFoodChef.com V4.1</b> | Fuente: {origen_html}
             </div>
         </div>
         <script>
@@ -426,7 +426,7 @@ elif receta_texto_input:
 elif archivo_multimodal:
     procesar_accion = True
 
-if st.button("🎬 GENERAR DIAGRAMA Y SOMMELIER V4"):
+if st.button("🎬 GENERAR DIAGRAMA Y SOMMELIER V4.1"):
     api_key_activa = API_KEY_INPUT.strip()
     
     if not api_key_activa:
@@ -441,7 +441,7 @@ if st.button("🎬 GENERAR DIAGRAMA Y SOMMELIER V4"):
             Eres un maestro chef, sumiller experto de Castilla-La Mancha y programador de flujos culinarios. 
             Transforma la receta aportada en un esquema estructurado JSON avanzado bajo los siguientes criterios obligatorios:
 
-            ¡IMPORTANTE! El usuario requiere que la receta seja exactamente para {comensales_objetivo} COMENSALES. 
+            ¡IMPORTANTE! El usuario requiere que la receta sea exactamente para {comensales_objetivo} COMENSALES. 
             Ajusta matemáticamente las cantidades para {comensales_objetivo} raciones.
 
             REGLAS ESTRICTAS DE FORMATO Y UNIDADES:
@@ -497,10 +497,10 @@ if st.button("🎬 GENERAR DIAGRAMA Y SOMMELIER V4"):
             response = None
             exito = False
             
-            with st.spinner("⚙️ Procesando diagrama V4 (Optimizando conexión con IA)..."):
+            with st.spinner("⚙️ Procesando diagrama V4.1 con reintento inteligente ante alta demanda (503)..."):
                 for mod in modelos_a_probar:
-                    intentos = 3
-                    for intento in range(intentos):
+                    intentos_maximos = 4
+                    for intento in range(intentos_maximos):
                         try:
                             response = client.models.generate_content(
                                 model=mod,
@@ -515,12 +515,12 @@ if st.button("🎬 GENERAR DIAGRAMA Y SOMMELIER V4"):
                                 break
                         except Exception as api_err:
                             err_str = str(api_err)
-                            if "503" in err_str or "UNAVAILABLE" in err_str or "high demand" in err_str:
-                                if intento < intentos - 1:
-                                    tiempo_espera = (intento + 1) * 3
+                            if "503" in err_str or "UNAVAILABLE" in err_str or "high demand" in err_str or "overloaded" in err_str:
+                                if intento < intentos_maximos - 1:
+                                    tiempo_espera = (2 ** intento)
                                     time.sleep(tiempo_espera)
                                     continue
-                            if intento == intentos - 1:
+                            if intento == intentos_maximos - 1:
                                 break
                     if exito:
                         break
@@ -538,7 +538,7 @@ if st.button("🎬 GENERAR DIAGRAMA Y SOMMELIER V4"):
                 origen_final = url_origen_detectada if url_origen_detectada else datos.get("origen_receta", "Texto aportado por el usuario")
 
                 html_final = generar_html_dashboard(
-                    datos.get("nombre_receta", "Receta Culinaria Pro V4"),
+                    datos.get("nombre_receta", "Receta Culinaria Pro V4.1"),
                     origen_final,
                     datos.get("ingredientes", []),
                     datos.get("pasos_previos", []),
@@ -551,15 +551,15 @@ if st.button("🎬 GENERAR DIAGRAMA Y SOMMELIER V4"):
                 
                 st.markdown("<br>", unsafe_allow_html=True)
                 st.download_button(
-                    label="📥 Descargar Diagrama HTML Autónomo V4",
+                    label="📥 Descargar Diagrama HTML Autónomo V4.1",
                     data=html_final,
-                    file_name="diagrama_facefoodchef_pro_v4.html",
+                    file_name="diagrama_facefoodchef_pro_v4_1.html",
                     mime="text/html"
                 )
                 
                 components.html(html_final, height=1450, scrolling=True)
             else:
-                st.error("⚠️ El servicio de Gemini está experimentando una alta demanda temporal (Error 503). Por favor, pulsa de nuevo el botón de generar en unos segundos.")
+                st.error("⚠️ El servicio de Gemini sigue experimentando una alta demanda temporal (Error 503). Los reintentos automáticos se agotaron; por favor, pulsa de nuevo el botón de generar en unos segundos.")
                 
         except Exception as e:
-            st.error(f"Error durante el procesamiento: {e}\n\n*Nota: Si persiste el error 503 de alta demanda, prueba a cambiar de modelo en el panel izquierdo o reintenta en unos instantes.*")
+            st.error(f"Error durante el procesamiento: {e}\n\n*Nota: Si persiste el error 503 de alta demanda, prueba a cambiar de modelo en el panel izquierdo (ej. a gemini-2.5-flash) o reintenta en unos instantes.*")
