@@ -29,7 +29,7 @@ except ImportError:
     HAS_PPTX = False
 
 st.set_page_config(
-    page_title="FaceFoodChef.com - Motor de Diagramas Culinarios Pro", 
+    page_title="FaceFoodChef.com - Motor de Diagramas Culinarios Pro V3", 
     layout="wide", 
     page_icon="🍳"
 )
@@ -93,7 +93,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.sidebar.header("⚙️ Panel de Control")
+st.sidebar.header("⚙️ Panel de Control V3")
 
 API_KEY_INPUT = st.sidebar.text_input(
     "🔑 Clave de API Gemini:",
@@ -104,7 +104,7 @@ API_KEY_INPUT = st.sidebar.text_input(
 
 modelo_seleccionado = st.sidebar.selectbox(
     "Modelo Gemini (con fallback automático):",
-    options=["gemini-2.5-flash", "gemini-1.5-flash", "gemini-2.5-pro", "gemini-1.5-pro"],
+    options=["gemini-2.5-flash", "gemini-3.6-flash", "gemini-1.5-flash", "gemini-1.5-pro"],
     index=0
 )
 
@@ -119,14 +119,14 @@ comensales_objetivo = st.sidebar.number_input(
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("""
-### 🌟 Características del Sistema
-- **Diagramas de Bloques Secuenciales y Paralelos:** Estructura visual clara paso a paso.
-- **Tolerancia a Alta Demanda (Error 503):** Reintentos automáticos y salto entre nodos alternativos.
-- **Asistente de Voz y Temporizadores:** Control interactivo de tiempos de cocinado.
+### 🌟 Mejoras Aplicadas V3
+- **Unidades abreviadas:** Uso de `g`, `ml`, `l`, `kg`, `ºC`, etc., manteniendo siempre **cucharada** y **cucharadita** con nombre completo.
+- **Sommelier Manchego/Español Avanzado:** Mínimo **2 propuestas de vino** (priorizando D.O. de Castilla-La Mancha: *La Mancha, Valdepeñas, Almansa, Manchuela, Ribera del Júcar, Mondéjar, Uclés*) y **2 propuestas de cerveza** (artesanas y nacionales).
+- **Control de Menaje y Alarmas:** Herramientas manuales detalladas y alarma polifónica integrada.
 """)
 
-st.markdown("<h1 style='text-align: center; color: #EF4444; font-weight: 800; letter-spacing: -1px; margin-bottom: 0;'>FACEFOODCHEF <span style='font-size: 16px; background: #36393F; color: #fff; padding: 4px 10px; border-radius: 4px; vertical-align: middle; border: 1px solid #4F545C;'>PRO</span></h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #A0AEC0; font-size: 15px; margin-bottom: 30px;'>Motor inteligente de conversión de recetas en diagramas de producción culinaria</p>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: #EF4444; font-weight: 800; letter-spacing: -1px; margin-bottom: 0;'>FACEFOODCHEF <span style='font-size: 16px; background: #36393F; color: #fff; padding: 4px 10px; border-radius: 4px; vertical-align: middle; border: 1px solid #4F545C;'>PRO V3</span></h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #A0AEC0; font-size: 15px; margin-bottom: 30px;'>Diagramas de cocina escalables con unidades abreviadas y sommelier experto de Castilla-La Mancha</p>", unsafe_allow_html=True)
 
 st.subheader("📥 Entrada de Receta")
 entrada_principal = st.text_area(
@@ -186,9 +186,9 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
     
     html_header = f"""
     <div style="background: linear-gradient(180deg, #36393F 0%, #2F3136 100%); border-radius: 8px; padding: 30px; text-align: center; margin-bottom: 24px; border-left: 6px solid #EF4444; border: 1px solid #4F545C; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-        <span style="font-size: 11px; font-weight: 800; color: #FFFFFF; text-transform: uppercase; letter-spacing: 2px; background: #EF4444; padding: 6px 14px; border-radius: 4px; display: inline-block;">Diagrama de Producción Culinaria</span>
+        <span style="font-size: 11px; font-weight: 800; color: #FFFFFF; text-transform: uppercase; letter-spacing: 2px; background: #EF4444; padding: 6px 14px; border-radius: 4px; display: inline-block;">Diagrama de Producción Culinaria V3</span>
         <h1 style="color: #ffffff; font-size: 30px; margin: 16px 0 8px 0; font-weight: 800;">{nombre_receta}</h1>
-        <p style="color: #A0AEC0; font-size: 14px; margin: 0;">Calculado y escalado para <b>{comensales} comensales</b>.</p>
+        <p style="color: #A0AEC0; font-size: 14px; margin: 0;">Calculado y escalado para <b>{comensales} comensales</b> (Unidades abreviadas).</p>
     </div>
     """
 
@@ -203,7 +203,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
 
     html_prev = """
     <div style="background-color: #36393F; border: 1px solid #4F545C; border-radius: 8px; padding: 22px; margin-bottom: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
-        <h3 style="color: #FBBF24; margin-top: 0; font-size: 18px; font-weight: 700;">🔪 2. Mise en Place (Preparación Previa y Menaje)</h3>
+        <h3 style="color: #FBBF24; margin-top: 0; font-size: 18px; font-weight: 700;">🔪 2. Mise en Place (Preparación Previa y Menaje Manual)</h3>
         <ul style='margin: 12px 0 0 0; padding-left: 20px; color: #CBD5E0; font-size: 14px; line-height: 1.8;'>
     """
     for prep in pasos_previos:
@@ -212,7 +212,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
 
     html_diagrama = """
     <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-        <h3 style="color: #ffffff; font-size: 20px; font-weight: 800; margin-bottom: 22px;">3. Diagrama de Ejecución y Bloques de Proceso</h3>
+        <h3 style="color: #ffffff; font-size: 20px; font-weight: 800; margin-bottom: 22px;">3. Diagrama de Ejecución con Utensilios y Unidades Abreviadas</h3>
     """
     
     BG_BLOQUE = "#36393F"
@@ -242,7 +242,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
                 <div style="flex: 1; min-width: 280px; background-color: {BG_BLOQUE}; border: 1px solid {BORDER_BLOQUE}; border-left: 6px solid {color_franja_paralelo}; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
                     <div style="margin-bottom: 12px;"><span style="font-size: 11px; font-weight: 800; color: #FFFFFF; background-color: {color_franja_paralelo}; padding: 5px 12px; border-radius: 4px; display: inline-block; text-transform: uppercase;">⚙️ PARALELO: {nombre_rama}</span></div>
                     <div style="font-size: 15px; font-weight: 600; color: #ffffff; margin: 12px 0;">{accion}</div>
-                    <div style="font-size: 12px; color: #A0AEC0; margin-bottom: 14px; background: rgba(0,0,0,0.3); padding: 6px 10px; border-radius: 4px;">🛠️ <b>Utensilios:</b> {utensilios_rama}</div>
+                    <div style="font-size: 12px; color: #A0AEC0; margin-bottom: 14px; background: rgba(0,0,0,0.3); padding: 6px 10px; border-radius: 4px;">🛠️ <b>Utensilios y Menaje:</b> {utensilios_rama}</div>
                     <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.4); padding: 10px 14px; border-radius: 6px;">
                         <div style="font-size: 13px; color: #ffffff;">⏱️ <span id="{timer_id}" style="font-weight: bold; color: #FBBF24;">{tiempo}</span> | 🌡️ {temp}</div>
                         <button onclick="iniciarTemporizador('{timer_id}', {dur_rama})" style="background-color: #EF4444; color: white; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 700;">⏳ Iniciar</button>
@@ -261,7 +261,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
             <div style="background-color: {BG_BLOQUE}; border: 1px solid {BORDER_BLOQUE}; border-left: 6px solid {left_border}; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
                 <div style="margin-bottom: 12px;"><span style="font-size: 11px; font-weight: 800; color: #FFFFFF; background-color: {badge_bg}; padding: 5px 12px; border-radius: 4px; display: inline-block; text-transform: uppercase;">{etiqueta}</span></div>
                 <div style="font-size: 15px; font-weight: 600; color: #ffffff; margin: 12px 0;">{bloque.get('accion')}</div>
-                <div style="font-size: 12px; color: #A0AEC0; margin-bottom: 14px; background: rgba(0,0,0,0.3); padding: 6px 10px; border-radius: 4px;">🛠️ <b>Utensilios:</b> {utensilios_str}</div>
+                <div style="font-size: 12px; color: #A0AEC0; margin-bottom: 14px; background: rgba(0,0,0,0.3); padding: 6px 10px; border-radius: 4px;">🛠️ <b>Utensilios y Menaje:</b> {utensilios_str}</div>
                 <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.4); padding: 10px 14px; border-radius: 6px;">
                     <div style="font-size: 13px; color: #ffffff;">⏱️ <span id="{timer_id}" style="font-weight: bold; color: #FBBF24;">{bloque.get('tiempo')}</span> | 🌡️ {bloque.get('temperatura')}</div>
                     <button onclick="iniciarTemporizador('{timer_id}', {duracion_min})" style="background-color: #EF4444; color: white; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 700;">⏳ Iniciar</button>
@@ -291,16 +291,17 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
 
     vinos_lista = maridaje.get('vinos', [])
     cervezas_lista = maridaje.get('cervezas', [])
+    
     vinos_html = "".join([f"<li style='margin-bottom: 6px;'>{v}</li>" for v in vinos_lista]) if vinos_lista else "<li>Sin propuestas de vino disponibles.</li>"
     cervezas_html = "".join([f"<li style='margin-bottom: 6px;'>{c}</li>" for c in cervezas_lista]) if cervezas_lista else "<li>Sin propuestas de cerveza disponibles.</li>"
 
     html_maridaje = f"""
     <div style="background-color: #36393F; border: 1px solid #4F545C; border-left: 6px solid #9D4EDD; border-radius: 8px; padding: 22px; margin-top: 20px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-        <h3 style="color: #9D4EDD; margin-top: 0; font-size: 18px; font-weight: 700;">🍷 5. Maridaje Recomendado</h3>
+        <h3 style="color: #9D4EDD; margin-top: 0; font-size: 18px; font-weight: 700;">🍷 5. Sommelier Experto (D.O. Castilla-La Mancha y España)</h3>
         <div style="margin-top: 14px; color: #CBD5E0; font-size: 14px; line-height: 1.7;">
-            <p style="margin-bottom: 8px; color: #E2E8F0;"><b>🍇 Vinos:</b></p>
+            <p style="margin-bottom: 8px; color: #E2E8F0;"><b>🍇 Propuestas de Vinos (Mínimo 2, con prioridad en Castilla-La Mancha):</b></p>
             <ul style="margin: 0 0 16px 0; padding-left: 20px;">{vinos_html}</ul>
-            <p style="margin-bottom: 8px; color: #E2E8F0;"><b>🍺 Cervezas:</b></p>
+            <p style="margin-bottom: 8px; color: #E2E8F0;"><b>🍺 Propuestas de Cervezas (Mínimo 2, artesanas y nacionales):</b></p>
             <ul style="margin: 0; padding-left: 20px;">{cervezas_html}</ul>
         </div>
     </div>
@@ -328,7 +329,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
             <div class="widget-box">
                 <p style="color: #A0AEC0; font-size: 13px; margin: 0 0 12px 0; font-weight: 600;">👨‍🍳💬 Asistente de Voz de Cocina</p>
                 <button id="btnVoz" class="btn-control" onclick="reproducir(this)">🎧 Asistente Manos Libres</button>
-                <button class="btn-control btn-stop" onclick="detener()">🔇 Silenciar</button>
+                <button class="btn-control btn-stop" onclick="detener()">🔇 Oído Cocina (Silenciar)</button>
             </div>
             {html_ing}
             {html_prev}
@@ -336,7 +337,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
             {html_recom}
             {html_maridaje}
             <div style="text-align: center; color: #718096; font-size: 13px; margin-top: 35px; border-top: 1px solid #4F545C; padding-top: 20px;">
-                🎬 <b>FaceFoodChef.com Pro</b> | Fuente: {origen_html}
+                🎬 <b>FaceFoodChef.com V3</b> | Fuente: {origen_html}
             </div>
         </div>
         <script>
@@ -377,7 +378,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
                         segundosRestantes--;
                         const m = Math.floor(segundosRestantes / 60);
                         const s = segundosRestantes % 60;
-                        elemento.innerText = `${{m}}m ${{s < 10 ? '0' : ''}}${s}s`;
+                        elemento.innerText = `${{m}}m ${{s < 10 ? '0' : ''}}${{s}}s`;
                     }}
                 }}, 1000);
             }}
@@ -385,9 +386,12 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
             function sonarAlertaPolifonica() {{
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 const frecuencias = [523.25, 659.25, 783.99, 1046.50, 1318.51];
+                
                 frecuencias.forEach((freq, index) => {{
                     setTimeout(() => {{
-                        if (audioCtx.state === 'suspended') {{ audioCtx.resume(); }}
+                        if (audioCtx.state === 'suspended') {{
+                            audioCtx.resume();
+                        }}
                         const osc = audioCtx.createOscillator();
                         const gain = audioCtx.createGain();
                         osc.type = 'triangle';
@@ -422,11 +426,11 @@ elif receta_texto_input:
 elif archivo_multimodal:
     procesar_accion = True
 
-if st.button("🎬 GENERAR DIAGRAMA DE BLOQUES"):
+if st.button("🎬 GENERAR DIAGRAMA Y SOMMELIER V3"):
     api_key_activa = API_KEY_INPUT.strip()
     
     if not api_key_activa:
-        st.error("⚠️ Por favor, introduce una clave de API de Google Gemini en el panel lateral.")
+        st.error("⚠️ Por favor, introduce una clave de API de Google Gemini en el panel lateral izquierdo.")
     elif not procesar_accion:
         st.warning("⚠️ Introduce una URL, un texto o adjunta un archivo antes de continuar.")
     else:
@@ -434,39 +438,48 @@ if st.button("🎬 GENERAR DIAGRAMA DE BLOQUES"):
             client = genai.Client(api_key=api_key_activa)
             
             prompt_sistema = f"""
-            Eres un maestro chef y programador de flujos culinarios. 
-            Transforma la receta aportada en un esquema estructurado JSON bajo los siguientes criterios:
+            Eres un maestro chef, sumiller experto de Castilla-La Mancha y programador de flujos culinarios. 
+            Transforma la receta aportada en un esquema estructurado JSON avanzado bajo los siguientes criterios obligatorios:
 
             ¡IMPORTANTE! El usuario requiere que la receta sea exactamente para {comensales_objetivo} COMENSALES. 
             Ajusta matemáticamente las cantidades para {comensales_objetivo} raciones.
 
-            REGLAS DE FORMATO Y UNIDADES:
-            1. UNIDADES: Usa unidades abreviadas (g, kg, ml, l, ºC, cm, min). Mantén completas "cucharada" y "cucharadita". No uses expresiones vagas como "al gusto".
-            2. UTENSILIOS: En cada bloque detalla el menaje necesario (cuchillo de cocinero, espumadera, sartén, etc.).
-            3. Devuelve EXCLUSIVAMENTE un JSON válido sin marcas ni textos adicionales fuera del JSON.
+            REGLAS ESTRICTAS DE FORMATO Y UNIDADES:
+            1. UNIDADES DE MEDIDA: Las unidades se deben expresar abreviadas siempre que sea posible (ej: g, kg, ml, l, ºC, cm, min, etc.). Sin embargo, la palabra "cucharada" y "cucharadita" deben mantenerse SIEMPRE escritas completas (prohibido usar "cda" o "cdita"). Quedan totalmente prohibidas expresiones vagas como "al gusto".
+            2. MENAJE MANUAL Y UTENSILIOS: En cada bloque de proceso o ingredientes, detalla el menaje pesado y el menaje manual necesario (cuchillo de cocinero, espumadera, pinzas de cocina, paleta de madera, espátula de silicona, batidor de varillas, etc.).
+            3. SOMMELIER (CASTILLA-LA MANCHA Y ESPAÑA): En la sección 'maridaje', debes proporcionar obligatoriamente:
+               - Al menos 2 propuestas de VINO, priorizando Denominaciones de Origen de Castilla-La Mancha (D.O. La Mancha, D.O. Valdepeñas, D.O. Almansa, D.O. Manchuela, D.O. Ribera del Júcar, D.O. Mondéjar, D.O. Uclés) indicando variedad de uva y maridaje técnico.
+               - Al menos 2 propuestas de CERVEZA, priorizando cervezas artesanas o de fabricación española.
+            4. Devuelve EXCLUSIVAMENTE un JSON válido sin marcas ni textos adicionales fuera del JSON.
 
             JSON Schema esperado:
             {{
               "nombre_receta": "String",
               "origen_receta": "String",
-              "ingredientes": ["400 g de harina de trigo", "10 g de sal fina", "2 cucharadas de aceite de oliva"],
-              "pasos_previos": ["Mise en place..."],
+              "ingredientes": ["400 g de harina de trigo", "10 g de sal fina", "2 cucharadas de aceite de oliva virgen extra"],
+              "pasos_previos": ["Mise en place utilizando cuchillo de cocinero..."],
               "bloques_proceso": [
-                {{"tipo": "secuencial", "accion": "Paso 1 detallado", "utensilios": ["Cazuela", "Cuchillo"], "tiempo": "5 min", "duracion_minutos": 5, "temperatura": "100 ºC"}},
+                {{"tipo": "secuencial", "accion": "Paso 1 detallado", "utensilios": ["Cazuela de acero inoxidable", "Cuchillo de cocinero"], "tiempo": "5 min", "duracion_minutos": 5, "temperatura": "100 ºC"}},
                 {{
                   "tipo": "paralelo",
                   "ramas": [
-                    {{"nombre": "Rama 1", "accion": "Sofreír...", "utensilios": ["Sartén"], "tiempo": "10 min", "duracion_minutos": 10, "temperatura": "90 ºC"}},
-                    {{"nombre": "Rama 2", "accion": "Cocer...", "utensilios": ["Olla"], "tiempo": "8 min", "duracion_minutos": 8, "temperatura": "100 ºC"}}
+                    {{"nombre": "Sartén 1", "accion": "Sofreír...", "utensilios": ["Sartén antiadherente", "Pinzas de cocina"], "tiempo": "10 min", "duracion_minutos": 10, "temperatura": "90 ºC"}},
+                    {{"nombre": "Olla 2", "accion": "Cocer...", "utensilios": ["Olla", "Espumadera"], "tiempo": "8 min", "duracion_minutos": 8, "temperatura": "100 ºC"}}
                   ]
                 }},
-                {{"tipo": "convergencia", "accion": "Unir mezclas", "utensilios": ["Bol"], "tiempo": "2 min", "duracion_minutos": 2, "temperatura": "80 ºC"}}
+                {{"tipo": "convergencia", "accion": "Unir mezclas", "utensilios": ["Bol grande de cristal", "Batidor de varillas manual"], "tiempo": "2 min", "duracion_minutos": 2, "temperatura": "80 ºC"}}
               ],
               "recomendaciones": ["Tip técnico 1"],
               "texto_voz": "Texto descriptivo completo y guiado de la receta",
               "maridaje": {{
-                "vinos": ["1. Vino tinto...", "2. Vino blanco..."],
-                "cervezas": ["1. Cerveza artesana...", "2. Cerveza rubia..."]
+                "vinos": [
+                  "1. Vino tinto D.O. La Mancha (Cencibel/Tempranillo)...",
+                  "2. Vino blanco D.O. Rueda (Verdejo)..."
+                ],
+                "cervezas": [
+                  "1. Cerveza artesana castellano-manchega tipo Pale Ale...",
+                  "2. Cerveza tostada española de marca nacional..."
+                ]
               }}
             }}
             """
@@ -474,20 +487,20 @@ if st.button("🎬 GENERAR DIAGRAMA DE BLOQUES"):
             contents_payload = [prompt_sistema]
             if archivo_multimodal:
                 contents_payload.append(types.Part.from_bytes(data=archivo_multimodal, mime_type=tipo_multimodal))
-                contents_payload.append(f"Analiza el archivo adjunto para extraer la receta y escalar a {comensales_objetivo} comensales.")
+                contents_payload.append(f"Analiza el archivo adjunto para extraer la receta, escalar a {comensales_objetivo} comensales con unidades abreviadas y sommelier CLM.")
             else:
                 contents_payload.append(f"Receta:\n{contenido_ia}")
 
-            modelos_a_probar = [modelo_seleccionado, "gemini-2.5-flash", "gemini-1.5-flash", "gemini-2.5-pro"]
+            modelos_a_probar = [modelo_seleccionado, "gemini-1.5-pro", "gemini-1.5-flash", "gemini-2.5-flash"]
             modelos_a_probar = list(dict.fromkeys(modelos_a_probar))
             
             response = None
             exito = False
             
-            with st.spinner("⚙️ Procesando diagrama de bloques con tolerancia a fallos (503)..."):
+            with st.spinner("⚙️ Procesando diagrama V3 (Optimizando conexión con IA)..."):
                 for mod in modelos_a_probar:
-                    intentos_maximos = 4
-                    for intento in range(intentos_maximos):
+                    intentos = 3
+                    for intento in range(intentos):
                         try:
                             response = client.models.generate_content(
                                 model=mod,
@@ -502,11 +515,12 @@ if st.button("🎬 GENERAR DIAGRAMA DE BLOQUES"):
                                 break
                         except Exception as api_err:
                             err_str = str(api_err)
-                            if "503" in err_str or "UNAVAILABLE" in err_str or "high demand" in err_str or "overloaded" in err_str:
-                                if intento < intentos_maximos - 1:
-                                    time.sleep(2 ** intento)
+                            if "503" in err_str or "UNAVAILABLE" in err_str or "high demand" in err_str:
+                                if intento < intentos - 1:
+                                    tiempo_espera = (intento + 1) * 3
+                                    time.sleep(tiempo_espera)
                                     continue
-                            if intento == intentos_maximos - 1:
+                            if intento == intentos - 1:
                                 break
                     if exito:
                         break
@@ -524,7 +538,7 @@ if st.button("🎬 GENERAR DIAGRAMA DE BLOQUES"):
                 origen_final = url_origen_detectada if url_origen_detectada else datos.get("origen_receta", "Texto aportado por el usuario")
 
                 html_final = generar_html_dashboard(
-                    datos.get("nombre_receta", "Receta Culinaria Pro"),
+                    datos.get("nombre_receta", "Receta Culinaria Pro V3"),
                     origen_final,
                     datos.get("ingredientes", []),
                     datos.get("pasos_previos", []),
@@ -537,15 +551,15 @@ if st.button("🎬 GENERAR DIAGRAMA DE BLOQUES"):
                 
                 st.markdown("<br>", unsafe_allow_html=True)
                 st.download_button(
-                    label="📥 Descargar Diagrama HTML Autónomo",
+                    label="📥 Descargar Diagrama HTML Autónomo V3",
                     data=html_final,
-                    file_name="diagrama_receta.html",
+                    file_name="diagrama_facefoodchef_pro_v3.html",
                     mime="text/html"
                 )
                 
                 components.html(html_final, height=1450, scrolling=True)
             else:
-                st.error("⚠️ El servicio de Gemini experimenta alta demanda temporal (Error 503). Por favor, pulsa de nuevo el botón de generar en unos segundos.")
+                st.error("⚠️ El servicio de Gemini está experimentando una alta demanda temporal (Error 503). Por favor, pulsa de nuevo el botón de generar en unos segundos.")
                 
         except Exception as e:
-            st.error(f"Error durante el procesamiento: {e}")
+            st.error(f"Error durante el procesamiento: {e}\n\n*Nota: Si persiste el error 503 de alta demanda, prueba a cambiar de modelo en el panel izquierdo o reintenta en unos instantes.*")
