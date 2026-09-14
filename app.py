@@ -135,15 +135,15 @@ comensales_objetivo = st.sidebar.number_input(
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("""
-### 🌟 Mejoras Aplicadas V3
-- **Estética Cinematográfica:** Interfaz oscura de alto contraste estilo Netflix con tipografías Montserrat e Inter.
-- **Unidades abreviadas:** Uso de `g`, `ml`, `l`, `kg`, `ºC`, etc., manteniendo siempre **cucharada** y **cucharadita** con nombre completo.
-- **Sommelier Manchego/Español Avanzado:** Mínimo **2 propuestas de vino** (priorizando D.O. de Castilla-La Mancha) y **2 propuestas de cerveza**.
-- **Control de Menaje y Alarmas:** Herramientas manuales detalladas y alarma polifónica integrada.
+### 🌟 Mejoras Aplicadas V3.1
+- **Estructura Modular Separada:** Utensilios/Menaje y Preparación Previa totalmente independientes.
+- **Enlace a Tienda Pro:** Botón directo integrado en la sección de utensilios para adquisición de menaje.
+- **Estética Cinematográfica:** Interfaz oscura de alto contraste estilo Netflix.
+- **Sommelier Manchego Avanzado:** Propuestas de vino de Castilla-La Mancha y cervezas artesanales.
 """)
 
-st.markdown("<h1 style='text-align: center; color: #FFFFFF; font-family: Montserrat, sans-serif; font-weight: 900; letter-spacing: 2px; margin-bottom: 0;'>FACEFOODCHEF <span style='font-size: 14px; background: #E50914; color: #fff; padding: 4px 10px; border-radius: 2px; vertical-align: middle; letter-spacing: 1px;'>PRO V3</span></h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #B3B3B3; font-size: 15px; margin-bottom: 30px; font-family: Inter, sans-serif;'>Diagramas de cocina escalables con unidades abreviadas y sommelier experto de Castilla-La Mancha</p>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: #FFFFFF; font-family: Montserrat, sans-serif; font-weight: 900; letter-spacing: 2px; margin-bottom: 0;'>FACEFOODCHEF <span style='font-size: 14px; background: #E50914; color: #fff; padding: 4px 10px; border-radius: 2px; vertical-align: middle; letter-spacing: 1px;'>PRO V3.1</span></h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #B3B3B3; font-size: 15px; margin-bottom: 30px; font-family: Inter, sans-serif;'>Diagramas de cocina escalables con separación modular de menaje y preparación previa</p>", unsafe_allow_html=True)
 
 st.subheader("📥 Entrada de Receta")
 entrada_principal = st.text_area(
@@ -199,12 +199,12 @@ def extraer_texto_de_url(url):
         except Exception as e:
             raise Exception(f"Error al procesar la URL: {e}")
 
-def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_previos, bloques_proceso, recomendaciones, texto_voz, maridaje, comensales):
+def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilios_menaje, pasos_previos, bloques_proceso, recomendaciones, texto_voz, maridaje, comensales):
     html_header = f"""
     <div style="background: #181818; border-radius: 8px; padding: 30px; text-align: center; margin-bottom: 24px; border-left: 6px solid #E50914; border: 1px solid #282828; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
-        <span style="font-size: 11px; font-weight: 700; color: #FFFFFF; text-transform: uppercase; letter-spacing: 2px; background: #E50914; padding: 6px 14px; border-radius: 2px; display: inline-block; font-family: 'Montserrat', sans-serif;">Diagrama de Producción Culinaria V3</span>
+        <span style="font-size: 11px; font-weight: 700; color: #FFFFFF; text-transform: uppercase; letter-spacing: 2px; background: #E50914; padding: 6px 14px; border-radius: 2px; display: inline-block; font-family: 'Montserrat', sans-serif;">Diagrama de Producción Culinaria V3.1</span>
         <h1 style="color: #FFFFFF; font-size: 28px; margin: 16px 0 8px 0; font-weight: 900; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">{nombre_receta}</h1>
-        <p style="color: #B3B3B3; font-size: 14px; margin: 0; font-family: 'Inter', sans-serif;">Calculado y escalado para <b>{comensales} comensales</b> (Unidades abreviadas).</p>
+        <p style="color: #B3B3B3; font-size: 14px; margin: 0; font-family: 'Inter', sans-serif;">Calculado y escalado para <b>{comensales} comensales</b>.</p>
     </div>
     """
 
@@ -217,9 +217,21 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
         html_ing += f"<span style='background-color: #222222; color: #E5E5E5; padding: 8px 16px; border-radius: 4px; font-size: 13px; border: 1px solid #333333; font-weight: 500; font-family: 'Inter', sans-serif;'>{ing}</span>"
     html_ing += "</div></div>"
 
+    html_utensilios = f"""
+    <div style="background-color: #181818; border: 1px solid #282828; border-radius: 8px; padding: 22px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #E50914; padding-bottom: 10px; margin-bottom: 16px;">
+            <h3 style="color: #FFFFFF; margin: 0; font-size: 18px; font-weight: 700; font-family: 'Montserrat', sans-serif;">🛠️ 2. Utensilios y Menaje</h3>
+            <a href="https://www.facefoodchef.com/tienda-menaje" target="_blank" style="background-color: #E50914; color: white; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 12px; font-weight: 700; font-family: 'Montserrat', sans-serif; text-transform: uppercase; letter-spacing: 1px;">🛒 Ir a la Tienda de Menaje</a>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+    """
+    for ut in utensilios_menaje:
+        html_utensilios += f"<span style='background-color: #222222; color: #E5E5E5; padding: 8px 16px; border-radius: 4px; font-size: 13px; border: 1px solid #333333; font-weight: 500; font-family: 'Inter', sans-serif;'>{ut}</span>"
+    html_utensilios += "</div></div>"
+
     html_prev = """
     <div style="background-color: #181818; border: 1px solid #282828; border-radius: 8px; padding: 22px; margin-bottom: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
-        <h3 style="color: #FFFFFF; margin-top: 0; font-size: 18px; font-weight: 700; font-family: 'Montserrat', sans-serif; border-bottom: 2px solid #E50914; padding-bottom: 10px; display: inline-block;">🔪 2. Mise en Place (Preparación Previa y Menaje Manual)</h3>
+        <h3 style="color: #FFFFFF; margin-top: 0; font-size: 18px; font-weight: 700; font-family: 'Montserrat', sans-serif; border-bottom: 2px solid #E50914; padding-bottom: 10px; display: inline-block;">🔪 3. Preparación Previa (Mise en Place)</h3>
         <ul style='margin: 16px 0 0 0; padding-left: 20px; color: #B3B3B3; font-size: 14px; line-height: 1.8; font-family: 'Inter', sans-serif;'>
     """
     for prep in pasos_previos:
@@ -228,7 +240,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
 
     html_diagrama = """
     <div style="font-family: 'Inter', sans-serif;">
-        <h3 style="color: #FFFFFF; font-size: 18px; font-weight: 700; margin-bottom: 22px; font-family: 'Montserrat', sans-serif; border-bottom: 2px solid #E50914; padding-bottom: 10px; display: inline-block;">3. Diagrama de Ejecución con Utensilios y Unidades Abreviadas</h3>
+        <h3 style="color: #FFFFFF; font-size: 18px; font-weight: 700; margin-bottom: 22px; font-family: 'Montserrat', sans-serif; border-bottom: 2px solid #E50914; padding-bottom: 10px; display: inline-block;">4. Diagrama de Ejecución y Tiempos</h3>
     """
     
     BORDER_BLOQUE = "#282828"
@@ -257,7 +269,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
                 <div style="flex: 1; min-width: 280px; background-color: #222222; border: 1px solid {BORDER_BLOQUE}; border-left: 4px solid {color_franja_paralelo}; border-radius: 4px; padding: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.9);">
                     <div style="margin-bottom: 12px;"><span style="font-size: 11px; font-weight: 700; color: #FFFFFF; background-color: {color_franja_paralelo}; padding: 4px 10px; border-radius: 2px; display: inline-block; text-transform: uppercase; font-family: 'Montserrat', sans-serif; letter-spacing: 1px;">⚙️ PARALELO: {nombre_rama}</span></div>
                     <div style="font-size: 14px; font-weight: 500; color: #FFFFFF; margin: 12px 0; font-family: 'Inter', sans-serif; line-height: 1.6;">{accion}</div>
-                    <div style="font-size: 12px; color: #B3B3B3; margin-bottom: 14px; background: #141414; padding: 8px 12px; border-radius: 4px; font-family: 'Inter', sans-serif;">🛠️ <b>Utensilios y Menaje:</b> {utensilios_rama}</div>
+                    <div style="font-size: 12px; color: #B3B3B3; margin-bottom: 14px; background: #141414; padding: 8px 12px; border-radius: 4px; font-family: 'Inter', sans-serif;">🛠️ <b>Herramientas:</b> {utensilios_rama}</div>
                     <div style="display: flex; justify-content: space-between; align-items: center; background: #141414; padding: 10px 14px; border-radius: 4px;">
                         <div style="font-size: 13px; color: #FFFFFF; font-family: 'Inter', sans-serif;">⏱️ <span id="{timer_id}" style="font-weight: bold; color: #E50914;">{tiempo}</span> | 🌡️ {temp}</div>
                         <button onclick="iniciarTemporizador('{timer_id}', {dur_rama})" style="background-color: #E50914; color: white; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 700; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">⏳ Iniciar</button>
@@ -276,7 +288,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
             <div style="background-color: #222222; border: 1px solid {BORDER_BLOQUE}; border-left: 4px solid {left_border}; border-radius: 4px; padding: 20px; margin-bottom: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.9);">
                 <div style="margin-bottom: 12px;"><span style="font-size: 11px; font-weight: 700; color: #FFFFFF; background-color: {badge_bg}; padding: 4px 10px; border-radius: 2px; display: inline-block; text-transform: uppercase; font-family: 'Montserrat', sans-serif; letter-spacing: 1px;">{etiqueta}</span></div>
                 <div style="font-size: 14px; font-weight: 500; color: #FFFFFF; margin: 12px 0; font-family: 'Inter', sans-serif; line-height: 1.6;">{bloque.get('accion')}</div>
-                <div style="font-size: 12px; color: #B3B3B3; margin-bottom: 14px; background: #141414; padding: 8px 12px; border-radius: 4px; font-family: 'Inter', sans-serif;">🛠️ <b>Utensilios y Menaje:</b> {utensilios_str}</div>
+                <div style="font-size: 12px; color: #B3B3B3; margin-bottom: 14px; background: #141414; padding: 8px 12px; border-radius: 4px; font-family: 'Inter', sans-serif;">🛠️ <b>Herramientas:</b> {utensilios_str}</div>
                 <div style="display: flex; justify-content: space-between; align-items: center; background: #141414; padding: 10px 14px; border-radius: 4px;">
                     <div style="font-size: 13px; color: #FFFFFF; font-family: 'Inter', sans-serif;">⏱️ <span id="{timer_id}" style="font-weight: bold; color: #E50914;">{bloque.get('tiempo')}</span> | 🌡️ {bloque.get('temperatura')}</div>
                     <button onclick="iniciarTemporizador('{timer_id}', {duracion_min})" style="background-color: #E50914; color: white; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 700; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">⏳ Iniciar</button>
@@ -297,7 +309,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
 
     html_recom = """
     <div style="background-color: #181818; border: 1px solid #282828; border-left: 4px solid #E50914; border-radius: 8px; padding: 22px; margin-top: 24px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
-        <h3 style="color: #FFFFFF; margin-top: 0; font-size: 18px; font-weight: 700; font-family: 'Montserrat', sans-serif; border-bottom: 2px solid #E50914; padding-bottom: 10px; display: inline-block;">💡 4. Recomendaciones del Chef</h3>
+        <h3 style="color: #FFFFFF; margin-top: 0; font-size: 18px; font-weight: 700; font-family: 'Montserrat', sans-serif; border-bottom: 2px solid #E50914; padding-bottom: 10px; display: inline-block;">💡 5. Recomendaciones del Chef</h3>
         <ul style='margin: 16px 0 0 0; padding-left: 20px; color: #B3B3B3; font-size: 14px; line-height: 1.8; font-family: 'Inter', sans-serif;'>
     """
     for rec in recomendaciones:
@@ -312,7 +324,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
 
     html_maridaje = f"""
     <div style="background-color: #181818; border: 1px solid #282828; border-left: 4px solid #E50914; border-radius: 8px; padding: 22px; margin-top: 20px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
-        <h3 style="color: #FFFFFF; margin-top: 0; font-size: 18px; font-weight: 700; font-family: 'Montserrat', sans-serif; border-bottom: 2px solid #E50914; padding-bottom: 10px; display: inline-block;">🍷 5. Sommelier Experto (D.O. Castilla-La Mancha y España)</h3>
+        <h3 style="color: #FFFFFF; margin-top: 0; font-size: 18px; font-weight: 700; font-family: 'Montserrat', sans-serif; border-bottom: 2px solid #E50914; padding-bottom: 10px; display: inline-block;">🍷 6. Sommelier Experto (D.O. Castilla-La Mancha y España)</h3>
         <div style="margin-top: 16px; color: #B3B3B3; font-size: 14px; line-height: 1.7; font-family: 'Inter', sans-serif;">
             <p style="margin-bottom: 8px; color: #E5E5E5;"><b>🍇 Propuestas de Vinos (Mínimo 2, con prioridad en Castilla-La Mancha):</b></p>
             <ul style="margin: 0 0 16px 0; padding-left: 20px;">{vinos_html}</ul>
@@ -325,7 +337,6 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
     origen_html = f'<a href="{origen_receta}" target="_blank" style="color: #E50914; text-decoration: underline;">{origen_receta}</a>' if origen_receta.startswith("http") else f'<span style="color: #B3B3B3;">{origen_receta}</span>'
     texto_voz_seguro = json.dumps(texto_voz)
 
-    # Corrección de la interpolación de cadenas JavaScript usando comillas simples o dobles seguras en python f-string
     return f"""
     <!DOCTYPE html>
     <html lang="es">
@@ -349,12 +360,13 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
                 <button class="btn-control btn-stop" onclick="detener()">🔇 Oído Cocina (Silenciar)</button>
             </div>
             {html_ing}
+            {html_utensilios}
             {html_prev}
             {html_diagrama}
             {html_recom}
             {html_maridaje}
             <div style="text-align: center; color: #737373; font-size: 13px; margin-top: 35px; border-top: 1px solid #282828; padding-top: 20px;">
-                🎬 <b>FaceFoodChef.com V3</b> | Fuente: {origen_html}
+                🎬 <b>FaceFoodChef.com V3.1</b> | Fuente: {origen_html}
             </div>
         </div>
         <script>
@@ -443,7 +455,7 @@ elif receta_texto_input:
 elif archivo_multimodal:
     procesar_accion = True
 
-if st.button("🎬 GENERAR DIAGRAMA Y SOMMELIER V3"):
+if st.button("🎬 GENERAR DIAGRAMA Y SOMMELIER V3.1"):
     api_key_activa = API_KEY_INPUT.strip()
     
     if not api_key_activa:
@@ -462,40 +474,43 @@ if st.button("🎬 GENERAR DIAGRAMA Y SOMMELIER V3"):
             Ajusta matemáticamente las cantidades para {comensales_objetivo} raciones.
 
             REGLAS ESTRICTAS DE FORMATO Y UNIDADES:
-            1. UNIDADES DE MEDIDA: Las unidades se deben expresar abreviadas siempre que sea posible (ej: g, kg, ml, l, ºC, cm, min, etc.). Sin embargo, la palabra "cucharada" y "cucharadita" deben mantenerse SIEMPRE escritas completas (prohibido usar "cda" o "cdita"). Quedan totalmente prohibidas expresiones vagas como "al gusto".
-            2. MENAJE MANUAL Y UTENSILIOS: En cada bloque de proceso o ingredientes, detalla el menaje pesado y el menaje manual necesario (cuchillo de cocinero, espumadera, pinzas de cocina, paleta de madera, espátula de silicona, batidor de varillas, etc.).
+            1. UNIDADES DE MEDIDA: Expresar abreviadas siempre que sea posible (g, kg, ml, l, ºC, cm, min). La palabra "cucharada" y "cucharadita" deben mantenerse SIEMPRE escritas completas. Prohibido "al gusto".
+            2. MODULARIZACIÓN: 
+               - Proporciona una lista separada de "utensilios_menaje" (ej: Cuchillo de cocinero, cazuela de acero inoxidable, batidor de varillas, etc.).
+               - Proporciona una lista separada de "pasos_previos" para la preparación previa / mise en place.
             3. SOMMELIER (CASTILLA-LA MANCHA Y ESPAÑA): En la sección 'maridaje', debes proporcionar obligatoriamente:
-               - Al menos 2 propuestas de VINO, priorizando Denominaciones de Origen de Castilla-La Mancha (D.O. La Mancha, D.O. Valdepeñas, D.O. Almansa, D.O. Manchuela, D.O. Ribera del Júcar, D.O. Mondéjar, D.O. Uclés) indicando variedad de uva y maridaje técnico.
-               - Al menos 2 propuestas de CERVEZA, priorizando cervezas artesanas o de fabricación española.
+               - Al menos 2 propuestas de VINO, priorizando Denominaciones de Origen de Castilla-La Mancha.
+               - Al menos 2 propuestas de CERVEZA, priorizando artesanales y nacionales.
             4. Devuelve EXCLUSIVAMENTE un JSON válido sin marcas ni textos adicionales fuera del JSON.
 
             JSON Schema esperado:
             {{
               "nombre_receta": "String",
               "origen_receta": "String",
-              "ingredientes": ["400 g de harina de trigo", "10 g de sal fina", "2 cucharadas de aceite de oliva virgen extra"],
-              "pasos_previos": ["Mise en place utilizando cuchillo de cocinero..."],
+              "ingredientes": ["400 g de harina de trigo", "10 g de sal fina"],
+              "utensilios_menaje": ["Cuchillo de cocinero", "Cazuela de acero inoxidable", "Espátula de silicona"],
+              "pasos_previos": ["Lavar y desinfectar los ingredientes frescos...", "Cortar en brunoise fina..."],
               "bloques_proceso": [
-                {{"tipo": "secuencial", "accion": "Paso 1 detallado", "utensilios": ["Cazuela de acero inoxidable", "Cuchillo de cocinero"], "tiempo": "5 min", "duracion_minutos": 5, "temperatura": "100 ºC"}},
+                {{"tipo": "secuencial", "accion": "Paso 1 detallado", "utensilios": ["Cazuela de acero inoxidable"], "tiempo": "5 min", "duracion_minutos": 5, "temperatura": "100 ºC"}},
                 {{
                   "tipo": "paralelo",
                   "ramas": [
-                    {{"nombre": "Sartén 1", "accion": "Sofreír...", "utensilios": ["Sartén antiadherente", "Pinzas de cocina"], "tiempo": "10 min", "duracion_minutos": 10, "temperatura": "90 ºC"}},
-                    {{"nombre": "Olla 2", "accion": "Cocer...", "utensilios": ["Olla", "Espumadera"], "tiempo": "8 min", "duracion_minutos": 8, "temperatura": "100 ºC"}}
+                    {{"nombre": "Sartén 1", "accion": "Sofreír...", "utensilios": ["Sartén antiadherente"], "tiempo": "10 min", "duracion_minutos": 10, "temperatura": "90 ºC"}},
+                    {{"nombre": "Olla 2", "accion": "Cocer...", "utensilios": ["Olla"], "tiempo": "8 min", "duracion_minutos": 8, "temperatura": "100 ºC"}}
                   ]
                 }},
-                {{"tipo": "convergencia", "accion": "Unir mezclas", "utensilios": ["Bol grande de cristal", "Batidor de varillas manual"], "tiempo": "2 min", "duracion_minutos": 2, "temperatura": "80 ºC"}}
+                {{"tipo": "convergencia", "accion": "Unir mezclas", "utensilios": ["Bol grande"], "tiempo": "2 min", "duracion_minutos": 2, "temperatura": "80 ºC"}}
               ],
               "recomendaciones": ["Tip técnico 1"],
               "texto_voz": "Texto descriptivo completo y guiado de la receta",
               "maridaje": {{
                 "vinos": [
-                  "1. Vino tinto D.O. La Mancha (Cencibel/Tempranillo)...",
-                  "2. Vino blanco D.O. Rueda (Verdejo)..."
+                  "1. Vino tinto D.O. La Mancha...",
+                  "2. Vino blanco D.O. Rueda..."
                 ],
                 "cervezas": [
-                  "1. Cerveza artesana castellano-manchega tipo Pale Ale...",
-                  "2. Cerveza tostada española de marca nacional..."
+                  "1. Cerveza artesana castellano-manchega...",
+                  "2. Cerveza tostada española..."
                 ]
               }}
             }}
@@ -504,7 +519,7 @@ if st.button("🎬 GENERAR DIAGRAMA Y SOMMELIER V3"):
             contents_payload = [prompt_sistema]
             if archivo_multimodal:
                 contents_payload.append(types.Part.from_bytes(data=archivo_multimodal, mime_type=tipo_multimodal))
-                contents_payload.append(f"Analiza el archivo adjunto para extraer la receta, escalar a {comensales_objetivo} comensales con unidades abreviadas y sommelier CLM.")
+                contents_payload.append(f"Analiza el archivo adjunto para extraer la receta, escalar a {comensales_objetivo} comensales con separación modular.")
             else:
                 contents_payload.append(f"Receta:\n{contenido_ia}")
 
@@ -514,7 +529,7 @@ if st.button("🎬 GENERAR DIAGRAMA Y SOMMELIER V3"):
             response = None
             exito = False
             
-            with st.spinner("⚙️ Procesando diagrama V3 (Optimizando conexión con IA)..."):
+            with st.spinner("⚙️ Procesando diagrama V3.1 (Optimizando conexión con IA)..."):
                 for mod in modelos_a_probar:
                     intentos = 3
                     for intento in range(intentos):
@@ -555,9 +570,10 @@ if st.button("🎬 GENERAR DIAGRAMA Y SOMMELIER V3"):
                 origen_final = url_origen_detectada if url_origen_detectada else datos.get("origen_receta", "Texto aportado por el usuario")
 
                 html_final = generar_html_dashboard(
-                    datos.get("nombre_receta", "Receta Culinaria Pro V3"),
+                    datos.get("nombre_receta", "Receta Culinaria Pro V3.1"),
                     origen_final,
                     datos.get("ingredientes", []),
+                    datos.get("utensilios_menaje", []),
                     datos.get("pasos_previos", []),
                     datos.get("bloques_proceso", []),
                     datos.get("recomendaciones", []),
