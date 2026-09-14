@@ -13,15 +13,13 @@ st.set_page_config(
 )
 
 # Inicializar cliente de Gemini (Asegúrate de configurar tu GEMINI_API_KEY en las variables de entorno)
-# os.environ["GEMINI_API_KEY"] = "TU_API_KEY"
-
 def obtener_cliente_gemini():
     try:
         return genai.Client()
     except Exception as e:
         return None
 
-# Estilos CSS globales inyectados basados estrictamente en el manual de diseño proporcionado
+# Estilos CSS globales inyectados basados estrictamente en el manual de diseño y colores solicitados
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@700;900&display=swap');
@@ -118,7 +116,7 @@ def main():
           "tiempo_total": "45 mins",
           "dificultad": "Media",
           "raciones": "4 personas",
-          "imagen_url": "URL de una imagen panorámica representativa (16:9) libre de derechos o placeholder temático",
+          "imagen_url": "https://images.unsplash.com/photo-1498837167922-ddd27525d352",
           "bloques": [
             {{
               "id": 1,
@@ -164,50 +162,58 @@ def main():
                     <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to top, #141414 10%, transparent 90%);"></div>
                     <div style="position: absolute; bottom: 20px; left: 20px; right: 20px;">
                         <span class="badge-match">Match {datos_receta.get('match_porcentaje', '95%')} para ti</span>
-                        <h1 style="margin: 10px 0 5px 0; font-size: 2.5rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.8);">{datos_receta.get('titulo', 'Receta')}</h1>
+                        <h1 style="margin: 10px 0 5px 0; font-size: 2.5rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); color: #FFFFFF; font-family: 'Montserrat', sans-serif;">{datos_receta.get('titulo', 'Receta')}</h1>
                         <p class="secondary-text">⏱️ {datos_receta.get('tiempo_total')} &nbsp;|&nbsp; 📊 {datos_receta.get('dificultad')} &nbsp;|&nbsp; 🍽️ {datos_receta.get('raciones')}</p>
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
                 
-                st.markdown("<h2 style='margin-top: 30px;'>🗺️ Diagrama de Bloques de Ejecución</h2>", unsafe_allow_html=True)
+                st.markdown("<h2 style='margin-top: 30px; color: #FFFFFF; font-family: 'Montserrat', sans-serif;'>🗺️ Diagrama de Bloques de Ejecución</h2>", unsafe_allow_html=True)
                 
                 # Generar bloques interactivos tipo flujo de trabajo
                 bloques = datos_receta.get('bloques', [])
                 
                 html_bloques = "<div style='display: flex; flex-direction: column; gap: 15px;'>"
                 for b in bloques:
-                    instrucciones_html = "".join([f"<li>{ins}</li>" for ins in b.get('instrucciones', [])])
+                    instrucciones_html = "".join([f"<li style='color: #FFFFFF; font-family: 'Inter', sans-serif;'>{ins}</li>" for ins in b.get('instrucciones', [])])
                     deps = ", ".join(map(str, b.get('dependencias', [])))
                     dep_text = f"<span class='secondary-text'>Requiere Bloque(s): #{deps}</span>" if deps else "<span class='secondary-text'>Fase Inicial / Independiente</span>"
                     
                     html_bloques += f"""
-                    <div style="background-color: #1F1F1F; border-left: 5px solid #E50914; padding: 20px; border-radius: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
+                    <div class="netflix-card" style="border-left: 5px solid #E50914;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                             <h3 style="margin: 0; color: #FFFFFF; font-family: 'Montserrat', sans-serif;">Bloque #{b.get('id')}: {b.get('fase')}</h3>
-                            <span style="background-color: #333333; color: #46D369; padding: 4px 10px; border-radius: 4px; font-weight: 600;">⏱️ {b.get('tiempo')}</span>
+                            <span style="background-color: #1F1F1F; color: #46D369; padding: 4px 10px; border-radius: 4px; font-weight: 600; border: 1px solid #46D369;">⏱️ {b.get('tiempo')}</span>
                         </div>
                         <div style="margin-bottom: 10px;">{dep_text}</div>
-                        <ul style="color: #FFFFFF; font-family: 'Inter', sans-serif; margin: 0; padding-left: 20px; line-height: 1.6;">
+                        <ul style="margin: 0; padding-left: 20px; line-height: 1.6;">
                             {instrucciones_html}
                         </ul>
                     </div>
                     """
                 html_bloques += "</div>"
                 
-                st.markdown(html_bloques, unsafe_allow_html=True)
+                html_final = f"""
+                <div style="font-family: 'Inter', sans-serif; color: #FFFFFF;">
+                    {html_bloques}
+                </div>
+                """
                 
                 st.success("¡Diagrama generado con éxito!")
+                components.html(html_final, height=950, scrolling=True)
                 
-            except json.JSONDecodeError:
-                st.error("Error al procesar la respuesta de la IA en formato JSON. Inténtalo de nuevo.")
-                if 'texto_respuesta' in locals():
-                    with st.expander("Ver respuesta raw de la IA"):
-                        st.text(texto_respuesta)
-            except APIError as e:
-                st.error(f"Error de la API de Gemini: {e}")
-            except Exception as e:
-                st.error(f"Se ha producido un error inesperado: {e}")
+            else:
+                st.error("No se pudo obtener una respuesta válida de los modelos de Gemini tras varios intentos.")
+                
+        except json.JSONDecodeError:
+            st.error("Error al procesar la respuesta de la IA en formato JSON. Inténtalo de nuevo.")
+            if 'texto_respuesta' in locals():
+                with st.expander("Ver respuesta raw de la IA"):
+                    st.text(texto_respuesta)
+        except APIError as e:
+            st.error(f"Error de la API de Gemini: {e}")
+        except Exception as e:
+            st.error(f"Se ha producido un error inesperado: {e}")
 
 if __name__ == "__main__":
     main()
