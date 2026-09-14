@@ -325,6 +325,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
     origen_html = f'<a href="{origen_receta}" target="_blank" style="color: #E50914; text-decoration: underline;">{origen_receta}</a>' if origen_receta.startswith("http") else f'<span style="color: #B3B3B3;">{origen_receta}</span>'
     texto_voz_seguro = json.dumps(texto_voz)
 
+    # Corrección de la interpolación de cadenas JavaScript usando comillas simples o dobles seguras en python f-string
     return f"""
     <!DOCTYPE html>
     <html lang="es">
@@ -394,7 +395,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, pasos_pre
                         segundosRestantes--;
                         const m = Math.floor(segundosRestantes / 60);
                         const s = segundosRestantes % 60;
-                        elemento.innerText = `${{m}}m ${{s < 10 ? '0' : ''}}${s}s`;
+                        elemento.innerText = m + "m " + (s < 10 ? "0" : "") + s + "s";
                     }}
                 }}, 1000);
             }}
