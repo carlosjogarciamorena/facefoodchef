@@ -28,14 +28,14 @@ try:
 except ImportError:
     HAS_PPTX = False
 
-# Configuración de página
+# Configuración de página Streamlit
 st.set_page_config(
     page_title="FaceFoodChef.com - Motor de Diagramas Culinarios", 
     layout="wide", 
     page_icon="🍳"
 )
 
-# Estilos globales Streamlit con la paleta de FaceFoodChef
+# Estilos globales con la paleta de FaceFoodChef
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Montserrat:wght@700;900&display=swap');
@@ -123,7 +123,7 @@ st.sidebar.markdown("---")
 st.sidebar.markdown("""
 ### 🎨 Código de Bordes (Lado Izquierdo):
 - 🟢 **Verde Neón (`#00FF66`):** Ingredientes / Entradas
-- 🟡 **Amarillo (`#FFB300`):** Acciones / Mezclas (Procesado)
+- 🟡 **Amarillo (`#FFB300`):** Acciones / Procesado
 - 🔴 **Rojo FaceFoodChef (`#EF4444`):** Alertas / Puntos Críticos
 - 🟡 **Dorado (`#FFD700`):** Plato Terminado
 """)
@@ -188,10 +188,10 @@ def extraer_texto_de_url(url):
             raise Exception(f"Error al procesar la URL: {e}")
 
 def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilios_menaje, pasos_previos, bloques_proceso, recomendaciones, texto_voz, maridaje, comensales):
-    # Definición de Colores de acuerdo a los requerimientos
+    # Definición de colores
     COLOR_VERDE_ING = "#00FF66"      # Entradas / Ingredientes
-    COLOR_AMARILLO_ACC = "#FFB300"   # Acciones / Procesado (reemplaza al azul)
-    COLOR_ROJO_ALERTA = "#EF4444"    # Alertas / Puntos Críticos (FaceFoodChef)
+    COLOR_AMARILLO_ACC = "#FFB300"   # Acciones / Procesado
+    COLOR_ROJO_ALERTA = "#EF4444"    # Alertas / Puntos Críticos
     COLOR_DORADO_PLATO = "#FFD700"   # Plato Final
 
     html_header = f"""
@@ -202,7 +202,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
     </div>
     """
 
-    # Bloque 1: Ingredientes (Borde lateral izquierdo Verde Neón #00FF66)
+    # Bloque 1: Ingredientes (Borde vertical izquierdo Verde Neón)
     html_ing = f"""
     <div style="background-color: #2C2F33; border-left: 6px solid {COLOR_VERDE_ING}; border-top: none; border-right: none; border-bottom: none; border-radius: 6px; padding: 20px; margin-bottom: 20px;">
         <h3 style="color: {COLOR_VERDE_ING}; margin-top: 0; font-size: 16px; font-weight: 700; font-family: 'Montserrat', sans-serif; border-bottom: 1px solid #4F545C; padding-bottom: 8px;">🛒 1. Ingredientes ({comensales} pax)</h3>
@@ -235,7 +235,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
         html_prev += f"<li>{prep}</li>"
     html_prev += "</ul></div>"
 
-    # Bloque 4: Diagrama de Proceso (Bordes laterales izquierdos)
+    # Bloque 4: Diagrama de Proceso
     html_diagrama = """
     <div style="font-family: 'Inter', sans-serif;">
         <h3 style="color: #FFFFFF; font-size: 18px; font-weight: 700; margin-bottom: 20px; font-family: 'Montserrat', sans-serif; border-bottom: 2px solid #EF4444; padding-bottom: 8px; display: inline-block;">4. Diagrama de Ejecución y Flujo</h3>
@@ -248,7 +248,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
         utensilios = bloque.get("utensilios", [])
         utensilios_str = ", ".join(utensilios) if utensilios else "N/A"
 
-        # Aplicación del borde vertical izquierdo según tipo/alerta
+        # Aplicación del borde vertical izquierdo según tipo o nivel de alerta
         borde_color = COLOR_ROJO_ALERTA if es_critico else COLOR_AMARILLO_ACC
 
         if tipo == "paralelo":
@@ -300,7 +300,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
             </div>
             """
 
-    # Bloque Final (Borde lateral izquierdo Dorado #FFD700)
+    # Bloque Final
     html_diagrama += f"""
     <div style="text-align: center; margin: 4px 0 12px 0;">
         <span style="color: {COLOR_DORADO_PLATO}; font-size: 20px; font-weight: bold;">↓</span>
@@ -312,7 +312,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
     </div>
     """
 
-    # Recomendaciones / Puntos Críticos (Borde lateral izquierdo Rojo #EF4444)
+    # Recomendaciones / Puntos Críticos
     html_recom = f"""
     <div style="background-color: #2C2F33; border-left: 6px solid {COLOR_ROJO_ALERTA}; border-top: none; border-right: none; border-bottom: none; border-radius: 6px; padding: 20px; margin-top: 24px; margin-bottom: 20px;">
         <h3 style="color: {COLOR_ROJO_ALERTA}; margin-top: 0; font-size: 16px; font-weight: 700; font-family: 'Montserrat', sans-serif; border-bottom: 1px solid #4F545C; padding-bottom: 8px;">🚨 5. Puntos Críticos y Alertas del Chef</h3>
@@ -322,19 +322,19 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
         html_recom += f"<li>{rec}</li>"
     html_recom += "</ul></div>"
 
-    # Maridaje
+    # Bloque 6: Maridaje (Actualización requerida)
     vinos_lista = maridaje.get('vinos', [])
     cervezas_lista = maridaje.get('cervezas', [])
-    vinos_html = "".join([f"<li>{v}</li>" for v in vinos_lista]) if vinos_lista else "<li>Sin propuestas disponibles.</li>"
-    cervezas_html = "".join([f"<li>{c}</li>" for c in cervezas_lista]) if cervezas_lista else "<li>Sin propuestas disponibles.</li>"
+    vinos_html = "".join([f"<li>{v}</li>" for v in vinos_lista]) if vinos_lista else "<li>Sin opciones disponibles.</li>"
+    cervezas_html = "".join([f"<li>{c}</li>" for c in cervezas_lista]) if cervezas_lista else "<li>Sin opciones disponibles.</li>"
 
     html_maridaje = f"""
     <div style="background-color: #2C2F33; border-left: 6px solid #4F545C; border-top: none; border-right: none; border-bottom: none; border-radius: 6px; padding: 20px; margin-top: 20px; margin-bottom: 20px;">
-        <h3 style="color: #FFFFFF; margin-top: 0; font-size: 16px; font-weight: 700; font-family: 'Montserrat', sans-serif; border-bottom: 1px solid #4F545C; padding-bottom: 8px;">🍷 6. Maridaje y Recomendaciones</h3>
+        <h3 style="color: #FFFFFF; margin-top: 0; font-size: 16px; font-weight: 700; font-family: 'Montserrat', sans-serif; border-bottom: 1px solid #4F545C; padding-bottom: 8px;">🍷 6. Maridaje</h3>
         <div style="margin-top: 14px; color: #E2E8F0; font-size: 14px; line-height: 1.6; font-family: 'Inter', sans-serif;">
-            <p style="margin-bottom: 6px; color: #FFFFFF;"><b>🍇 Vinos (D.O. Castilla-La Mancha / España):</b></p>
+            <p style="margin-bottom: 6px; color: #FFFFFF;"><b>🍇 Vinos (Denominaciones de Origen):</b></p>
             <ul style="margin: 0 0 14px 0; padding-left: 20px;">{vinos_html}</ul>
-            <p style="margin-bottom: 6px; color: #FFFFFF;"><b>🍺 Cervezas Artesanales:</b></p>
+            <p style="margin-bottom: 6px; color: #FFFFFF;"><b>🍺 Cervezas:</b></p>
             <ul style="margin: 0; padding-left: 20px;">{cervezas_html}</ul>
         </div>
     </div>
@@ -478,7 +478,10 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
             3. BLOQUES DE PROCESO:
                - "tipo": "secuencial", "paralelo" o "convergencia".
                - "es_critico": booleano (true si requiere especial precaución técnica o de seguridad).
-            4. MARIDAJE: Incluye propuestas de vino y cerveza.
+            4. MARIDAJE:
+               - Evalúa todas las Denominaciones de Origen (sin restricción geográfica).
+               - Genera EXACTAMENTE 3 propuestas de vinos indicando tipo o Denominación de Origen idónea.
+               - Genera EXACTAMENTE 3 propuestas de cervezas (sin limitación a artesanales) acordes al plato.
             5. Devuelve EXCLUSIVAMENTE el JSON estructurado sin formato adicional fuera de él.
 
             JSON Schema esperado:
@@ -501,8 +504,16 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
               "recomendaciones": ["Punto crítico de cocción"],
               "texto_voz": "Resumen narrado del proceso",
               "maridaje": {{
-                "vinos": ["1. Vino Tinto D.O. La Mancha"],
-                "cervezas": ["1. Cerveza artesana"]
+                "vinos": [
+                  "1. Vino Tinto crianza (D.O. Ribera del Duero)",
+                  "2. Vino Blanco Verdejo (D.O. Rueda)",
+                  "3. Vino Rosado (D.O. Navarra)"
+                ],
+                "cervezas": [
+                  "1. Cerveza Pilsner tradicional",
+                  "2. Cerveza de Trigo (Weissbier)",
+                  "3. Cerveza Negra (Stout)"
+                ]
               }}
             }}
             """
