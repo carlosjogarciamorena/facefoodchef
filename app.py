@@ -28,75 +28,61 @@ try:
 except ImportError:
     HAS_PPTX = False
 
+# Configuración de página
 st.set_page_config(
-    page_title="FaceFoodChef.com - Motor de Diagramas Culinarios Pro V3", 
+    page_title="FaceFoodChef.com - Motor de Diagramas Culinarios Pro V4", 
     layout="wide", 
     page_icon="🍳"
 )
 
+# CSS Global de Streamlit
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;900&family=Inter:wght@400;500&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;900&family=Inter:wght@400;500;700&display=swap');
 
     .stApp, .block-container, [data-testid="stSidebar"] {
-        background-color: #141414 !important;
+        background-color: #0A0A0A !important;
         color: #E5E5E5 !important;
         font-family: 'Inter', sans-serif !important;
     }
     header, footer { visibility: hidden; }
     
     .stTextArea textarea, .stTextInput input, .stSelectbox select, .stNumberInput input {
-        background-color: #181818 !important;
+        background-color: #121212 !important;
         color: #FFFFFF !important;
         border: 1px solid #282828 !important;
-        border-radius: 4px !important;
+        border-radius: 6px !important;
         font-size: 16px !important;
         font-family: 'Inter', sans-serif !important;
     }
     .stTextArea textarea:focus, .stTextInput input:focus, .stNumberInput input:focus {
-        border-color: #E50914 !important;
-        box-shadow: none !important;
+        border-color: #00E5FF !important;
+        box-shadow: 0 0 10px rgba(0, 229, 255, 0.2) !important;
     }
 
     .stButton > button {
-        background-color: #E50914 !important;
-        color: #FFFFFF !important;
+        background: linear-gradient(135deg, #00E5FF 0%, #0088FF 100%) !important;
+        color: #000000 !important;
         font-family: 'Montserrat', sans-serif !important;
-        font-weight: 700 !important;
+        font-weight: 900 !important;
         font-size: 16px !important;
         border: none !important;
-        border-radius: 4px !important;
+        border-radius: 6px !important;
         padding: 14px 30px !important;
         width: 100%;
         text-transform: uppercase;
         letter-spacing: 1px;
-        transition: background-color 0.3s ease !important;
+        transition: all 0.3s ease !important;
     }
     .stButton > button:hover {
-        background-color: #F40612 !important;
-    }
-
-    .stDownloadButton > button {
-        background-color: #181818 !important;
-        color: #FFFFFF !important;
-        border: 1px solid #E50914 !important;
-        font-family: 'Montserrat', sans-serif !important;
-        font-weight: 700 !important;
-        border-radius: 4px !important;
-        width: 100%;
-        padding: 10px;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-    .stDownloadButton > button:hover {
-        background-color: #E50914 !important;
-        color: #FFFFFF !important;
+        box-shadow: 0 0 15px rgba(0, 229, 255, 0.6) !important;
+        transform: translateY(-1px);
     }
 
     .streamlit-expanderHeader {
-        background-color: #181818 !important;
+        background-color: #121212 !important;
         color: #FFFFFF !important;
-        border-radius: 4px !important;
+        border-radius: 6px !important;
         border: 1px solid #282828 !important;
         font-family: 'Montserrat', sans-serif !important;
     }
@@ -109,17 +95,18 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.sidebar.header("⚙️ Panel de Control V3")
+# Panel Lateral
+st.sidebar.header("⚙️ Panel de Control V4")
 
 API_KEY_INPUT = st.sidebar.text_input(
     "🔑 Clave de API Gemini:",
     type="password",
     value=st.secrets.get("GEMINI_API_KEY", "") if "GEMINI_API_KEY" in st.secrets else "",
-    help="Introduce tu clave de API de Google Gemini manualmente."
+    help="Introduce tu clave de API de Google Gemini."
 )
 
 modelo_seleccionado = st.sidebar.selectbox(
-    "Modelo Gemini (con fallback automático):",
+    "Modelo Gemini:",
     options=["gemini-2.5-flash", "gemini-3.6-flash", "gemini-1.5-flash", "gemini-1.5-pro"],
     index=0
 )
@@ -135,16 +122,19 @@ comensales_objetivo = st.sidebar.number_input(
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("""
-### 🌟 Mejoras Aplicadas V3.1
-- **Estructura Modular Separada:** Utensilios/Menaje y Preparación Previa totalmente independientes.
-- **Enlace a Tienda Pro:** Botón directo integrado en la sección de utensilios para adquisición de menaje.
-- **Estética Cinematográfica:** Interfaz oscura de alto contraste estilo Netflix.
-- **Sommelier Manchego Avanzado:** Propuestas de vino de Castilla-La Mancha y cervezas artesanales.
+### 🎨 Código de Bordes (Diagrama):
+- 🟢 **Borde Verde Neón (#00FF66):** Ingredientes / Entradas
+- 🔵 **Borde Azul Brillante (#00E5FF):** Acciones / Mezclas (Procesado)
+- 🟡 **Borde Amarillo (#FFB300):** Tiempos / Temperaturas / Puntos de Control
+- 🔴 **Borde Rojo (#FF3366):** Alertas / Puntos Críticos
+- 🟡 **Borde Dorado (#FFD700):** Resultado / Plato Final
 """)
 
-st.markdown("<h1 style='text-align: center; color: #FFFFFF; font-family: Montserrat, sans-serif; font-weight: 900; letter-spacing: 2px; margin-bottom: 0;'>FACEFOODCHEF <span style='font-size: 14px; background: #E50914; color: #fff; padding: 4px 10px; border-radius: 2px; vertical-align: middle; letter-spacing: 1px;'>PRO V3.1</span></h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #B3B3B3; font-size: 15px; margin-bottom: 30px; font-family: Inter, sans-serif;'>Diagramas de cocina escalables con separación modular de menaje y preparación previa</p>", unsafe_allow_html=True)
+# Encabezado
+st.markdown("<h1 style='text-align: center; color: #FFFFFF; font-family: Montserrat, sans-serif; font-weight: 900; letter-spacing: 2px; margin-bottom: 0;'>FACEFOODCHEF <span style='font-size: 14px; background: #00E5FF; color: #000; padding: 4px 10px; border-radius: 4px; vertical-align: middle; letter-spacing: 1px;'>PRO V4</span></h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #B3B3B3; font-size: 15px; margin-bottom: 30px; font-family: Inter, sans-serif;'>Generador de Diagramas de Flujo Culinarios con Código de Colores</p>", unsafe_allow_html=True)
 
+# Sección de entrada
 st.subheader("📥 Entrada de Receta")
 entrada_principal = st.text_area(
     "Pega la URL de la receta o el texto completo:", 
@@ -200,62 +190,80 @@ def extraer_texto_de_url(url):
             raise Exception(f"Error al procesar la URL: {e}")
 
 def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilios_menaje, pasos_previos, bloques_proceso, recomendaciones, texto_voz, maridaje, comensales):
+    # Definición de Estilos por Categoría (Requisito de bordes y fondos)
+    COLOR_INGREDIENTE = "#00FF66"  # Verde Neón
+    COLOR_ACCION = "#00E5FF"       # Azul Brillante
+    COLOR_CONTROL = "#FFB300"      # Amarillo / Naranja
+    COLOR_ALERTA = "#FF3366"       # Rojo
+    COLOR_PLATO_FINAL = "#FFD700"  # Dorado
+
     html_header = f"""
-    <div style="background: #181818; border-radius: 8px; padding: 30px; text-align: center; margin-bottom: 24px; border-left: 6px solid #E50914; border: 1px solid #282828; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
-        <span style="font-size: 11px; font-weight: 700; color: #FFFFFF; text-transform: uppercase; letter-spacing: 2px; background: #E50914; padding: 6px 14px; border-radius: 2px; display: inline-block; font-family: 'Montserrat', sans-serif;">Diagrama de Producción Culinaria V3.1</span>
-        <h1 style="color: #FFFFFF; font-size: 28px; margin: 16px 0 8px 0; font-weight: 900; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">{nombre_receta}</h1>
-        <p style="color: #B3B3B3; font-size: 14px; margin: 0; font-family: 'Inter', sans-serif;">Calculado y escalado para <b>{comensales} comensales</b>.</p>
+    <div style="background: #000000; border-radius: 8px; padding: 24px; text-align: center; margin-bottom: 24px; border: 2px solid {COLOR_PLATO_FINAL}; box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);">
+        <span style="font-size: 11px; font-weight: 700; color: #000; text-transform: uppercase; letter-spacing: 2px; background: {COLOR_PLATO_FINAL}; padding: 4px 12px; border-radius: 3px; display: inline-block; font-family: 'Montserrat', sans-serif;">Flujo de Producción Culinario</span>
+        <h1 style="color: #FFFFFF; font-size: 26px; margin: 12px 0 6px 0; font-weight: 900; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">{nombre_receta}</h1>
+        <p style="color: #B3B3B3; font-size: 13px; margin: 0; font-family: 'Inter', sans-serif;">Receta adaptada para <b>{comensales} personas</b></p>
     </div>
     """
 
+    # Bloque 1: Ingredientes (Borde Verde Neón #00FF66, Fondo Negro)
     html_ing = f"""
-    <div style="background-color: #181818; border: 1px solid #282828; border-radius: 8px; padding: 22px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
-        <h3 style="color: #FFFFFF; margin-top: 0; font-size: 18px; font-weight: 700; font-family: 'Montserrat', sans-serif; border-bottom: 2px solid #E50914; padding-bottom: 10px; display: inline-block;">🛒 1. Ingredientes Exactos ({comensales} pax)</h3>
-        <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px;">
+    <div style="background-color: #000000; border: 2px solid {COLOR_INGREDIENTE}; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 0 10px rgba(0, 255, 102, 0.1);">
+        <h3 style="color: {COLOR_INGREDIENTE}; margin-top: 0; font-size: 16px; font-weight: 700; font-family: 'Montserrat', sans-serif; border-bottom: 1px solid #222; padding-bottom: 8px;">🛒 1. Ingredientes - Entradas ({comensales} pax)</h3>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px;">
     """
     for ing in ingredientes:
-        html_ing += f"<span style='background-color: #222222; color: #E5E5E5; padding: 8px 16px; border-radius: 4px; font-size: 13px; border: 1px solid #333333; font-weight: 500; font-family: 'Inter', sans-serif;'>{ing}</span>"
+        html_ing += f"<span style='background-color: #111111; color: #FFFFFF; padding: 8px 14px; border-radius: 4px; font-size: 13px; border: 1px solid #222; font-family: 'Inter', sans-serif;'>{ing}</span>"
     html_ing += "</div></div>"
 
+    # Bloque 2: Utensilios y Menaje
     html_utensilios = f"""
-    <div style="background-color: #181818; border: 1px solid #282828; border-radius: 8px; padding: 22px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #E50914; padding-bottom: 10px; margin-bottom: 16px;">
-            <h3 style="color: #FFFFFF; margin: 0; font-size: 18px; font-weight: 700; font-family: 'Montserrat', sans-serif;">🛠️ 2. Utensilios y Menaje</h3>
-            <a href="https://www.facefoodchef.com/tienda-menaje" target="_blank" style="background-color: #E50914; color: white; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 12px; font-weight: 700; font-family: 'Montserrat', sans-serif; text-transform: uppercase; letter-spacing: 1px;">🛒 Ir a la Tienda de Menaje</a>
+    <div style="background-color: #000000; border: 1px solid #333333; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; padding-bottom: 8px; margin-bottom: 14px;">
+            <h3 style="color: #FFFFFF; margin: 0; font-size: 16px; font-weight: 700; font-family: 'Montserrat', sans-serif;">🛠️ 2. Utensilios y Menaje</h3>
+            <a href="https://www.facefoodchef.com/tienda-menaje" target="_blank" style="background-color: #1A1A1A; color: #00E5FF; border: 1px solid #00E5FF; padding: 6px 14px; border-radius: 4px; text-decoration: none; font-size: 11px; font-weight: 700; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">🛒 Tienda de Menaje</a>
         </div>
-        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
     """
     for ut in utensilios_menaje:
-        html_utensilios += f"<span style='background-color: #222222; color: #E5E5E5; padding: 8px 16px; border-radius: 4px; font-size: 13px; border: 1px solid #333333; font-weight: 500; font-family: 'Inter', sans-serif;'>{ut}</span>"
+        html_utensilios += f"<span style='background-color: #111111; color: #CCCCCC; padding: 6px 12px; border-radius: 4px; font-size: 13px; border: 1px solid #222;'>{ut}</span>"
     html_utensilios += "</div></div>"
 
+    # Bloque 3: Preparación Previa (Mise en place)
     html_prev = """
-    <div style="background-color: #181818; border: 1px solid #282828; border-radius: 8px; padding: 22px; margin-bottom: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
-        <h3 style="color: #FFFFFF; margin-top: 0; font-size: 18px; font-weight: 700; font-family: 'Montserrat', sans-serif; border-bottom: 2px solid #E50914; padding-bottom: 10px; display: inline-block;">🔪 3. Preparación Previa (Mise en Place)</h3>
-        <ul style='margin: 16px 0 0 0; padding-left: 20px; color: #B3B3B3; font-size: 14px; line-height: 1.8; font-family: 'Inter', sans-serif;'>
+    <div style="background-color: #000000; border: 1px solid #333333; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+        <h3 style="color: #FFFFFF; margin-top: 0; font-size: 16px; font-weight: 700; font-family: 'Montserrat', sans-serif; border-bottom: 1px solid #222; padding-bottom: 8px;">🔪 3. Preparación Previa (Mise en Place)</h3>
+        <ul style='margin: 14px 0 0 0; padding-left: 20px; color: #CCCCCC; font-size: 14px; line-height: 1.7;'>
     """
     for prep in pasos_previos:
         html_prev += f"<li>{prep}</li>"
     html_prev += "</ul></div>"
 
+    # Bloque 4: Diagrama de Proceso Dinámico
     html_diagrama = """
     <div style="font-family: 'Inter', sans-serif;">
-        <h3 style="color: #FFFFFF; font-size: 18px; font-weight: 700; margin-bottom: 22px; font-family: 'Montserrat', sans-serif; border-bottom: 2px solid #E50914; padding-bottom: 10px; display: inline-block;">4. Diagrama de Ejecución y Tiempos</h3>
+        <h3 style="color: #FFFFFF; font-size: 18px; font-weight: 700; margin-bottom: 20px; font-family: 'Montserrat', sans-serif; border-bottom: 2px solid #00E5FF; padding-bottom: 8px; display: inline-block;">4. Diagrama de Ejecución y Flujo</h3>
     """
-    
-    BORDER_BLOQUE = "#282828"
-    
+
     for i, bloque in enumerate(bloques_proceso):
         tipo = bloque.get("tipo", "secuencial")
+        es_critico = bloque.get("es_critico", False)
         duracion_min = bloque.get("duracion_minutos", 5)
         utensilios = bloque.get("utensilios", [])
-        utensilios_str = ", ".join(utensilios) if utensilios else "Sin utensilios especificados"
-        
+        utensilios_str = ", ".join(utensilios) if utensilios else "N/A"
+
+        # Determinación de Color según la especificación del usuario
+        if es_critico:
+            borde_color = COLOR_ALERTA  # #FF3366
+        elif tipo == "convergencia":
+            borde_color = COLOR_ACCION  # #00E5FF
+        else:
+            borde_color = COLOR_ACCION  # #00E5FF por defecto para acciones
+
         if tipo == "paralelo":
             ramas = bloque.get("ramas", [])
-            html_diagrama += '<div style="display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap;">'
+            html_diagrama += '<div style="display: flex; gap: 14px; margin-bottom: 16px; flex-wrap: wrap;">'
             for idx, rama in enumerate(ramas):
-                nombre_rama = rama.get("nombre", f"Rama {idx+1}").upper()
+                nombre_rama = rama.get("nombre", f"Subproceso {idx+1}").upper()
                 accion = rama.get("accion", "")
                 tiempo = rama.get("tiempo", "")
                 temp = rama.get("temperatura", "")
@@ -263,78 +271,84 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
                 dur_rama = rama.get("duracion_minutos", 5)
                 timer_id = f"timer_par_{i}_{idx}"
                 
-                color_franja_paralelo = "#E50914"
-                
                 html_diagrama += f"""
-                <div style="flex: 1; min-width: 280px; background-color: #222222; border: 1px solid {BORDER_BLOQUE}; border-left: 4px solid {color_franja_paralelo}; border-radius: 4px; padding: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.9);">
-                    <div style="margin-bottom: 12px;"><span style="font-size: 11px; font-weight: 700; color: #FFFFFF; background-color: {color_franja_paralelo}; padding: 4px 10px; border-radius: 2px; display: inline-block; text-transform: uppercase; font-family: 'Montserrat', sans-serif; letter-spacing: 1px;">⚙️ PARALELO: {nombre_rama}</span></div>
-                    <div style="font-size: 14px; font-weight: 500; color: #FFFFFF; margin: 12px 0; font-family: 'Inter', sans-serif; line-height: 1.6;">{accion}</div>
-                    <div style="font-size: 12px; color: #B3B3B3; margin-bottom: 14px; background: #141414; padding: 8px 12px; border-radius: 4px; font-family: 'Inter', sans-serif;">🛠️ <b>Herramientas:</b> {utensilios_rama}</div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; background: #141414; padding: 10px 14px; border-radius: 4px;">
-                        <div style="font-size: 13px; color: #FFFFFF; font-family: 'Inter', sans-serif;">⏱️ <span id="{timer_id}" style="font-weight: bold; color: #E50914;">{tiempo}</span> | 🌡️ {temp}</div>
-                        <button onclick="iniciarTemporizador('{timer_id}', {dur_rama})" style="background-color: #E50914; color: white; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 700; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">⏳ Iniciar</button>
+                <div style="flex: 1; min-width: 280px; background-color: #000000; border: 2px solid {COLOR_ACCION}; border-radius: 6px; padding: 18px; box-shadow: 0 0 10px rgba(0, 229, 255, 0.1);">
+                    <div style="margin-bottom: 10px;"><span style="font-size: 10px; font-weight: 700; color: #000000; background-color: {COLOR_ACCION}; padding: 3px 8px; border-radius: 2px; text-transform: uppercase; font-family: 'Montserrat', sans-serif;">⚙️ ACCIÓN EN PARALELO: {nombre_rama}</span></div>
+                    <div style="font-size: 14px; font-weight: 500; color: #FFFFFF; margin: 10px 0; line-height: 1.5;">{accion}</div>
+                    <div style="font-size: 12px; color: #888888; margin-bottom: 12px;">🛠️ <b>Utensilios:</b> {utensilios_rama}</div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: #0A0A0A; padding: 8px 12px; border: 1px solid {COLOR_CONTROL}; border-radius: 4px;">
+                        <div style="font-size: 12px; color: {COLOR_CONTROL}; font-weight: bold;">⏱️ <span id="{timer_id}">{tiempo}</span> | 🌡️ {temp}</div>
+                        <button onclick="iniciarTemporizador('{timer_id}', {dur_rama})" style="background-color: {COLOR_CONTROL}; color: #000; border: none; padding: 4px 10px; border-radius: 3px; cursor: pointer; font-size: 11px; font-weight: 700; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">⏳ Iniciar</button>
                     </div>
                 </div>
                 """
             html_diagrama += '</div>'
         else:
-            es_convergencia = tipo == "convergencia"
-            left_border = "#E50914"
-            badge_bg = "#E50914"
-            etiqueta = "CONVERGENCIA / UNIÓN" if es_convergencia else f"PASO {i+1}"
             timer_id = f"timer_seq_{i}"
-
+            etiqueta = "UNIÓN / CONVERGENCIA" if tipo == "convergencia" else f"PASO {i+1}"
+            
             html_diagrama += f"""
-            <div style="background-color: #222222; border: 1px solid {BORDER_BLOQUE}; border-left: 4px solid {left_border}; border-radius: 4px; padding: 20px; margin-bottom: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.9);">
-                <div style="margin-bottom: 12px;"><span style="font-size: 11px; font-weight: 700; color: #FFFFFF; background-color: {badge_bg}; padding: 4px 10px; border-radius: 2px; display: inline-block; text-transform: uppercase; font-family: 'Montserrat', sans-serif; letter-spacing: 1px;">{etiqueta}</span></div>
-                <div style="font-size: 14px; font-weight: 500; color: #FFFFFF; margin: 12px 0; font-family: 'Inter', sans-serif; line-height: 1.6;">{bloque.get('accion')}</div>
-                <div style="font-size: 12px; color: #B3B3B3; margin-bottom: 14px; background: #141414; padding: 8px 12px; border-radius: 4px; font-family: 'Inter', sans-serif;">🛠️ <b>Herramientas:</b> {utensilios_str}</div>
-                <div style="display: flex; justify-content: space-between; align-items: center; background: #141414; padding: 10px 14px; border-radius: 4px;">
-                    <div style="font-size: 13px; color: #FFFFFF; font-family: 'Inter', sans-serif;">⏱️ <span id="{timer_id}" style="font-weight: bold; color: #E50914;">{bloque.get('tiempo')}</span> | 🌡️ {bloque.get('temperatura')}</div>
-                    <button onclick="iniciarTemporizador('{timer_id}', {duracion_min})" style="background-color: #E50914; color: white; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 700; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">⏳ Iniciar</button>
+            <div style="background-color: #000000; border: 2px solid {borde_color}; border-radius: 6px; padding: 18px; margin-bottom: 16px; box-shadow: 0 0 10px rgba(0,0,0,0.8);">
+                <div style="margin-bottom: 10px;">
+                    <span style="font-size: 10px; font-weight: 700; color: #000000; background-color: {borde_color}; padding: 3px 8px; border-radius: 2px; text-transform: uppercase; font-family: 'Montserrat', sans-serif;">{etiqueta}</span>
+                </div>
+                <div style="font-size: 14px; font-weight: 500; color: #FFFFFF; margin: 10px 0; line-height: 1.5;">{bloque.get('accion')}</div>
+                <div style="font-size: 12px; color: #888888; margin-bottom: 12px;">🛠️ <b>Utensilios:</b> {utensilios_str}</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; background: #0A0A0A; padding: 8px 12px; border: 1px solid {COLOR_CONTROL}; border-radius: 4px;">
+                    <div style="font-size: 12px; color: {COLOR_CONTROL}; font-weight: bold;">⏱️ <span id="{timer_id}">{bloque.get('tiempo')}</span> | 🌡️ {bloque.get('temperatura')}</div>
+                    <button onclick="iniciarTemporizador('{timer_id}', {duracion_min})" style="background-color: {COLOR_CONTROL}; color: #000; border: none; padding: 4px 10px; border-radius: 3px; cursor: pointer; font-size: 11px; font-weight: 700; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">⏳ Iniciar</button>
                 </div>
             </div>
             """
             
         if i < len(bloques_proceso) - 1:
-            html_diagrama += """
-            <div style="display: flex; flex-direction: column; align-items: center; margin: 6px 0 20px 0;">
-                <div style="width: 2px; height: 16px; background: #333333;"></div>
-                <div style="background-color: #181818; color: #E50914; border: 1px solid #333333; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700;">↓</div>
-                <div style="width: 2px; height: 16px; background: #333333;"></div>
+            html_diagrama += f"""
+            <div style="text-align: center; margin: 4px 0 12px 0;">
+                <span style="color: {COLOR_ACCION}; font-size: 18px; font-weight: bold;">↓</span>
             </div>
             """
-    
-    html_diagrama += "</div>"
 
-    html_recom = """
-    <div style="background-color: #181818; border: 1px solid #282828; border-left: 4px solid #E50914; border-radius: 8px; padding: 22px; margin-top: 24px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
-        <h3 style="color: #FFFFFF; margin-top: 0; font-size: 18px; font-weight: 700; font-family: 'Montserrat', sans-serif; border-bottom: 2px solid #E50914; padding-bottom: 10px; display: inline-block;">💡 5. Recomendaciones del Chef</h3>
-        <ul style='margin: 16px 0 0 0; padding-left: 20px; color: #B3B3B3; font-size: 14px; line-height: 1.8; font-family: 'Inter', sans-serif;'>
+    # Bloque Final: Plato Terminado (Borde Dorado Resplandeciente #FFD700)
+    html_diagrama += f"""
+    <div style="text-align: center; margin: 4px 0 12px 0;">
+        <span style="color: {COLOR_PLATO_FINAL}; font-size: 18px; font-weight: bold;">↓</span>
+    </div>
+    <div style="background-color: #000000; border: 2px solid {COLOR_PLATO_FINAL}; border-radius: 8px; padding: 20px; text-align: center; margin-top: 10px; box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);">
+        <span style="font-size: 11px; font-weight: 700; color: #000; background-color: {COLOR_PLATO_FINAL}; padding: 4px 10px; border-radius: 3px; font-family: 'Montserrat', sans-serif;">RESULTADO FINAL</span>
+        <h3 style="color: {COLOR_PLATO_FINAL}; margin: 10px 0 0 0; font-weight: 900; font-family: 'Montserrat', sans-serif;">🍽️ PLATO LISTO PARA SERVIR</h3>
+    </div>
+    </div>
+    """
+
+    # Alertas y Recomendaciones (Borde Rojo #FF3366)
+    html_recom = f"""
+    <div style="background-color: #000000; border: 2px solid {COLOR_ALERTA}; border-radius: 8px; padding: 20px; margin-top: 24px; margin-bottom: 20px; box-shadow: 0 0 10px rgba(255, 51, 102, 0.1);">
+        <h3 style="color: {COLOR_ALERTA}; margin-top: 0; font-size: 16px; font-weight: 700; font-family: 'Montserrat', sans-serif; border-bottom: 1px solid #222; padding-bottom: 8px;">🚨 5. Puntos Críticos y Alertas del Chef</h3>
+        <ul style='margin: 14px 0 0 0; padding-left: 20px; color: #CCCCCC; font-size: 14px; line-height: 1.7;'>
     """
     for rec in recomendaciones:
         html_recom += f"<li>{rec}</li>"
     html_recom += "</ul></div>"
 
+    # Sommelier
     vinos_lista = maridaje.get('vinos', [])
     cervezas_lista = maridaje.get('cervezas', [])
-    
-    vinos_html = "".join([f"<li style='margin-bottom: 6px;'>{v}</li>" for v in vinos_lista]) if vinos_lista else "<li>Sin propuestas de vino disponibles.</li>"
-    cervezas_html = "".join([f"<li style='margin-bottom: 6px;'>{c}</li>" for c in cervezas_lista]) if cervezas_lista else "<li>Sin propuestas de cerveza disponibles.</li>"
+    vinos_html = "".join([f"<li>{v}</li>" for v in vinos_lista]) if vinos_lista else "<li>Sin propuestas disponibles.</li>"
+    cervezas_html = "".join([f"<li>{c}</li>" for c in cervezas_lista]) if cervezas_lista else "<li>Sin propuestas disponibles.</li>"
 
     html_maridaje = f"""
-    <div style="background-color: #181818; border: 1px solid #282828; border-left: 4px solid #E50914; border-radius: 8px; padding: 22px; margin-top: 20px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
-        <h3 style="color: #FFFFFF; margin-top: 0; font-size: 18px; font-weight: 700; font-family: 'Montserrat', sans-serif; border-bottom: 2px solid #E50914; padding-bottom: 10px; display: inline-block;">🍷 6. Sommelier Experto (D.O. Castilla-La Mancha y España)</h3>
-        <div style="margin-top: 16px; color: #B3B3B3; font-size: 14px; line-height: 1.7; font-family: 'Inter', sans-serif;">
-            <p style="margin-bottom: 8px; color: #E5E5E5;"><b>🍇 Propuestas de Vinos (Mínimo 2, con prioridad en Castilla-La Mancha):</b></p>
-            <ul style="margin: 0 0 16px 0; padding-left: 20px;">{vinos_html}</ul>
-            <p style="margin-bottom: 8px; color: #E5E5E5;"><b>🍺 Propuestas de Cervezas (Mínimo 2, artesanas y nacionales):</b></p>
+    <div style="background-color: #000000; border: 1px solid #333333; border-radius: 8px; padding: 20px; margin-top: 20px; margin-bottom: 20px;">
+        <h3 style="color: #FFFFFF; margin-top: 0; font-size: 16px; font-weight: 700; font-family: 'Montserrat', sans-serif; border-bottom: 1px solid #222; padding-bottom: 8px;">🍷 6. Maridaje y Recomendaciones</h3>
+        <div style="margin-top: 14px; color: #CCCCCC; font-size: 14px; line-height: 1.6;">
+            <p style="margin-bottom: 6px; color: #FFFFFF;"><b>🍇 Vinos (D.O. Castilla-La Mancha / España):</b></p>
+            <ul style="margin: 0 0 14px 0; padding-left: 20px;">{vinos_html}</ul>
+            <p style="margin-bottom: 6px; color: #FFFFFF;"><b>🍺 Cervezas Artesanales:</b></p>
             <ul style="margin: 0; padding-left: 20px;">{cervezas_html}</ul>
         </div>
     </div>
     """
 
-    origen_html = f'<a href="{origen_receta}" target="_blank" style="color: #E50914; text-decoration: underline;">{origen_receta}</a>' if origen_receta.startswith("http") else f'<span style="color: #B3B3B3;">{origen_receta}</span>'
+    origen_html = f'<a href="{origen_receta}" target="_blank" style="color: #00E5FF; text-decoration: underline;">{origen_receta}</a>' if origen_receta.startswith("http") else f'<span style="color: #888888;">{origen_receta}</span>'
     texto_voz_seguro = json.dumps(texto_voz)
 
     return f"""
@@ -344,20 +358,20 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
         <meta charset="utf-8">
         <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;900&family=Inter:wght@400;500&display=swap" rel="stylesheet">
         <style>
-            body {{ background-color: #141414; color: #E5E5E5; font-family: 'Inter', sans-serif; padding: 16px; margin: 0; }}
+            body {{ background-color: #0A0A0A; color: #E5E5E5; font-family: 'Inter', sans-serif; padding: 16px; margin: 0; }}
             .container-hub {{ max-width: 900px; margin: auto; }}
-            .widget-box {{ background-color: #181818; border: 1px solid #282828; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }}
-            .btn-control {{ background-color: #E50914; color: white; border: none; padding: 10px 22px; font-size: 13px; font-weight: 700; border-radius: 4px; cursor: pointer; margin: 4px; font-family: 'Montserrat', sans-serif; text-transform: uppercase; letter-spacing: 1px; }}
-            .btn-stop {{ background-color: #282828; color: #E5E5E5; }}
+            .widget-box {{ background-color: #000000; border: 1px solid #222; border-radius: 8px; padding: 18px; text-align: center; margin-bottom: 20px; }}
+            .btn-control {{ background: #00E5FF; color: #000; border: none; padding: 8px 18px; font-size: 12px; font-weight: 700; border-radius: 4px; cursor: pointer; margin: 4px; font-family: 'Montserrat', sans-serif; text-transform: uppercase; }}
+            .btn-stop {{ background: #222; color: #FFF; }}
         </style>
     </head>
     <body>
         <div class="container-hub">
             {html_header}
             <div class="widget-box">
-                <p style="color: #B3B3B3; font-size: 13px; margin: 0 0 12px 0; font-weight: 600; font-family: 'Montserrat', sans-serif;">👨‍🍳💬 Asistente de Voz de Cocina</p>
-                <button id="btnVoz" class="btn-control" onclick="reproducir(this)">🎧 Asistente Manos Libres</button>
-                <button class="btn-control btn-stop" onclick="detener()">🔇 Oído Cocina (Silenciar)</button>
+                <p style="color: #888; font-size: 12px; margin: 0 0 10px 0; font-weight: 700; font-family: 'Montserrat', sans-serif;">👨‍🍳 ASISTENTE AUDITIVO</p>
+                <button id="btnVoz" class="btn-control" onclick="reproducir(this)">🎧 Escuchar Pasos de la Receta</button>
+                <button class="btn-control btn-stop" onclick="detener()">Silenciar</button>
             </div>
             {html_ing}
             {html_utensilios}
@@ -365,8 +379,8 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
             {html_diagrama}
             {html_recom}
             {html_maridaje}
-            <div style="text-align: center; color: #737373; font-size: 13px; margin-top: 35px; border-top: 1px solid #282828; padding-top: 20px;">
-                🎬 <b>FaceFoodChef.com V3.1</b> | Fuente: {origen_html}
+            <div style="text-align: center; color: #555555; font-size: 12px; margin-top: 30px; border-top: 1px solid #222; padding-top: 16px;">
+                FaceFoodChef.com V4 | Origen: {origen_html}
             </div>
         </div>
         <script>
@@ -379,9 +393,9 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
                 currentUtterance = new SpeechSynthesisUtterance(textoVoz);
                 currentUtterance.lang = 'es-ES';
                 currentUtterance.rate = 0.95;
-                btn.innerText = "🔊 Reproduciendo Guía...";
-                currentUtterance.onend = () => btn.innerText = "🎧 Asistente Manos Libres";
-                currentUtterance.onerror = () => btn.innerText = "🎧 Asistente Manos Libres";
+                btn.innerText = "🔊 Reproduciendo...";
+                currentUtterance.onend = () => btn.innerText = "🎧 Escuchar Pasos de la Receta";
+                currentUtterance.onerror = () => btn.innerText = "🎧 Escuchar Pasos de la Receta";
                 window.speechSynthesis.speak(currentUtterance);
             }}
 
@@ -389,7 +403,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
                 if ('speechSynthesis' in window) {{
                     window.speechSynthesis.cancel();
                     const btn = document.getElementById('btnVoz');
-                    if (btn) btn.innerText = "🎧 Asistente Manos Libres";
+                    if (btn) btn.innerText = "🎧 Escuchar Pasos de la Receta";
                 }}
             }}
 
@@ -401,8 +415,8 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
                 window[elementId + "_interval"] = setInterval(() => {{
                     if (segundosRestantes <= 0) {{
                         clearInterval(window[elementId + "_interval"]);
-                        elemento.innerText = "¡TIEMPO CUMPLIDO! ⏰";
-                        sonarAlertaPolifonica();
+                        elemento.innerText = "¡TIEMPO FINALIZADO!";
+                        sonarAlerta();
                     }} else {{
                         segundosRestantes--;
                         const m = Math.floor(segundosRestantes / 60);
@@ -412,27 +426,19 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
                 }}, 1000);
             }}
 
-            function sonarAlertaPolifonica() {{
+            function sonarAlerta() {{
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const frecuencias = [523.25, 659.25, 783.99, 1046.50, 1318.51];
-                
-                frecuencias.forEach((freq, index) => {{
-                    setTimeout(() => {{
-                        if (audioCtx.state === 'suspended') {{
-                            audioCtx.resume();
-                        }}
-                        const osc = audioCtx.createOscillator();
-                        const gain = audioCtx.createGain();
-                        osc.type = 'triangle';
-                        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-                        gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
-                        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
-                        osc.connect(gain);
-                        gain.connect(audioCtx.destination);
-                        osc.start();
-                        osc.stop(audioCtx.currentTime + 0.35);
-                    }}, index * 200);
-                }});
+                const freq = 880;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.5);
             }}
         </script>
     </body>
@@ -444,7 +450,7 @@ contenido_ia = None
 
 if url_origen_detectada:
     try:
-        with st.spinner("🌐 Obteniendo datos de la URL..."):
+        with st.spinner("🌐 Extrayendo información de la URL..."):
             contenido_ia, url_origen_detectada = extraer_texto_de_url(url_origen_detectada)
             procesar_accion = True
     except Exception as e:
@@ -455,63 +461,56 @@ elif receta_texto_input:
 elif archivo_multimodal:
     procesar_accion = True
 
-if st.button("🎬 GENERAR DIAGRAMA Y SOMMELIER V3.1"):
+if st.button("🚀 GENERAR DIAGRAMA DE BLOQUES (V4)"):
     api_key_activa = API_KEY_INPUT.strip()
     
     if not api_key_activa:
-        st.error("⚠️ Por favor, introduce una clave de API de Google Gemini en el panel lateral izquierdo.")
+        st.error("⚠️ Introduce tu clave de API de Google Gemini.")
     elif not procesar_accion:
-        st.warning("⚠️ Introduce una URL, un texto o adjunta un archivo antes de continuar.")
+        st.warning("⚠️ Debes introducir un texto, URL o adjuntar un archivo.")
     else:
         try:
             client = genai.Client(api_key=api_key_activa)
             
             prompt_sistema = f"""
-            Eres un maestro chef, sumiller experto de Castilla-La Mancha y programador de flujos culinarios. 
-            Transforma la receta aportada en un esquema estructurado JSON avanzado bajo los siguientes criterios obligatorios:
+            Eres un ingeniero de procesos culinarios y experto en cocina profesional. 
+            Convierte la receta facilitada en un objeto JSON estructurado diseñado para renderizar un diagrama de flujo.
 
-            ¡IMPORTANTE! El usuario requiere que la receta sea exactamente para {comensales_objetivo} COMENSALES. 
-            Ajusta matemáticamente las cantidades para {comensales_objetivo} raciones.
+            Debes recalcular y escalar todas las cantidades exactamente para {comensales_objetivo} COMENSALES.
 
-            REGLAS ESTRICTAS DE FORMATO Y UNIDADES:
-            1. UNIDADES DE MEDIDA: Expresar abreviadas siempre que sea posible (g, kg, ml, l, ºC, cm, min). La palabra "cucharada" y "cucharadita" deben mantenerse SIEMPRE escritas completas. Prohibido "al gusto".
-            2. MODULARIZACIÓN: 
-               - Proporciona una lista separada de "utensilios_menaje" (ej: Cuchillo de cocinero, cazuela de acero inoxidable, batidor de varillas, etc.).
-               - Proporciona una lista separada de "pasos_previos" para la preparación previa / mise en place.
-            3. SOMMELIER (CASTILLA-LA MANCHA Y ESPAÑA): En la sección 'maridaje', debes proporcionar obligatoriamente:
-               - Al menos 2 propuestas de VINO, priorizando Denominaciones de Origen de Castilla-La Mancha.
-               - Al menos 2 propuestas de CERVEZA, priorizando artesanales y nacionales.
-            4. Devuelve EXCLUSIVAMENTE un JSON válido sin marcas ni textos adicionales fuera del JSON.
+            REGLAS ESTRUCTURALES Y JSON:
+            1. UNIDADES: Abreviadas (g, kg, ml, l, ºC, min). Cucharada y cucharadita se escriben completas. Sin expresiones vagamente especificadas como "al gusto".
+            2. UTENSILIOS Y MISE EN PLACE:
+               - Separa la lista de "utensilios_menaje".
+               - Separa la lista de "pasos_previos" (limpieza, cortes preliminares).
+            3. BLOQUES DE PROCESO:
+               - "tipo": puede ser "secuencial", "paralelo" o "convergencia".
+               - "es_critico": booleano (true si el paso requiere atención especial de seguridad, punto de cocción o control térmico sensible).
+            4. SOMMELIER: Maridaje de al menos 2 vinos (prioridad D.O. Castilla-La Mancha) y 2 cervezas.
+            5. Devuelve ÚNICAMENTE la estructura JSON.
 
-            JSON Schema esperado:
+            JSON Schema:
             {{
               "nombre_receta": "String",
               "origen_receta": "String",
-              "ingredientes": ["400 g de harina de trigo", "10 g de sal fina"],
-              "utensilios_menaje": ["Cuchillo de cocinero", "Cazuela de acero inoxidable", "Espátula de silicona"],
-              "pasos_previos": ["Lavar y desinfectar los ingredientes frescos...", "Cortar en brunoise fina..."],
+              "ingredientes": ["400 g de harina"],
+              "utensilios_menaje": ["Cuchillo", "Sartén"],
+              "pasos_previos": ["Cortar cebolla en juliana"],
               "bloques_proceso": [
-                {{"tipo": "secuencial", "accion": "Paso 1 detallado", "utensilios": ["Cazuela de acero inoxidable"], "tiempo": "5 min", "duracion_minutos": 5, "temperatura": "100 ºC"}},
+                {{"tipo": "secuencial", "es_critico": false, "accion": "Descripción del paso", "utensilios": ["Sartén"], "tiempo": "5 min", "duracion_minutos": 5, "temperatura": "180 ºC"}},
                 {{
                   "tipo": "paralelo",
+                  "es_critico": false,
                   "ramas": [
-                    {{"nombre": "Sartén 1", "accion": "Sofreír...", "utensilios": ["Sartén antiadherente"], "tiempo": "10 min", "duracion_minutos": 10, "temperatura": "90 ºC"}},
-                    {{"nombre": "Olla 2", "accion": "Cocer...", "utensilios": ["Olla"], "tiempo": "8 min", "duracion_minutos": 8, "temperatura": "100 ºC"}}
+                    {{"nombre": "Salsa", "accion": "Reducir el vino", "utensilios": ["Cazo"], "tiempo": "10 min", "duracion_minutos": 10, "temperatura": "90 ºC"}}
                   ]
-                }},
-                {{"tipo": "convergencia", "accion": "Unir mezclas", "utensilios": ["Bol grande"], "tiempo": "2 min", "duracion_minutos": 2, "temperatura": "80 ºC"}}
+                }}
               ],
-              "recomendaciones": ["Tip técnico 1"],
-              "texto_voz": "Texto descriptivo completo y guiado de la receta",
+              "recomendaciones": ["Punto crítico: no quemar el ajo"],
+              "texto_voz": "Resumen locutado",
               "maridaje": {{
-                "vinos": [
-                  "1. Vino tinto D.O. La Mancha...",
-                  "2. Vino blanco D.O. Rueda..."
-                ],
-                "cervezas": [
-                  "1. Cerveza artesana castellano-manchega...",
-                  "2. Cerveza tostada española..."
-                ]
+                "vinos": ["1. Vino Tinto D.O. La Mancha"],
+                "cervezas": ["1. Cerveza artesanal"]
               }}
             }}
             """
@@ -519,9 +518,9 @@ if st.button("🎬 GENERAR DIAGRAMA Y SOMMELIER V3.1"):
             contents_payload = [prompt_sistema]
             if archivo_multimodal:
                 contents_payload.append(types.Part.from_bytes(data=archivo_multimodal, mime_type=tipo_multimodal))
-                contents_payload.append(f"Analiza el archivo adjunto para extraer la receta, escalar a {comensales_objetivo} comensales con separación modular.")
+                contents_payload.append(f"Procesa el documento adjunto escalado a {comensales_objetivo} comensales.")
             else:
-                contents_payload.append(f"Receta:\n{contenido_ia}")
+                contents_payload.append(f"Receta a procesar:\n{contenido_ia}")
 
             modelos_a_probar = [modelo_seleccionado, "gemini-1.5-pro", "gemini-1.5-flash", "gemini-2.5-flash"]
             modelos_a_probar = list(dict.fromkeys(modelos_a_probar))
@@ -529,7 +528,7 @@ if st.button("🎬 GENERAR DIAGRAMA Y SOMMELIER V3.1"):
             response = None
             exito = False
             
-            with st.spinner("⚙️ Procesando diagrama V3.1 (Optimizando conexión con IA)..."):
+            with st.spinner("⚡ Analizando secuencia culinaria y estructurando diagrama..."):
                 for mod in modelos_a_probar:
                     intentos = 3
                     for intento in range(intentos):
@@ -547,11 +546,9 @@ if st.button("🎬 GENERAR DIAGRAMA Y SOMMELIER V3.1"):
                                 break
                         except Exception as api_err:
                             err_str = str(api_err)
-                            if "503" in err_str or "UNAVAILABLE" in err_str or "high demand" in err_str:
-                                if intento < intentos - 1:
-                                    tiempo_espera = (intento + 1) * 3
-                                    time.sleep(tiempo_espera)
-                                    continue
+                            if "503" in err_str or "UNAVAILABLE" in err_str:
+                                time.sleep((intento + 1) * 2)
+                                continue
                             if intento == intentos - 1:
                                 break
                     if exito:
@@ -567,10 +564,10 @@ if st.button("🎬 GENERAR DIAGRAMA Y SOMMELIER V3.1"):
                     texto_respuesta = texto_respuesta[:-3]
                 
                 datos = json.loads(texto_respuesta.strip())
-                origen_final = url_origen_detectada if url_origen_detectada else datos.get("origen_receta", "Texto aportado por el usuario")
+                origen_final = url_origen_detectada if url_origen_detectada else datos.get("origen_receta", "Texto del usuario")
 
                 html_final = generar_html_dashboard(
-                    datos.get("nombre_receta", "Receta Culinaria Pro V3.1"),
+                    datos.get("nombre_receta", "Receta Culinaria"),
                     origen_final,
                     datos.get("ingredientes", []),
                     datos.get("utensilios_menaje", []),
@@ -582,12 +579,12 @@ if st.button("🎬 GENERAR DIAGRAMA Y SOMMELIER V3.1"):
                     comensales_objetivo
                 )
                 
-                st.success("¡Diagrama de producción generado con éxito!")
-                components.html(html_final, height=1100, scrolling=True)
+                st.success("¡Diagrama generado correctamente!")
+                components.html(html_final, height=1200, scrolling=True)
             else:
-                st.error("No se pudo obtener una respuesta válida de los modelos de Gemini tras varios intentos.")
+                st.error("No se pudo obtener una respuesta válida del modelo Gemini.")
                 
         except APIError as e:
             st.error(f"Error de la API de Gemini: {e}")
         except Exception as e:
-            st.error(f"Se ha producido un error inesperado: {e}")
+            st.error(f"Error inesperado al procesar los datos: {e}")
