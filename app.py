@@ -122,7 +122,7 @@ comensales_objetivo = st.sidebar.number_input(
 st.sidebar.markdown("---")
 st.sidebar.markdown("""
 ### 🎨 Código de Bordes (Lado Izquierdo):
-- 🟢 **Verde Neón (`#00FF66`):** Ingredientes / Entradas
+- 🟢 **Verde Neón (`#00FF66`):** Ingredientes / Entradas / Maridaje
 - 🟡 **Amarillo (`#FFB300`):** Acciones / Procesado
 - 🔴 **Rojo FaceFoodChef (`#EF4444`):** Alertas / Puntos Críticos
 - 🟡 **Dorado (`#FFD700`):** Plato Terminado
@@ -320,8 +320,11 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
     cervezas_html = "".join([f"<li style='margin-bottom: 4px;'>{c}</li>" for c in cervezas_lista]) if cervezas_lista else "<li>Sin opciones disponibles.</li>"
 
     html_maridaje = f"""
-    <div style="background-color: #2C2F33; border-left: 6px solid #4F545C; border-top: none; border-right: none; border-bottom: none; border-radius: 6px; padding: 16px; margin-top: 16px; margin-bottom: 16px;">
-        <h3 style="color: #FFFFFF; margin-top: 0; font-size: clamp(14px, 2.5vw, 16px); font-weight: 700; font-family: 'Montserrat', sans-serif; border-bottom: 1px solid #4F545C; padding-bottom: 8px;">🍷 6. Maridaje</h3>
+    <div style="background-color: #2C2F33; border-left: 6px solid {COLOR_VERDE_ING}; border-top: none; border-right: none; border-bottom: none; border-radius: 6px; padding: 16px; margin-top: 16px; margin-bottom: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4F545C; padding-bottom: 8px; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+            <h3 style="color: {COLOR_VERDE_ING}; margin: 0; font-size: clamp(14px, 2.5vw, 16px); font-weight: 700; font-family: 'Montserrat', sans-serif;">🍷 6. Maridaje</h3>
+            <a href="https://www.facefoodchef.com/bodega" target="_blank" style="background-color: {COLOR_VERDE_ING}; color: #2C2F33; padding: 6px 12px; border-radius: 4px; text-decoration: none; font-size: 11px; font-weight: 700; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">🛒 Ir a la bodega</a>
+        </div>
         <div style="margin-top: 12px; color: #E2E8F0; font-size: clamp(13px, 2.2vw, 15px); line-height: 1.6; font-family: 'Inter', sans-serif;">
             <p style="margin-bottom: 4px; color: #FFFFFF;"><b>🍇 Vinos (Denominaciones de Origen):</b></p>
             <ul style="margin: 0 0 10px 0; padding-left: 18px;">{vinos_html}</ul>
