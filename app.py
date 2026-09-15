@@ -106,7 +106,7 @@ API_KEY_INPUT = st.sidebar.text_input(
 
 modelo_seleccionado = st.sidebar.selectbox(
     "Modelo Gemini:",
-    options=["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"],
+    options=["gemini-3.6-flash", "gemini-1.5-flash", "gemini-1.5-pro"],
     index=0
 )
 
@@ -205,7 +205,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
     <div style="background-color: #2C2F33; border-left: 6px solid {COLOR_VERDE_ING}; border-top: none; border-right: none; border-bottom: none; border-radius: 6px; padding: 16px; margin-bottom: 16px;">
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4F545C; padding-bottom: 8px; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
             <h3 style="color: {COLOR_VERDE_ING}; margin: 0; font-size: clamp(14px, 2.5vw, 16px); font-weight: 700; font-family: 'Montserrat', sans-serif;">🛒 1. Ingredientes ({comensales} pax)</h3>
-            <a href="https://www.facefoodchef.com/delicatessen-gourmet" target="_blank" style="background-color: {COLOR_VERDE_ING}; color: #2C2F33; padding: 6px 12px; border-radius: 4px; text-decoration: none; font-size: 11px; font-weight: 700; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">🛒 DELICATESSEN GOURMET</a>
+            <a href="https://www.facefoodchef.com/delicatessen-gourmet" target="_blank" style="background-color: {COLOR_VERDE_ING}; color: #2C2F33; padding: 6px 12px; border-radius: 4px; text-decoration: none; font-size: 11px; font-weight: 700; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">🛒 Delicatessen Gourmet</a>
         </div>
         <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;">
     """
@@ -217,7 +217,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
     <div style="background-color: #2C2F33; border-left: 6px solid {COLOR_VERDE_ING}; border-top: none; border-right: none; border-bottom: none; border-radius: 6px; padding: 16px; margin-bottom: 16px;">
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4F545C; padding-bottom: 8px; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
             <h3 style="color: {COLOR_VERDE_ING}; margin: 0; font-size: clamp(14px, 2.5vw, 16px); font-weight: 700; font-family: 'Montserrat', sans-serif;">🛠️ 2. Utensilios y Menaje</h3>
-            <a href="https://www.facefoodchef.com/pucheros-store" target="_blank" style="background-color: {COLOR_VERDE_ING}; color: #2C2F33; padding: 6px 12px; border-radius: 4px; text-decoration: none; font-size: 11px; font-weight: 700; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">🛒 PUCHEROS STORE</a>
+            <a href="https://www.facefoodchef.com/pucheros-store" target="_blank" style="background-color: {COLOR_VERDE_ING}; color: #2C2F33; padding: 6px 12px; border-radius: 4px; text-decoration: none; font-size: 11px; font-weight: 700; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">🛒 Pucheros Store</a>
         </div>
         <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;">
     """
@@ -326,7 +326,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
     <div style="background-color: #2C2F33; border-left: 6px solid {COLOR_VERDE_ING}; border-top: none; border-right: none; border-bottom: none; border-radius: 6px; padding: 16px; margin-top: 16px; margin-bottom: 16px;">
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4F545C; padding-bottom: 8px; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
             <h3 style="color: {COLOR_VERDE_ING}; margin: 0; font-size: clamp(14px, 2.5vw, 16px); font-weight: 700; font-family: 'Montserrat', sans-serif;">🍷 6. Maridaje</h3>
-            <a href="https://www.facefoodchef.com/liquidos-store" target="_blank" style="background-color: {COLOR_VERDE_ING}; color: #2C2F33; padding: 6px 12px; border-radius: 4px; text-decoration: none; font-size: 11px; font-weight: 700; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">🛒 LIQUIDOS STORE</a>
+            <a href="https://www.facefoodchef.com/liquidos-store" target="_blank" style="background-color: {COLOR_VERDE_ING}; color: #2C2F33; padding: 6px 12px; border-radius: 4px; text-decoration: none; font-size: 11px; font-weight: 700; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">🛒 Liquidos Store</a>
         </div>
         <div style="margin-top: 12px; color: #E2E8F0; font-size: clamp(13px, 2.2vw, 15px); line-height: 1.6; font-family: 'Inter', sans-serif;">
             <p style="margin-bottom: 4px; color: #FFFFFF;"><b>🍇 Vinos (Denominaciones de Origen):</b></p>
@@ -480,7 +480,7 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
                - Evalúa todas las Denominaciones de Origen (sin restricción geográfica).
                - Genera EXACTAMENTE 3 propuestas de vinos indicando tipo o Denominación de Origen idónea.
                - Genera EXACTAMENTE 3 propuestas de cervezas acordes al plato.
-            5. Devuelve EXCLUSIVAMENTE un objeto JSON válido que cumpla estrictamente con la estructura solicitada, sin bloques de texto adicionales fuera del JSON.
+            5. Devuelve EXCLUSIVAMENTE el JSON estructurado sin formato adicional fuera de él.
 
             JSON Schema esperado:
             {{
@@ -523,8 +523,7 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
             else:
                 contents_payload.append(f"Receta:\n{contenido_ia}")
 
-            # Modelos oficiales actualizados
-            modelos_a_probar = [modelo_seleccionado, "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"]
+            modelos_a_probar = [modelo_seleccionado, "gemini-3.6-flash", "gemini-1.5-flash", "gemini-1.5-pro"]
             modelos_a_probar = list(dict.fromkeys(modelos_a_probar))
             
             response = None
@@ -539,8 +538,7 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
                                 model=mod,
                                 contents=contents_payload,
                                 config=types.GenerateContentConfig(
-                                    response_mime_type="application/json",
-                                    temperature=0.2
+                                    response_mime_type="application/json"
                                 ),
                             )
                             if response and response.text:
@@ -548,7 +546,7 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
                                 break
                         except Exception as api_err:
                             err_str = str(api_err)
-                            if "503" in err_str or "UNAVAILABLE" in err_str or "429" in err_str:
+                            if "503" in err_str or "UNAVAILABLE" in err_str:
                                 time.sleep((intento + 1) * 2)
                                 continue
                             if intento == intentos - 1:
@@ -593,7 +591,7 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
                 
                 components.html(html_final, height=1200, scrolling=True)
             else:
-                st.error("No se pudo obtener una respuesta válida del modelo Gemini. Verifica que tu clave de API sea correcta y tenga créditos activos.")
+                st.error("No se pudo obtener una respuesta válida del modelo Gemini.")
                 
         except APIError as e:
             st.error(f"Error de la API de Gemini: {e}")
