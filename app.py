@@ -203,7 +203,10 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
 
     html_ing = f"""
     <div style="background-color: #2C2F33; border-left: 6px solid {COLOR_VERDE_ING}; border-top: none; border-right: none; border-bottom: none; border-radius: 6px; padding: 16px; margin-bottom: 16px;">
-        <h3 style="color: {COLOR_VERDE_ING}; margin-top: 0; font-size: clamp(14px, 2.5vw, 16px); font-weight: 700; font-family: 'Montserrat', sans-serif; border-bottom: 1px solid #4F545C; padding-bottom: 8px;">🛒 1. Ingredientes ({comensales} pax)</h3>
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4F545C; padding-bottom: 8px; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+            <h3 style="color: {COLOR_VERDE_ING}; margin: 0; font-size: clamp(14px, 2.5vw, 16px); font-weight: 700; font-family: 'Montserrat', sans-serif;">🛒 1. Ingredientes ({comensales} pax)</h3>
+            <a href="https://www.facefoodchef.com/tienda-gourmet" target="_blank" style="background-color: {COLOR_VERDE_ING}; color: #2C2F33; padding: 6px 12px; border-radius: 4px; text-decoration: none; font-size: 11px; font-weight: 700; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">🛒 Ir a la tienda gourmet</a>
+        </div>
         <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;">
     """
     for ing in ingredientes:
@@ -471,7 +474,7 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
                - Separa la lista de "utensilios_menaje".
                - Separa la lista de "pasos_previos" (Mise en place).
             3. BLOQUES DE PROCESO:
-               - "tipo": "secuencial", "paralelo" o "convergencia".
+               - "tipo": "secuencial", "paralelo" or "convergencia".
                - "es_critico": booleano (true si requiere especial precaución técnica o de seguridad).
             4. MARIDAJE:
                - Evalúa todas las Denominaciones de Origen (sin restricción geográfica).
