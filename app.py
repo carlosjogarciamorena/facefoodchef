@@ -106,7 +106,7 @@ API_KEY_INPUT = st.sidebar.text_input(
 
 modelo_seleccionado = st.sidebar.selectbox(
     "Modelo Gemini:",
-    options=["gemini-2.5-flash", "gemini-3.6-flash", "gemini-1.5-flash", "gemini-1.5-pro"],
+    options=["gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-pro"],
     index=0
 )
 
@@ -188,11 +188,10 @@ def extraer_texto_de_url(url):
             raise Exception(f"Error al procesar la URL: {e}")
 
 def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilios_menaje, pasos_previos, bloques_proceso, recomendaciones, texto_voz, maridaje, comensales):
-    # Definición de colores
-    COLOR_VERDE_ING = "#00FF66"      # Entradas / Ingredientes
-    COLOR_AMARILLO_ACC = "#FFB300"   # Acciones / Procesado
-    COLOR_ROJO_ALERTA = "#EF4444"    # Alertas / Puntos Críticos
-    COLOR_DORADO_PLATO = "#FFD700"   # Plato Final
+    COLOR_VERDE_ING = "#00FF66"      
+    COLOR_AMARILLO_ACC = "#FFB300"   
+    COLOR_ROJO_ALERTA = "#EF4444"    
+    COLOR_DORADO_PLATO = "#FFD700"   
 
     html_header = f"""
     <div style="background-color: #2C2F33; border-radius: 8px; padding: 24px; text-align: center; margin-bottom: 24px; border-left: 6px solid {COLOR_DORADO_PLATO}; border-top: none; border-right: none; border-bottom: none;">
@@ -202,17 +201,15 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
     </div>
     """
 
-    # Bloque 1: Ingredientes (Borde vertical izquierdo Verde Neón)
     html_ing = f"""
     <div style="background-color: #2C2F33; border-left: 6px solid {COLOR_VERDE_ING}; border-top: none; border-right: none; border-bottom: none; border-radius: 6px; padding: 20px; margin-bottom: 20px;">
         <h3 style="color: {COLOR_VERDE_ING}; margin-top: 0; font-size: 16px; font-weight: 700; font-family: 'Montserrat', sans-serif; border-bottom: 1px solid #4F545C; padding-bottom: 8px;">🛒 1. Ingredientes ({comensales} pax)</h3>
         <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px;">
     """
     for ing in ingredientes:
-        html_ing += f"<span style='background-color: #36393F; color: #E2E8F0; padding: 8px 14px; border-radius: 4px; font-size: 13px; font-family: 'Inter', sans-serif;'>{ing}</span>"
+        html_ing += f"<span style='background-color: #36393F; color: #E2E8F0; padding: 8px 14px; border-radius: 4px; font-size: 13px; font-family: \"Inter\", sans-serif;'>{ing}</span>"
     html_ing += "</div></div>"
 
-    # Bloque 2: Utensilios y Menaje
     html_utensilios = f"""
     <div style="background-color: #2C2F33; border-left: 6px solid #4F545C; border-top: none; border-right: none; border-bottom: none; border-radius: 6px; padding: 20px; margin-bottom: 20px;">
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4F545C; padding-bottom: 8px; margin-bottom: 14px;">
@@ -222,20 +219,18 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
         <div style="display: flex; flex-wrap: wrap; gap: 8px;">
     """
     for ut in utensilios_menaje:
-        html_utensilios += f"<span style='background-color: #36393F; color: #E2E8F0; padding: 6px 12px; border-radius: 4px; font-size: 13px; font-family: 'Inter', sans-serif;'>{ut}</span>"
+        html_utensilios += f"<span style='background-color: #36393F; color: #E2E8F0; padding: 6px 12px; border-radius: 4px; font-size: 13px; font-family: \"Inter\", sans-serif;'>{ut}</span>"
     html_utensilios += "</div></div>"
 
-    # Bloque 3: Preparación Previa
     html_prev = """
     <div style="background-color: #2C2F33; border-left: 6px solid #4F545C; border-top: none; border-right: none; border-bottom: none; border-radius: 6px; padding: 20px; margin-bottom: 24px;">
         <h3 style="color: #FFFFFF; margin-top: 0; font-size: 16px; font-weight: 700; font-family: 'Montserrat', sans-serif; border-bottom: 1px solid #4F545C; padding-bottom: 8px;">🔪 3. Preparación Previa (Mise en Place)</h3>
-        <ul style='margin: 14px 0 0 0; padding-left: 20px; color: #E2E8F0; font-size: 14px; line-height: 1.7; font-family: 'Inter', sans-serif;'>
+        <ul style='margin: 14px 0 0 0; padding-left: 20px; color: #E2E8F0; font-size: 14px; line-height: 1.7; font-family: "Inter", sans-serif;'>
     """
     for prep in pasos_previos:
         html_prev += f"<li>{prep}</li>"
     html_prev += "</ul></div>"
 
-    # Bloque 4: Diagrama de Proceso
     html_diagrama = """
     <div style="font-family: 'Inter', sans-serif;">
         <h3 style="color: #FFFFFF; font-size: 18px; font-weight: 700; margin-bottom: 20px; font-family: 'Montserrat', sans-serif; border-bottom: 2px solid #EF4444; padding-bottom: 8px; display: inline-block;">4. Diagrama de Ejecución y Flujo</h3>
@@ -248,7 +243,6 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
         utensilios = bloque.get("utensilios", [])
         utensilios_str = ", ".join(utensilios) if utensilios else "N/A"
 
-        # Aplicación del borde vertical izquierdo según tipo o nivel de alerta
         borde_color = COLOR_ROJO_ALERTA if es_critico else COLOR_AMARILLO_ACC
 
         if tipo == "paralelo":
@@ -300,7 +294,6 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
             </div>
             """
 
-    # Bloque Final
     html_diagrama += f"""
     <div style="text-align: center; margin: 4px 0 12px 0;">
         <span style="color: {COLOR_DORADO_PLATO}; font-size: 20px; font-weight: bold;">↓</span>
@@ -312,17 +305,15 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
     </div>
     """
 
-    # Recomendaciones / Puntos Críticos
     html_recom = f"""
     <div style="background-color: #2C2F33; border-left: 6px solid {COLOR_ROJO_ALERTA}; border-top: none; border-right: none; border-bottom: none; border-radius: 6px; padding: 20px; margin-top: 24px; margin-bottom: 20px;">
         <h3 style="color: {COLOR_ROJO_ALERTA}; margin-top: 0; font-size: 16px; font-weight: 700; font-family: 'Montserrat', sans-serif; border-bottom: 1px solid #4F545C; padding-bottom: 8px;">🚨 5. Puntos Críticos y Alertas del Chef</h3>
-        <ul style='margin: 14px 0 0 0; padding-left: 20px; color: #E2E8F0; font-size: 14px; line-height: 1.7; font-family: 'Inter', sans-serif;'>
+        <ul style='margin: 14px 0 0 0; padding-left: 20px; color: #E2E8F0; font-size: 14px; line-height: 1.7; font-family: "Inter", sans-serif;'>
     """
     for rec in recomendaciones:
         html_recom += f"<li>{rec}</li>"
     html_recom += "</ul></div>"
 
-    # Bloque 6: Maridaje (Actualización requerida)
     vinos_lista = maridaje.get('vinos', [])
     cervezas_lista = maridaje.get('cervezas', [])
     vinos_html = "".join([f"<li>{v}</li>" for v in vinos_lista]) if vinos_lista else "<li>Sin opciones disponibles.</li>"
@@ -525,7 +516,7 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
             else:
                 contents_payload.append(f"Receta:\n{contenido_ia}")
 
-            modelos_a_probar = [modelo_seleccionado, "gemini-1.5-pro", "gemini-1.5-flash", "gemini-2.5-flash"]
+            modelos_a_probar = [modelo_seleccionado, "gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-pro"]
             modelos_a_probar = list(dict.fromkeys(modelos_a_probar))
             
             response = None
@@ -583,6 +574,16 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
                 )
                 
                 st.success("¡Diagrama generado correctamente!")
+                
+                # --- BOTÓN DE DESCARGA AÑADIDO ---
+                nombre_archivo = f"diagrama_{datos.get('nombre_receta', 'receta').lower().replace(' ', '_')}.html"
+                st.download_button(
+                    label="💾 Descargar Diagrama en HTML",
+                    data=html_final,
+                    file_name=nombre_archivo,
+                    mime="text/html"
+                )
+                
                 components.html(html_final, height=1200, scrolling=True)
             else:
                 st.error("No se pudo obtener una respuesta válida del modelo Gemini.")
