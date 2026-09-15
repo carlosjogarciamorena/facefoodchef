@@ -331,7 +331,8 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
     </div>
     """
 
-    origen_html = f'<a href="{origen_receta}" target="_blank" style="color: #FFB300; text-decoration: underline;">{origen_receta}</a>' if origen_receta.startswith("http") else f'<span style="color: #E2E8F0;">{origen_receta}</span>'
+    # URL de origen cambiada a un gris menos llamativo (#9AA0A6)
+    origen_html = f'<a href="{origen_receta}" target="_blank" style="color: #9AA0A6; text-decoration: underline;">{origen_receta}</a>' if origen_receta.startswith("http") else f'<span style="color: #9AA0A6;">{origen_receta}</span>'
     texto_voz_seguro = json.dumps(texto_voz)
 
     return f"""
@@ -362,7 +363,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
             {html_diagrama}
             {html_recom}
             {html_maridaje}
-            <div style="text-align: center; color: #E2E8F0; font-size: 12px; margin-top: 30px; border-top: 1px solid #4F545C; padding-top: 16px; font-family: 'Inter', sans-serif;">
+            <div style="text-align: center; color: #9AA0A6; font-size: 12px; margin-top: 30px; border-top: 1px solid #4F545C; padding-top: 16px; font-family: 'Inter', sans-serif;">
                 FaceFoodChef.com | Origen: {origen_html}
             </div>
         </div>
