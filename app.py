@@ -122,7 +122,7 @@ comensales_objetivo = st.sidebar.number_input(
 st.sidebar.markdown("---")
 st.sidebar.markdown("""
 ### 🎨 Código de Bordes (Lado Izquierdo):
-- 🟢 **Verde Neón (`#00FF66`):** Ingredientes / Entradas / Maridaje
+- 🟢 **Verde Neón (`#00FF66`):** Ingredientes / Utensilios / Maridaje
 - 🟡 **Amarillo (`#FFB300`):** Acciones / Procesado
 - 🔴 **Rojo FaceFoodChef (`#EF4444`):** Alertas / Puntos Críticos
 - 🟡 **Dorado (`#FFD700`):** Plato Terminado
@@ -205,7 +205,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
     <div style="background-color: #2C2F33; border-left: 6px solid {COLOR_VERDE_ING}; border-top: none; border-right: none; border-bottom: none; border-radius: 6px; padding: 16px; margin-bottom: 16px;">
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4F545C; padding-bottom: 8px; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
             <h3 style="color: {COLOR_VERDE_ING}; margin: 0; font-size: clamp(14px, 2.5vw, 16px); font-weight: 700; font-family: 'Montserrat', sans-serif;">🛒 1. Ingredientes ({comensales} pax)</h3>
-            <a href="https://www.facefoodchef.com/tienda-gourmet" target="_blank" style="background-color: {COLOR_VERDE_ING}; color: #2C2F33; padding: 6px 12px; border-radius: 4px; text-decoration: none; font-size: 11px; font-weight: 700; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">🛒 Ir a la tienda gourmet</a>
+            <a href="https://www.facefoodchef.com/delicatessen-gourmet" target="_blank" style="background-color: {COLOR_VERDE_ING}; color: #2C2F33; padding: 6px 12px; border-radius: 4px; text-decoration: none; font-size: 11px; font-weight: 700; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">🛒 Delicatessen Gourmet</a>
         </div>
         <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;">
     """
@@ -214,12 +214,12 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
     html_ing += "</div></div>"
 
     html_utensilios = f"""
-    <div style="background-color: #2C2F33; border-left: 6px solid #4F545C; border-top: none; border-right: none; border-bottom: none; border-radius: 6px; padding: 16px; margin-bottom: 16px;">
+    <div style="background-color: #2C2F33; border-left: 6px solid {COLOR_VERDE_ING}; border-top: none; border-right: none; border-bottom: none; border-radius: 6px; padding: 16px; margin-bottom: 16px;">
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4F545C; padding-bottom: 8px; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
-            <h3 style="color: #FFFFFF; margin: 0; font-size: clamp(14px, 2.5vw, 16px); font-weight: 700; font-family: 'Montserrat', sans-serif;">🛠️ 2. Utensilios y Menaje</h3>
-            <a href="https://www.facefoodchef.com/tienda-menaje" target="_blank" style="background-color: #EF4444; color: #FFFFFF; padding: 6px 12px; border-radius: 4px; text-decoration: none; font-size: 11px; font-weight: 700; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">🛒 Tienda de Menaje</a>
+            <h3 style="color: {COLOR_VERDE_ING}; margin: 0; font-size: clamp(14px, 2.5vw, 16px); font-weight: 700; font-family: 'Montserrat', sans-serif;">🛠️ 2. Utensilios y Menaje</h3>
+            <a href="https://www.facefoodchef.com/pucheros-store" target="_blank" style="background-color: {COLOR_VERDE_ING}; color: #2C2F33; padding: 6px 12px; border-radius: 4px; text-decoration: none; font-size: 11px; font-weight: 700; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">🛒 Pucheros Store</a>
         </div>
-        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;">
     """
     for ut in utensilios_menaje:
         html_utensilios += f"<span style='background-color: #36393F; color: #E2E8F0; padding: 6px 10px; border-radius: 4px; font-size: clamp(12px, 2vw, 14px); font-family: \"Inter\", sans-serif;'>{ut}</span>"
@@ -326,7 +326,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
     <div style="background-color: #2C2F33; border-left: 6px solid {COLOR_VERDE_ING}; border-top: none; border-right: none; border-bottom: none; border-radius: 6px; padding: 16px; margin-top: 16px; margin-bottom: 16px;">
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4F545C; padding-bottom: 8px; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
             <h3 style="color: {COLOR_VERDE_ING}; margin: 0; font-size: clamp(14px, 2.5vw, 16px); font-weight: 700; font-family: 'Montserrat', sans-serif;">🍷 6. Maridaje</h3>
-            <a href="https://www.facefoodchef.com/bodega" target="_blank" style="background-color: {COLOR_VERDE_ING}; color: #2C2F33; padding: 6px 12px; border-radius: 4px; text-decoration: none; font-size: 11px; font-weight: 700; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">🛒 Ir a la bodega</a>
+            <a href="https://www.facefoodchef.com/liquidos-store" target="_blank" style="background-color: {COLOR_VERDE_ING}; color: #2C2F33; padding: 6px 12px; border-radius: 4px; text-decoration: none; font-size: 11px; font-weight: 700; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">🛒 Liquidos Store</a>
         </div>
         <div style="margin-top: 12px; color: #E2E8F0; font-size: clamp(13px, 2.2vw, 15px); line-height: 1.6; font-family: 'Inter', sans-serif;">
             <p style="margin-bottom: 4px; color: #FFFFFF;"><b>🍇 Vinos (Denominaciones de Origen):</b></p>
