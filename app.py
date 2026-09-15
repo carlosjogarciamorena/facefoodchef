@@ -106,7 +106,7 @@ API_KEY_INPUT = st.sidebar.text_input(
 
 modelo_seleccionado = st.sidebar.selectbox(
     "Modelo Gemini:",
-    options=["gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-pro"],
+    options=["gemini-3.6-flash", "gemini-1.5-flash", "gemini-1.5-pro"],
     index=0
 )
 
@@ -516,13 +516,13 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
             else:
                 contents_payload.append(f"Receta:\n{contenido_ia}")
 
-            modelos_a_probar = [modelo_seleccionado, "gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-pro"]
+            modelos_a_probar = [modelo_seleccionado, "gemini-3.6-flash", "gemini-1.5-flash", "gemini-1.5-pro"]
             modelos_a_probar = list(dict.fromkeys(modelos_a_probar))
             
             response = None
             exito = False
             
-            with st.spinner("⚡ Generando diagrama de bloques..."):
+            with st.spinner("⚡ Generando diagrama de bloques con Gemini 3.6..."):
                 for mod in modelos_a_probar:
                     intentos = 3
                     for intento in range(intentos):
@@ -531,8 +531,7 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
                                 model=mod,
                                 contents=contents_payload,
                                 config=types.GenerateContentConfig(
-                                    response_mime_type="application/json",
-                                    temperature=0.1
+                                    response_mime_type="application/json"
                                 ),
                             )
                             if response and response.text:
@@ -573,9 +572,8 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
                     comensales_objetivo
                 )
                 
-                st.success("¡Diagrama generado correctamente!")
+                st.success("¡Diagrama generado correctamente con éxito!")
                 
-                # --- BOTÓN DE DESCARGA AÑADIDO ---
                 nombre_archivo = f"diagrama_{datos.get('nombre_receta', 'receta').lower().replace(' ', '_')}.html"
                 st.download_button(
                     label="💾 Descargar Diagrama en HTML",
