@@ -106,7 +106,7 @@ API_KEY_INPUT = st.sidebar.text_input(
 
 modelo_seleccionado = st.sidebar.selectbox(
     "Modelo Gemini:",
-    options=["gemini-2.5-flash", "gemini-2.0-flash", "gemini-2.5-pro"],
+    options=["gemini-3.6-flash", "gemini-2.5-flash", "gemini-2.0-flash"],
     index=0
 )
 
@@ -151,7 +151,13 @@ tipo_multimodal = None
 if entrada_principal.strip():
     texto_limpio = entrada_principal.strip()
     if texto_limpio.startswith("http://") or texto_limpio.startswith("https://"):
-        url_origen_detectada = texto_limpio
+        # Limpieza de URLs duplicadas o pegadas por error consecutivamente
+        if texto_limpio.count("http") > 1:
+            # Extraer la última URL válida si se pegó dos veces
+            partes = texto_limpio.split("http")
+            url_origen_detectada = "http" + partes[-1]
+        else:
+            url_origen_detectada = texto_limpio
     else:
         receta_texto_input = texto_limpio
 
@@ -185,13 +191,12 @@ def extraer_texto_de_url(url):
                 element.decompose()
             return f"Contenido de {url}:\n{soup.get_text(separator='\n', strip=True)}", url
         except Exception as e:
-            raise Exception(f"Error al procesar la URL: {e}")
+            raise Exception(f"Error al procesar la URL (Comprueba que sea accesible o pega el texto directamente): {e}")
 
 def calcular_tiempo_total(bloques_proceso, minutos_prep=10):
     total = minutos_prep
     for b in bloques_proceso:
         if b.get("tipo") == "paralelo":
-            # Si hay tareas en paralelo, tomamos la de mayor duración de esa fase
             max_rama = max([r.get("duracion_minutos", 5) for r in b.get("ramas", [{"duracion_minutos": 5}])], default=5)
             total += max_rama
         else:
@@ -204,7 +209,6 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
     COLOR_ROJO_ALERTA = "#EF4444"    
     COLOR_DORADO_PLATO = "#FFD700"   
 
-    # Estimación de tiempo de preparación previa y cálculo del total
     minutos_prep_est = len(pasos_previos) * 3 if pasos_previos else 10
     tiempo_total_min = calcular_tiempo_total(bloques_proceso, minutos_prep_est)
 
@@ -539,7 +543,8 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
             else:
                 contents_payload.append(f"Receta:\n{contenido_ia}")
 
-            modelos_a_probar = [modelo_seleccionado, "gemini-2.5-flash", "gemini-2.0-flash"]
+            # Incorporación de gemini-3.6-flash como modelo principal predeterminado
+            modelos_a_probar = [modelo_seleccionado, "gemini-3.6-flash", "gemini-2.5-flash", "gemini-2.0-flash"]
             modelos_a_probar = list(dict.fromkeys(modelos_a_probar))
             
             response = None
