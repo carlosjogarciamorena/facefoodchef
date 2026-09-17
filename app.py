@@ -101,12 +101,12 @@ API_KEY_INPUT = st.sidebar.text_input(
     "🔑 Clave de API Gemini:",
     type="password",
     value=st.secrets.get("GEMINI_API_KEY", "") if "GEMINI_API_KEY" in st.secrets else "",
-    help="Introduce tu clave de API de Google Gemini."
+    help="Introduce tu clave de API de Google Gemini (Google AI Studio)."
 )
 
 modelo_seleccionado = st.sidebar.selectbox(
     "Modelo Gemini:",
-    options=["gemini-3.6-flash", "gemini-1.5-flash", "gemini-1.5-pro"],
+    options=["gemini-2.5-flash", "gemini-2.0-flash", "gemini-2.5-pro"],
     index=0
 )
 
@@ -114,14 +114,14 @@ comensales_objetivo = st.sidebar.number_input(
     "👥 Número de comensales:",
     min_value=1,
     max_value=100,
-    value=2,
+    value=4,
     step=1,
     help="El sistema recalculará los ingredientes para este número de personas."
 )
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("""
-### 🎨 Código de Bordes (Lado Izquierdo):
+### 🎨 Código de Bloques:
 - 🟢 **Verde Neón (`#00FF66`):** Ingredientes / Utensilios / Maridaje
 - 🟡 **Amarillo (`#FFB300`):** Acciones / Procesado
 - 🔴 **Rojo FaceFoodChef (`#EF4444`):** Alertas / Puntos Críticos
@@ -187,25 +187,42 @@ def extraer_texto_de_url(url):
         except Exception as e:
             raise Exception(f"Error al procesar la URL: {e}")
 
+def calcular_tiempo_total(bloques_proceso, minutos_prep=10):
+    total = minutos_prep
+    for b in bloques_proceso:
+        if b.get("tipo") == "paralelo":
+            # Si hay tareas en paralelo, tomamos la de mayor duración de esa fase
+            max_rama = max([r.get("duracion_minutos", 5) for r in b.get("ramas", [{"duracion_minutos": 5}])], default=5)
+            total += max_rama
+        else:
+            total += b.get("duracion_minutos", 5)
+    return total
+
 def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilios_menaje, pasos_previos, bloques_proceso, recomendaciones, texto_voz, maridaje, comensales):
     COLOR_VERDE_ING = "#00FF66"      
     COLOR_AMARILLO_ACC = "#FFB300"   
     COLOR_ROJO_ALERTA = "#EF4444"    
     COLOR_DORADO_PLATO = "#FFD700"   
 
+    # Estimación de tiempo de preparación previa y cálculo del total
+    minutos_prep_est = len(pasos_previos) * 3 if pasos_previos else 10
+    tiempo_total_min = calcular_tiempo_total(bloques_proceso, minutos_prep_est)
+
     html_header = f"""
-    <div style="background-color: #2C2F33; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 20px; border-left: 6px solid {COLOR_DORADO_PLATO}; border-top: none; border-right: none; border-bottom: none;">
+    <div style="background-color: #2C2F33; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 20px; border-left: 6px solid {COLOR_DORADO_PLATO};">
         <span style="font-size: 11px; font-weight: 700; color: #2C2F33; text-transform: uppercase; letter-spacing: 2px; background: {COLOR_DORADO_PLATO}; padding: 4px 12px; border-radius: 3px; display: inline-block; font-family: 'Montserrat', sans-serif;">Flujo Culinario Completo</span>
-        <h1 style="color: #FFFFFF; font-size: clamp(18px, 4vw, 24px); margin: 10px 0 6px 0; font-weight: 900; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">{nombre_receta}</h1>
-        <p style="color: #E2E8F0; font-size: clamp(12px, 2vw, 14px); margin: 0; font-family: 'Inter', sans-serif;">Receta adaptada para <b>{comensales} personas</b></p>
+        <h1 style="color: #FFFFFF; font-size: clamp(18px, 4vw, 24px); margin: 10px 0 8px 0; font-weight: 900; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">{nombre_receta}</h1>
+        <div style="display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; margin-top: 8px; font-family: 'Inter', sans-serif; font-size: clamp(12px, 2vw, 14px);">
+            <span style="background-color: #36393F; padding: 6px 12px; border-radius: 4px; color: #E2E8F0;">👥 <b>Receta adaptada para:</b> {comensales} personas</span>
+            <span style="background-color: #36393F; padding: 6px 12px; border-radius: 4px; color: #FFB300; font-family: 'JetBrains Mono', monospace;">⏱️ <b>Tiempo total estimado:</b> {tiempo_total_min} min</span>
+        </div>
     </div>
     """
 
     html_ing = f"""
-    <div style="background-color: #2C2F33; border-left: 6px solid {COLOR_VERDE_ING}; border-top: none; border-right: none; border-bottom: none; border-radius: 6px; padding: 16px; margin-bottom: 16px;">
+    <div style="background-color: #2C2F33; border-left: 6px solid {COLOR_VERDE_ING}; border-radius: 6px; padding: 16px; margin-bottom: 16px;">
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4F545C; padding-bottom: 8px; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
             <h3 style="color: {COLOR_VERDE_ING}; margin: 0; font-size: clamp(14px, 2.5vw, 16px); font-weight: 700; font-family: 'Montserrat', sans-serif;">🛒 1. Ingredientes ({comensales} pax)</h3>
-            <a href="https://www.facefoodchef.com/delicatessen-gourmet" target="_blank" style="background-color: {COLOR_VERDE_ING}; color: #2C2F33; padding: 6px 12px; border-radius: 4px; text-decoration: none; font-size: 11px; font-weight: 700; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">🛒 Delicatessen Gourmet</a>
         </div>
         <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;">
     """
@@ -214,10 +231,9 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
     html_ing += "</div></div>"
 
     html_utensilios = f"""
-    <div style="background-color: #2C2F33; border-left: 6px solid {COLOR_VERDE_ING}; border-top: none; border-right: none; border-bottom: none; border-radius: 6px; padding: 16px; margin-bottom: 16px;">
+    <div style="background-color: #2C2F33; border-left: 6px solid {COLOR_VERDE_ING}; border-radius: 6px; padding: 16px; margin-bottom: 16px;">
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4F545C; padding-bottom: 8px; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
             <h3 style="color: {COLOR_VERDE_ING}; margin: 0; font-size: clamp(14px, 2.5vw, 16px); font-weight: 700; font-family: 'Montserrat', sans-serif;">🛠️ 2. Utensilios y Menaje</h3>
-            <a href="https://www.facefoodchef.com/pucheros-store" target="_blank" style="background-color: {COLOR_VERDE_ING}; color: #2C2F33; padding: 6px 12px; border-radius: 4px; text-decoration: none; font-size: 11px; font-weight: 700; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">🛒 Pucheros Store</a>
         </div>
         <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;">
     """
@@ -226,7 +242,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
     html_utensilios += "</div></div>"
 
     html_prev = """
-    <div style="background-color: #2C2F33; border-left: 6px solid #4F545C; border-top: none; border-right: none; border-bottom: none; border-radius: 6px; padding: 16px; margin-bottom: 20px;">
+    <div style="background-color: #2C2F33; border-left: 6px solid #4F545C; border-radius: 6px; padding: 16px; margin-bottom: 20px;">
         <h3 style="color: #FFFFFF; margin-top: 0; font-size: clamp(14px, 2.5vw, 16px); font-weight: 700; font-family: 'Montserrat', sans-serif; border-bottom: 1px solid #4F545C; padding-bottom: 8px;">🔪 3. Preparación Previa (Mise en Place)</h3>
         <ul style='margin: 12px 0 0 0; padding-left: 18px; color: #E2E8F0; font-size: clamp(13px, 2.2vw, 15px); line-height: 1.6; font-family: "Inter", sans-serif;'>
     """
@@ -261,7 +277,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
                 timer_id = f"timer_par_{i}_{idx}"
                 
                 html_diagrama += f"""
-                <div style="flex: 1; min-width: 260px; background-color: #2C2F33; border-left: 6px solid {COLOR_AMARILLO_ACC}; border-top: none; border-right: none; border-bottom: none; border-radius: 6px; padding: 16px;">
+                <div style="flex: 1; min-width: 260px; background-color: #2C2F33; border-left: 6px solid {COLOR_AMARILLO_ACC}; border-radius: 6px; padding: 16px;">
                     <div style="margin-bottom: 8px;"><span style="font-size: 10px; font-weight: 700; color: #2C2F33; background-color: {COLOR_AMARILLO_ACC}; padding: 3px 8px; border-radius: 2px; text-transform: uppercase; font-family: 'Montserrat', sans-serif;">⚙️ PARALELO: {nombre_rama}</span></div>
                     <div style="font-size: clamp(13px, 2.2vw, 15px); font-weight: 500; color: #FFFFFF; margin: 8px 0; line-height: 1.5; font-family: 'Inter', sans-serif;">{accion}</div>
                     <div style="font-size: clamp(11px, 2vw, 13px); color: #E2E8F0; margin-bottom: 10px; font-family: 'Inter', sans-serif;">🛠️ <b>Utensilios:</b> {utensilios_rama}</div>
@@ -277,7 +293,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
             etiqueta = "UNIÓN / CONVERGENCIA" if tipo == "convergencia" else f"PASO {i+1}"
             
             html_diagrama += f"""
-            <div style="background-color: #2C2F33; border-left: 6px solid {borde_color}; border-top: none; border-right: none; border-bottom: none; border-radius: 6px; padding: 16px; margin-bottom: 14px;">
+            <div style="background-color: #2C2F33; border-left: 6px solid {borde_color}; border-radius: 6px; padding: 16px; margin-bottom: 14px;">
                 <div style="margin-bottom: 8px;">
                     <span style="font-size: 10px; font-weight: 700; color: #2C2F33; background-color: {borde_color}; padding: 3px 8px; border-radius: 2px; text-transform: uppercase; font-family: 'Montserrat', sans-serif;">{etiqueta}</span>
                 </div>
@@ -301,7 +317,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
     <div style="text-align: center; margin: 4px 0 10px 0;">
         <span style="color: {COLOR_DORADO_PLATO}; font-size: 18px; font-weight: bold;">↓</span>
     </div>
-    <div style="background-color: #2C2F33; border-left: 6px solid {COLOR_DORADO_PLATO}; border-top: none; border-right: none; border-bottom: none; border-radius: 6px; padding: 16px; text-align: center; margin-top: 10px;">
+    <div style="background-color: #2C2F33; border-left: 6px solid {COLOR_DORADO_PLATO}; border-radius: 6px; padding: 16px; text-align: center; margin-top: 10px;">
         <span style="font-size: 11px; font-weight: 700; color: #2C2F33; background-color: {COLOR_DORADO_PLATO}; padding: 4px 10px; border-radius: 3px; font-family: 'Montserrat', sans-serif;">RESULTADO FINAL</span>
         <h3 style="color: {COLOR_DORADO_PLATO}; margin: 8px 0 0 0; font-weight: 900; font-family: 'Montserrat', sans-serif; font-size: clamp(15px, 2.8vw, 18px);">🍽️ PLATO LISTO PARA SERVIR</h3>
     </div>
@@ -309,7 +325,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
     """
 
     html_recom = f"""
-    <div style="background-color: #2C2F33; border-left: 6px solid {COLOR_ROJO_ALERTA}; border-top: none; border-right: none; border-bottom: none; border-radius: 6px; padding: 16px; margin-top: 20px; margin-bottom: 16px;">
+    <div style="background-color: #2C2F33; border-left: 6px solid {COLOR_ROJO_ALERTA}; border-radius: 6px; padding: 16px; margin-top: 20px; margin-bottom: 16px;">
         <h3 style="color: {COLOR_ROJO_ALERTA}; margin-top: 0; font-size: clamp(14px, 2.5vw, 16px); font-weight: 700; font-family: 'Montserrat', sans-serif; border-bottom: 1px solid #4F545C; padding-bottom: 8px;">🚨 5. Puntos Críticos y Alertas del Chef</h3>
         <ul style='margin: 12px 0 0 0; padding-left: 18px; color: #E2E8F0; font-size: clamp(13px, 2.2vw, 15px); line-height: 1.6; font-family: "Inter", sans-serif;'>
     """
@@ -323,10 +339,9 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
     cervezas_html = "".join([f"<li style='margin-bottom: 4px;'>{c}</li>" for c in cervezas_lista]) if cervezas_lista else "<li>Sin opciones disponibles.</li>"
 
     html_maridaje = f"""
-    <div style="background-color: #2C2F33; border-left: 6px solid {COLOR_VERDE_ING}; border-top: none; border-right: none; border-bottom: none; border-radius: 6px; padding: 16px; margin-top: 16px; margin-bottom: 16px;">
+    <div style="background-color: #2C2F33; border-left: 6px solid {COLOR_VERDE_ING}; border-radius: 6px; padding: 16px; margin-top: 16px; margin-bottom: 16px;">
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4F545C; padding-bottom: 8px; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
             <h3 style="color: {COLOR_VERDE_ING}; margin: 0; font-size: clamp(14px, 2.5vw, 16px); font-weight: 700; font-family: 'Montserrat', sans-serif;">🍷 6. Maridaje</h3>
-            <a href="https://www.facefoodchef.com/liquidos-store" target="_blank" style="background-color: {COLOR_VERDE_ING}; color: #2C2F33; padding: 6px 12px; border-radius: 4px; text-decoration: none; font-size: 11px; font-weight: 700; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">🛒 Liquidos Store</a>
         </div>
         <div style="margin-top: 12px; color: #E2E8F0; font-size: clamp(13px, 2.2vw, 15px); line-height: 1.6; font-family: 'Inter', sans-serif;">
             <p style="margin-bottom: 4px; color: #FFFFFF;"><b>🍇 Vinos (Denominaciones de Origen):</b></p>
@@ -455,16 +470,16 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
     api_key_activa = API_KEY_INPUT.strip()
     
     if not api_key_activa:
-        st.error("⚠️ Introduce tu clave de API de Google Gemini.")
+        st.error("⚠️ Introduce tu clave de API de Google Gemini en el panel lateral.")
     elif not procesar_accion:
-        st.warning("⚠️ Debes introducir un texto, URL o adjuntar un archivo.")
+        st.warning("⚠️ Debes introducir un texto, URL o adjuntar un archivo con la receta.")
     else:
         try:
             client = genai.Client(api_key=api_key_activa)
             
             prompt_sistema = f"""
             Eres un experto programador de flujos culinarios y maestro chef. 
-            Transforma la receta dada en una estructura JSON optimizada para generar un diagrama de flujo paso a paso apto para pantallas móviles.
+            Transforma la receta dada en una estructura JSON optimizada para generar un diagrama de flujo paso a paso.
 
             Recalcula las cantidades exactamente para {comensales_objetivo} COMENSALES.
 
@@ -474,13 +489,14 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
                - Separa la lista de "utensilios_menaje".
                - Separa la lista de "pasos_previos" (Mise en place).
             3. BLOQUES DE PROCESO:
-               - "tipo": "secuencial", "paralelo" or "convergencia".
+               - "tipo": "secuencial", "paralelo" o "convergencia".
                - "es_critico": booleano (true si requiere especial precaución técnica o de seguridad).
+               - "duracion_minutos": número entero con los minutos estimados de ese bloque.
             4. MARIDAJE:
                - Evalúa todas las Denominaciones de Origen (sin restricción geográfica).
                - Genera EXACTAMENTE 3 propuestas de vinos indicando tipo o Denominación de Origen idónea.
                - Genera EXACTAMENTE 3 propuestas de cervezas acordes al plato.
-            5. Devuelve EXCLUSIVAMENTE el JSON estructurado sin formato adicional fuera de él.
+            5. Devuelve EXCLUSIVAMENTE un objeto JSON válido que cumpla estrictamente con la estructura solicitada, sin bloques de texto adicionales fuera del JSON.
 
             JSON Schema esperado:
             {{
@@ -523,13 +539,13 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
             else:
                 contents_payload.append(f"Receta:\n{contenido_ia}")
 
-            modelos_a_probar = [modelo_seleccionado, "gemini-3.6-flash", "gemini-1.5-flash", "gemini-1.5-pro"]
+            modelos_a_probar = [modelo_seleccionado, "gemini-2.5-flash", "gemini-2.0-flash"]
             modelos_a_probar = list(dict.fromkeys(modelos_a_probar))
             
             response = None
             exito = False
             
-            with st.spinner("⚡ Generando diagrama adaptado a dispositivos móviles..."):
+            with st.spinner("⚡ Conectando con Gemini y generando el diagrama..."):
                 for mod in modelos_a_probar:
                     intentos = 3
                     for intento in range(intentos):
@@ -538,7 +554,8 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
                                 model=mod,
                                 contents=contents_payload,
                                 config=types.GenerateContentConfig(
-                                    response_mime_type="application/json"
+                                    response_mime_type="application/json",
+                                    temperature=0.2
                                 ),
                             )
                             if response and response.text:
@@ -546,7 +563,7 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
                                 break
                         except Exception as api_err:
                             err_str = str(api_err)
-                            if "503" in err_str or "UNAVAILABLE" in err_str:
+                            if "503" in err_str or "UNAVAILABLE" in err_str or "429" in err_str:
                                 time.sleep((intento + 1) * 2)
                                 continue
                             if intento == intentos - 1:
@@ -591,7 +608,7 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
                 
                 components.html(html_final, height=1200, scrolling=True)
             else:
-                st.error("No se pudo obtener una respuesta válida del modelo Gemini.")
+                st.error("No se pudo obtener una respuesta válida del modelo Gemini. Verifica que tu clave de API sea correcta, tenga créditos activos y que el prompt no rebase los límites de contenido.")
                 
         except APIError as e:
             st.error(f"Error de la API de Gemini: {e}")
