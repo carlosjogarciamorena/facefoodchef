@@ -151,9 +151,7 @@ tipo_multimodal = None
 if entrada_principal.strip():
     texto_limpio = entrada_principal.strip()
     if texto_limpio.startswith("http://") or texto_limpio.startswith("https://"):
-        # Limpieza de URLs duplicadas o pegadas por error consecutivamente
         if texto_limpio.count("http") > 1:
-            # Extraer la última URL válida si se pegó dos veces
             partes = texto_limpio.split("http")
             url_origen_detectada = "http" + partes[-1]
         else:
@@ -203,7 +201,7 @@ def calcular_tiempo_total(bloques_proceso, minutos_prep=10):
             total += b.get("duracion_minutos", 5)
     return total
 
-def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilios_menaje, pasos_previos, bloques_proceso, recomendaciones, texto_voz, maridaje, comensales):
+def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilios_menaje, pasos_previos, bloques_proceso, recomendaciones, texto_voz, maridaje, comensales, nivel_dificultad):
     COLOR_VERDE_ING = "#00FF66"      
     COLOR_AMARILLO_ACC = "#FFB300"   
     COLOR_ROJO_ALERTA = "#EF4444"    
@@ -216,9 +214,10 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
     <div style="background-color: #2C2F33; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 20px; border-left: 6px solid {COLOR_DORADO_PLATO};">
         <span style="font-size: 11px; font-weight: 700; color: #2C2F33; text-transform: uppercase; letter-spacing: 2px; background: {COLOR_DORADO_PLATO}; padding: 4px 12px; border-radius: 3px; display: inline-block; font-family: 'Montserrat', sans-serif;">Flujo Culinario Completo</span>
         <h1 style="color: #FFFFFF; font-size: clamp(18px, 4vw, 24px); margin: 10px 0 8px 0; font-weight: 900; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">{nombre_receta}</h1>
-        <div style="display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; margin-top: 8px; font-family: 'Inter', sans-serif; font-size: clamp(12px, 2vw, 14px);">
-            <span style="background-color: #36393F; padding: 6px 12px; border-radius: 4px; color: #E2E8F0;">👥 <b>Receta adaptada para:</b> {comensales} personas</span>
-            <span style="background-color: #36393F; padding: 6px 12px; border-radius: 4px; color: #FFB300; font-family: 'JetBrains Mono', monospace;">⏱️ <b>Tiempo total estimado:</b> {tiempo_total_min} min</span>
+        <div style="display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; margin-top: 10px; font-family: 'Inter', sans-serif; font-size: clamp(12px, 2vw, 14px);">
+            <span style="background-color: #36393F; padding: 6px 12px; border-radius: 4px; color: #E2E8F0;">👥 <b>Comensales:</b> {comensales} pax</span>
+            <span style="background-color: #36393F; padding: 6px 12px; border-radius: 4px; color: #FFB300; font-family: 'JetBrains Mono', monospace;">⏱️ <b>Tiempo total:</b> {tiempo_total_min} min</span>
+            <span style="background-color: #36393F; padding: 6px 12px; border-radius: 4px; color: #EF4444; font-weight: 700;">🎯 <b>Nivel:</b> {nivel_dificultad}</span>
         </div>
     </div>
     """
@@ -487,6 +486,12 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
 
             Recalcula las cantidades exactamente para {comensales_objetivo} COMENSALES.
 
+            EVALUACIÓN DE NIVEL DE DIFICULTAD:
+            Asigna obligatoriamente uno de estos tres niveles en el campo "nivel_dificultad" basándote en la complejidad técnica de la receta:
+            1. "Nivel Facil: pisito de estudiante" (recetas sencillas, sin técnicas complejas, pocos ingredientes, rápida ejecución).
+            2. "Nivel Intermedio: cuñao avanzado" (requiere cierta soltura en cocina, tiempos de cocción combinados, sofritos elaborados o técnicas moderadas).
+            3. "Nivel Chef: pura precisión" (técnicas exigentes, control estricto de temperaturas, emulsiones delicadas, limpieza compleja o múltiples procesos paralelos).
+
             REGLAS ESTRUCTURALES Y JSON:
             1. UNIDADES: Abreviadas (g, kg, ml, l, ºC, min). Escribir "cucharada" y "cucharadita" completas. Evita términos ambiguos ("al gusto").
             2. MODULARIZACIÓN:
@@ -506,6 +511,7 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
             {{
               "nombre_receta": "String",
               "origen_receta": "String",
+              "nivel_dificultad": "Nivel Facil: pisito de estudiante",
               "ingredientes": ["400 g de harina"],
               "utensilios_menaje": ["Cuchillo", "Sartén"],
               "pasos_previos": ["Cortar vegetales"],
@@ -543,7 +549,6 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
             else:
                 contents_payload.append(f"Receta:\n{contenido_ia}")
 
-            # Incorporación de gemini-3.6-flash como modelo principal predeterminado
             modelos_a_probar = [modelo_seleccionado, "gemini-3.6-flash", "gemini-2.5-flash", "gemini-2.0-flash"]
             modelos_a_probar = list(dict.fromkeys(modelos_a_probar))
             
@@ -598,7 +603,8 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
                     datos.get("recomendaciones", []),
                     datos.get("texto_voz", ""),
                     datos.get("maridaje", {}),
-                    comensales_objetivo
+                    comensales_objetivo,
+                    datos.get("nivel_dificultad", "Nivel Intermedio: cuñao avanzado")
                 )
                 
                 st.success("¡Diagrama optimizado generado con éxito!")
