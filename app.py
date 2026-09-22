@@ -60,7 +60,7 @@ st.markdown("""
         box-shadow: none !important;
     }
 
-    /* Botones de Streamlit unificados en Verde */
+    /* Botones principales de Streamlit */
     .stButton > button {
         background: #00FF66 !important;
         color: #1E1E1E !important;
@@ -299,7 +299,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
                     <div style="font-size: clamp(11px, 2vw, 13px); color: #E2E8F0; margin-bottom: 10px; font-family: 'JetBrains Mono', monospace;">🛠️ <b>Utensilios:</b> {utensilios_rama}</div>
                     <div style="display: flex; justify-content: space-between; align-items: center; background: #36393F; padding: 8px 12px; border-radius: 4px; flex-wrap: wrap; gap: 6px;">
                         <div style="font-size: clamp(12px, 2vw, 14px); color: #FFB300; font-family: 'JetBrains Mono', monospace; font-weight: 600;">⏱️ <span id="{timer_id}">{tiempo}</span> | 🌡️ {temp}</div>
-                        <button onclick="iniciarTemporizador('{timer_id}', {dur_rama})" style="background-color: {COLOR_VERDE_ING}; color: #1E1E1E; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 900; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">⏳ Iniciar</button>
+                        <button onclick="iniciarTemporizador('{timer_id}', {dur_rama})" class="btn-iniciar">⏳ INICIAR</button>
                     </div>
                 </div>
                 """
@@ -317,7 +317,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
                 <div style="font-size: clamp(11px, 2vw, 13px); color: #E2E8F0; margin-bottom: 10px; font-family: 'JetBrains Mono', monospace;">🛠️ <b>Utensilios:</b> {utensilios_str}</div>
                 <div style="display: flex; justify-content: space-between; align-items: center; background: #36393F; padding: 8px 12px; border-radius: 4px; flex-wrap: wrap; gap: 6px;">
                     <div style="font-size: clamp(12px, 2vw, 14px); color: #FFB300; font-family: 'JetBrains Mono', monospace; font-weight: 600;">⏱️ <span id="{timer_id}">{bloque.get('tiempo')}</span> | 🌡️ {bloque.get('temperatura')}</div>
-                    <button onclick="iniciarTemporizador('{timer_id}', {duracion_min})" style="background-color: {COLOR_VERDE_ING}; color: #1E1E1E; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 900; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">⏳ Iniciar</button>
+                    <button onclick="iniciarTemporizador('{timer_id}', {duracion_min})" class="btn-iniciar">⏳ INICIAR</button>
                 </div>
             </div>
             """
@@ -384,8 +384,19 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
             body {{ background-color: #36393F; color: #E2E8F0; font-family: 'Inter', sans-serif; padding: 12px; margin: 0; }}
             .container-hub {{ max-width: 900px; margin: auto; }}
             .widget-box {{ background-color: #2C2F33; border-radius: 6px; padding: 16px; text-align: center; margin-bottom: 16px; }}
-            .btn-control {{ background: {COLOR_VERDE_ING}; color: #1E1E1E; border: none; padding: 10px 16px; font-size: 12px; font-weight: 900; border-radius: 4px; cursor: pointer; margin: 4px; font-family: 'Montserrat', sans-serif; text-transform: uppercase; transition: filter 0.2s; }}
-            .btn-control:hover {{ filter: brightness(0.9); }}
+            
+            /* Botón "Escuchar Pasos" en rojo */
+            .btn-escuchar {{ background: #EF4444; color: #FFFFFF; border: none; padding: 10px 16px; font-size: 12px; font-weight: 900; border-radius: 4px; cursor: pointer; margin: 4px; font-family: 'Montserrat', sans-serif; text-transform: uppercase; transition: filter 0.2s; }}
+            .btn-escuchar:hover {{ filter: brightness(0.9); }}
+            
+            /* Botón "Silenciar" cambiado a "OIDO COCINA (silenciar)" en gris */
+            .btn-silenciar {{ background: #4F545C; color: #FFFFFF; border: none; padding: 10px 16px; font-size: 12px; font-weight: 900; border-radius: 4px; cursor: pointer; margin: 4px; font-family: 'Montserrat', sans-serif; text-transform: uppercase; transition: filter 0.2s; }}
+            .btn-silenciar:hover {{ filter: brightness(0.9); }}
+            
+            /* Todos los botones INICIAR de los bloques de temporizador en rojo */
+            .btn-iniciar {{ background: #EF4444; color: #FFFFFF; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 900; font-family: 'Montserrat', sans-serif; text-transform: uppercase; transition: filter 0.2s; }}
+            .btn-iniciar:hover {{ filter: brightness(0.9); }}
+
             .btn-store {{
                 background-color: {COLOR_VERDE_ING};
                 color: #1E1E1E;
@@ -409,8 +420,8 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
             {html_header}
             <div class="widget-box">
                 <p style="color: #E2E8F0; font-size: 12px; margin: 0 0 10px 0; font-weight: 700; font-family: 'Montserrat', sans-serif;">👨‍🍳 ASISTENTE AUDITIVO</p>
-                <button id="btnVoz" class="btn-control" onclick="reproducir(this)">🎧 Escuchar Pasos</button>
-                <button class="btn-control" onclick="detener()">Silenciar</button>
+                <button id="btnVoz" class="btn-escuchar" onclick="reproducir(this)">🎧 Escuchar Pasos</button>
+                <button class="btn-silenciar" onclick="detener()">OIDO COCINA (silenciar)</button>
             </div>
             {html_ing}
             {html_utensilios}
