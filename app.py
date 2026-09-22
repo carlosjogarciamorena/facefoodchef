@@ -385,15 +385,12 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
             .container-hub {{ max-width: 900px; margin: auto; }}
             .widget-box {{ background-color: #2C2F33; border-radius: 6px; padding: 16px; text-align: center; margin-bottom: 16px; }}
             
-            /* Botón "Escuchar Pasos" en rojo */
             .btn-escuchar {{ background: #EF4444; color: #FFFFFF; border: none; padding: 10px 16px; font-size: 12px; font-weight: 900; border-radius: 4px; cursor: pointer; margin: 4px; font-family: 'Montserrat', sans-serif; text-transform: uppercase; transition: filter 0.2s; }}
             .btn-escuchar:hover {{ filter: brightness(0.9); }}
             
-            /* Botón "Silenciar" cambiado a "OIDO COCINA (silenciar)" en gris */
             .btn-silenciar {{ background: #4F545C; color: #FFFFFF; border: none; padding: 10px 16px; font-size: 12px; font-weight: 900; border-radius: 4px; cursor: pointer; margin: 4px; font-family: 'Montserrat', sans-serif; text-transform: uppercase; transition: filter 0.2s; }}
             .btn-silenciar:hover {{ filter: brightness(0.9); }}
             
-            /* Todos los botones INICIAR de los bloques de temporizador en rojo */
             .btn-iniciar {{ background: #EF4444; color: #FFFFFF; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 900; font-family: 'Montserrat', sans-serif; text-transform: uppercase; transition: filter 0.2s; }}
             .btn-iniciar:hover {{ filter: brightness(0.9); }}
 
@@ -588,10 +585,11 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
             
             response = None
             exito = False
+            error_capturado = ""
             
             with st.spinner("⚡ Conectando con Gemini y generando el diagrama..."):
                 for mod in modelos_a_probar:
-                    intentos = 3
+                    intentos = 2
                     for intento in range(intentos):
                         try:
                             response = client.models.generate_content(
@@ -607,8 +605,12 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
                                 break
                         except Exception as api_err:
                             err_str = str(api_err)
-                            if "503" in err_str or "UNAVAILABLE" in err_str or "429" in err_str:
-                                time.sleep((intento + 1) * 2)
+                            error_capturado = err_str
+                            if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
+                                # Romper inmediatamente el ciclo si se agota la cuota para evitar bloqueos largos
+                                break
+                            if "503" in err_str or "UNAVAILABLE" in err_str:
+                                time.sleep(2)
                                 continue
                             if intento == intentos - 1:
                                 break
@@ -653,7 +655,10 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
                 
                 components.html(html_final, height=1250, scrolling=True)
             else:
-                st.error("No se pudo obtener una respuesta válida del modelo debido a saturación temporal (503). Por favor, vuelve a pulsar el botón en unos segundos.")
+                if "429" in error_capturado or "RESOURCE_EXHAUSTED" in error_capturado:
+                    st.error("⚠️ **Límite de cuota gratuito alcanzado (Error 429).** Has superado las solicitudes permitidas por la API de Google por hoy. Por favor, espera unos segundos/minutos antes de volver a intentarlo o verifica tu plan en Google AI Studio.")
+                else:
+                    st.error(f"No se pudo obtener una respuesta válida del modelo: {error_capturado}")
                 
         except APIError as e:
             st.error(f"Error de la API de Gemini: {e}")
