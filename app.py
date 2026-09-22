@@ -107,7 +107,7 @@ API_KEY_INPUT = st.sidebar.text_input(
 
 modelo_seleccionado = st.sidebar.selectbox(
     "Modelo Gemini:",
-    options=["gemini-3.6-flash", "gemini-2.5-flash", "gemini-2.0-flash"],
+    options=["gemini-2.5-flash", "gemini-2.0-flash", "gemini-3.6-flash"],
     index=0
 )
 
@@ -211,7 +211,6 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
     minutos_prep_est = len(pasos_previos) * 3 if pasos_previos else 10
     tiempo_total_min = calcular_tiempo_total(bloques_proceso, minutos_prep_est)
 
-    # Determinar el color del nivel de dificultad
     nivel_dificultad_upper = nivel_dificultad.upper()
     if "SUPERVIVIENTE" in nivel_dificultad_upper:
         color_nivel = COLOR_VERDE_ING
@@ -386,11 +385,9 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
             .container-hub {{ max-width: 900px; margin: auto; }}
             .widget-box {{ background-color: #2C2F33; border-radius: 6px; padding: 16px; text-align: center; margin-bottom: 16px; }}
             
-            /* Todos los botones de control (voz y silencio) unificados al verde */
             .btn-control {{ background: {COLOR_VERDE_ING}; color: #1E1E1E; border: none; padding: 10px 16px; font-size: 12px; font-weight: 900; border-radius: 4px; cursor: pointer; margin: 4px; font-family: 'Montserrat', sans-serif; text-transform: uppercase; transition: filter 0.2s; }}
             .btn-control:hover {{ filter: brightness(0.9); }}
             
-            /* Clase específica para los botones de las Tiendas/Extras unificada en verde */
             .btn-store {{
                 background-color: {COLOR_VERDE_ING};
                 color: #1E1E1E;
@@ -582,8 +579,7 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
                     contents=f"{prompt_sistema}\n\nRECETA A PROCESAR:\n{contenido_ia}",
                 )
 
-                texto_json = response.text.replace("
-```json", "").replace("```", "").strip()
+                texto_json = response.text.replace("```json", "").replace("```", "").strip()
                 datos = json.loads(texto_json)
 
                 html_final = generar_html_dashboard(
@@ -604,10 +600,3 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
 
         except Exception as e:
             st.error(f"❌ Ocurrió un error al procesar la receta: {e}")
-```eof
-
-### Resumen de los cambios realizados:
-1.  **Tipografías en el contenido (Cuerpo):** Modifiqué el estilo en los bloques `html_ing`, `html_utensilios`, `html_prev`, `html_recom` y `html_maridaje`. Ahora todos tienen configurada la fuente `"JetBrains Mono", monospace`, alineándose con el contenido y los textos técnicos de tu diagrama. 
-2.  **Títulos:** Las etiquetas de títulos como `h1`, `h2`, `h3` continúan usando `"Montserrat", sans-serif` a lo largo de todo el documento HTML (asegurado a través de CSS nativo e inline styles), tal como solicitaste.
-3.  **Colores de Botones Homogeneizados:** Arreglé todos los botones internos generados (los que abren alertas "DELICATESSEN GOURMET", "PUCHEROS STORE", "EMPLATADO", "LIQUIDOS STORE", "Escuchar Pasos", "Silenciar", y los "Temporizadores"). Todos comparten estrictamente las propiedades con el `background-color` de `COLOR_VERDE_ING (#00FF66)` y el texto oscuro `color: #1E1E1E`, respetando el diseño del botón principal.
-4.  **Reparación del Script:** Completé el bloque final (la petición a Gemini que faltaba por cortar en el prompt) para garantizarte que el archivo funciona y corre con `streamlit run app.py` directamente.
