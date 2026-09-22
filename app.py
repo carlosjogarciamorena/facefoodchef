@@ -38,7 +38,7 @@ st.set_page_config(
 # Estilos globales optimizados para Móviles, Tablets y Escritorio
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Montserrat:wght@700;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&family=Montserrat:wght@700;900&display=swap');
 
     .stApp, .block-container, [data-testid="stSidebar"] {
         background-color: #36393F !important;
@@ -210,6 +210,17 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
     minutos_prep_est = len(pasos_previos) * 3 if pasos_previos else 10
     tiempo_total_min = calcular_tiempo_total(bloques_proceso, minutos_prep_est)
 
+    # Determinar el color del nivel de dificultad
+    nivel_dificultad_upper = nivel_dificultad.upper()
+    if "SUPERVIVIENTE" in nivel_dificultad_upper:
+        color_nivel = COLOR_VERDE_ING
+    elif "CUALIFICADO" in nivel_dificultad_upper:
+        color_nivel = COLOR_AMARILLO_ACC
+    elif "DOCTOR" in nivel_dificultad_upper:
+        color_nivel = COLOR_ROJO_ALERTA
+    else:
+        color_nivel = "#E2E8F0"
+
     html_header = f"""
     <div style="background-color: #2C2F33; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 20px; border-left: 6px solid {COLOR_DORADO_PLATO};">
         <span style="font-size: 11px; font-weight: 700; color: #2C2F33; text-transform: uppercase; letter-spacing: 2px; background: {COLOR_DORADO_PLATO}; padding: 4px 12px; border-radius: 3px; display: inline-block; font-family: 'Montserrat', sans-serif;">Flujo Culinario Completo</span>
@@ -217,7 +228,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
         <div style="display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; margin-top: 10px; font-family: 'Inter', sans-serif; font-size: clamp(12px, 2vw, 14px);">
             <span style="background-color: #36393F; padding: 6px 12px; border-radius: 4px; color: #E2E8F0;">👥 <b>Comensales:</b> {comensales} pax</span>
             <span style="background-color: #36393F; padding: 6px 12px; border-radius: 4px; color: #FFB300; font-family: 'JetBrains Mono', monospace;">⏱️ <b>Tiempo total:</b> {tiempo_total_min} min</span>
-            <span style="background-color: #36393F; padding: 6px 12px; border-radius: 4px; color: #EF4444; font-weight: 700;">🎯 <b>Nivel:</b> {nivel_dificultad}</span>
+            <span style="background-color: #36393F; padding: 6px 12px; border-radius: 4px; color: {color_nivel}; font-weight: 700;">🎯 <b>Nivel:</b> {nivel_dificultad}</span>
         </div>
     </div>
     """
@@ -226,6 +237,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
     <div style="background-color: #2C2F33; border-left: 6px solid {COLOR_VERDE_ING}; border-radius: 6px; padding: 16px; margin-bottom: 16px;">
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4F545C; padding-bottom: 8px; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
             <h3 style="color: {COLOR_VERDE_ING}; margin: 0; font-size: clamp(14px, 2.5vw, 16px); font-weight: 700; font-family: 'Montserrat', sans-serif;">🛒 1. Ingredientes ({comensales} pax)</h3>
+            <button class="btn-store" style="background-color: {COLOR_VERDE_ING}; color: #1E1E1E;" onclick="alert('Redirigiendo a la tienda de ingredientes...')">🛒 DELICATESSEN COURMET</button>
         </div>
         <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;">
     """
@@ -237,6 +249,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
     <div style="background-color: #2C2F33; border-left: 6px solid {COLOR_VERDE_ING}; border-radius: 6px; padding: 16px; margin-bottom: 16px;">
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4F545C; padding-bottom: 8px; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
             <h3 style="color: {COLOR_VERDE_ING}; margin: 0; font-size: clamp(14px, 2.5vw, 16px); font-weight: 700; font-family: 'Montserrat', sans-serif;">🛠️ 2. Utensilios y Menaje</h3>
+            <button class="btn-store" style="background-color: #A8B2C1; color: #1E1E1E;" onclick="alert('Redirigiendo a la tienda de menaje...')">🍳 PUCHEROS STORE</button>
         </div>
         <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;">
     """
@@ -254,7 +267,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
     html_prev += "</ul></div>"
 
     html_diagrama = """
-    <div style="font-family: 'Inter', sans-serif;">
+    <div>
         <h3 style="color: #FFFFFF; font-size: clamp(16px, 3vw, 18px); font-weight: 700; margin-bottom: 16px; font-family: 'Montserrat', sans-serif; border-bottom: 2px solid #EF4444; padding-bottom: 6px; display: inline-block;">4. Diagrama de Ejecución y Flujo</h3>
     """
 
@@ -281,9 +294,9 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
                 
                 html_diagrama += f"""
                 <div style="flex: 1; min-width: 260px; background-color: #2C2F33; border-left: 6px solid {COLOR_AMARILLO_ACC}; border-radius: 6px; padding: 16px;">
-                    <div style="margin-bottom: 8px;"><span style="font-size: 10px; font-weight: 700; color: #2C2F33; background-color: {COLOR_AMARILLO_ACC}; padding: 3px 8px; border-radius: 2px; text-transform: uppercase; font-family: 'Montserrat', sans-serif;">⚙️ PARALELO: {nombre_rama}</span></div>
-                    <div style="font-size: clamp(13px, 2.2vw, 15px); font-weight: 500; color: #FFFFFF; margin: 8px 0; line-height: 1.5; font-family: 'Inter', sans-serif;">{accion}</div>
-                    <div style="font-size: clamp(11px, 2vw, 13px); color: #E2E8F0; margin-bottom: 10px; font-family: 'Inter', sans-serif;">🛠️ <b>Utensilios:</b> {utensilios_rama}</div>
+                    <div style="margin-bottom: 8px;"><span style="font-size: 11px; font-weight: 700; color: #2C2F33; background-color: {COLOR_AMARILLO_ACC}; padding: 3px 8px; border-radius: 2px; text-transform: uppercase; font-family: 'JetBrains Mono', monospace;">⚙️ PARALELO: {nombre_rama}</span></div>
+                    <div style="font-size: clamp(13px, 2.2vw, 15px); font-weight: 500; color: #FFFFFF; margin: 8px 0; line-height: 1.5; font-family: 'JetBrains Mono', monospace;">{accion}</div>
+                    <div style="font-size: clamp(11px, 2vw, 13px); color: #E2E8F0; margin-bottom: 10px; font-family: 'JetBrains Mono', monospace;">🛠️ <b>Utensilios:</b> {utensilios_rama}</div>
                     <div style="display: flex; justify-content: space-between; align-items: center; background: #36393F; padding: 8px 12px; border-radius: 4px; flex-wrap: wrap; gap: 6px;">
                         <div style="font-size: clamp(12px, 2vw, 14px); color: #FFB300; font-family: 'JetBrains Mono', monospace; font-weight: 600;">⏱️ <span id="{timer_id}">{tiempo}</span> | 🌡️ {temp}</div>
                         <button onclick="iniciarTemporizador('{timer_id}', {dur_rama})" style="background-color: #EF4444; color: #FFF; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 700; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">⏳ Iniciar</button>
@@ -298,10 +311,10 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
             html_diagrama += f"""
             <div style="background-color: #2C2F33; border-left: 6px solid {borde_color}; border-radius: 6px; padding: 16px; margin-bottom: 14px;">
                 <div style="margin-bottom: 8px;">
-                    <span style="font-size: 10px; font-weight: 700; color: #2C2F33; background-color: {borde_color}; padding: 3px 8px; border-radius: 2px; text-transform: uppercase; font-family: 'Montserrat', sans-serif;">{etiqueta}</span>
+                    <span style="font-size: 11px; font-weight: 700; color: #2C2F33; background-color: {borde_color}; padding: 3px 8px; border-radius: 2px; text-transform: uppercase; font-family: 'JetBrains Mono', monospace;">{etiqueta}</span>
                 </div>
-                <div style="font-size: clamp(13px, 2.2vw, 15px); font-weight: 500; color: #FFFFFF; margin: 8px 0; line-height: 1.5; font-family: 'Inter', sans-serif;">{bloque.get('accion')}</div>
-                <div style="font-size: clamp(11px, 2vw, 13px); color: #E2E8F0; margin-bottom: 10px; font-family: 'Inter', sans-serif;">🛠️ <b>Utensilios:</b> {utensilios_str}</div>
+                <div style="font-size: clamp(13px, 2.2vw, 15px); font-weight: 500; color: #FFFFFF; margin: 8px 0; line-height: 1.5; font-family: 'JetBrains Mono', monospace;">{bloque.get('accion')}</div>
+                <div style="font-size: clamp(11px, 2vw, 13px); color: #E2E8F0; margin-bottom: 10px; font-family: 'JetBrains Mono', monospace;">🛠️ <b>Utensilios:</b> {utensilios_str}</div>
                 <div style="display: flex; justify-content: space-between; align-items: center; background: #36393F; padding: 8px 12px; border-radius: 4px; flex-wrap: wrap; gap: 6px;">
                     <div style="font-size: clamp(12px, 2vw, 14px); color: #FFB300; font-family: 'JetBrains Mono', monospace; font-weight: 600;">⏱️ <span id="{timer_id}">{bloque.get('tiempo')}</span> | 🌡️ {bloque.get('temperatura')}</div>
                     <button onclick="iniciarTemporizador('{timer_id}', {duracion_min})" style="background-color: #EF4444; color: #FFF; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 700; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">⏳ Iniciar</button>
@@ -322,7 +335,8 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
     </div>
     <div style="background-color: #2C2F33; border-left: 6px solid {COLOR_DORADO_PLATO}; border-radius: 6px; padding: 16px; text-align: center; margin-top: 10px;">
         <span style="font-size: 11px; font-weight: 700; color: #2C2F33; background-color: {COLOR_DORADO_PLATO}; padding: 4px 10px; border-radius: 3px; font-family: 'Montserrat', sans-serif;">RESULTADO FINAL</span>
-        <h3 style="color: {COLOR_DORADO_PLATO}; margin: 8px 0 0 0; font-weight: 900; font-family: 'Montserrat', sans-serif; font-size: clamp(15px, 2.8vw, 18px);">🍽️ PLATO LISTO PARA SERVIR</h3>
+        <h3 style="color: {COLOR_DORADO_PLATO}; margin: 12px 0; font-weight: 900; font-family: 'Montserrat', sans-serif; font-size: clamp(15px, 2.8vw, 18px);">🍽️ PLATO LISTO PARA SERVIR</h3>
+        <button class="btn-store" style="background-color: {COLOR_DORADO_PLATO}; color: #1E1E1E;" onclick="alert('Enlace a técnicas de emplatado o equipo...')">✨ EMPLATADO</button>
     </div>
     </div>
     """
@@ -345,6 +359,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
     <div style="background-color: #2C2F33; border-left: 6px solid {COLOR_VERDE_ING}; border-radius: 6px; padding: 16px; margin-top: 16px; margin-bottom: 16px;">
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4F545C; padding-bottom: 8px; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
             <h3 style="color: {COLOR_VERDE_ING}; margin: 0; font-size: clamp(14px, 2.5vw, 16px); font-weight: 700; font-family: 'Montserrat', sans-serif;">🍷 6. Maridaje</h3>
+            <button class="btn-store" style="background-color: #9333EA; color: #FFF;" onclick="alert('Redirigiendo a la bodega de líquidos...')">🍾 LIQUIDOS STORE</button>
         </div>
         <div style="margin-top: 12px; color: #E2E8F0; font-size: clamp(13px, 2.2vw, 15px); line-height: 1.6; font-family: 'Inter', sans-serif;">
             <p style="margin-bottom: 4px; color: #FFFFFF;"><b>🍇 Vinos (Denominaciones de Origen):</b></p>
@@ -364,13 +379,30 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
         <style>
             body {{ background-color: #36393F; color: #E2E8F0; font-family: 'Inter', sans-serif; padding: 12px; margin: 0; }}
             .container-hub {{ max-width: 900px; margin: auto; }}
             .widget-box {{ background-color: #2C2F33; border-radius: 6px; padding: 16px; text-align: center; margin-bottom: 16px; }}
             .btn-control {{ background: #EF4444; color: #FFF; border: none; padding: 10px 16px; font-size: 12px; font-weight: 700; border-radius: 4px; cursor: pointer; margin: 4px; font-family: 'Montserrat', sans-serif; text-transform: uppercase; }}
             .btn-stop {{ background: #4F545C; color: #FFF; }}
+            
+            /* Clase específica para los botones de las Tiendas/Extras */
+            .btn-store {{
+                border: none;
+                padding: 8px 14px;
+                font-size: 11px;
+                font-weight: 900;
+                border-radius: 4px;
+                cursor: pointer;
+                font-family: 'Montserrat', sans-serif;
+                text-transform: uppercase;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                transition: transform 0.1s;
+            }}
+            .btn-store:active {{
+                transform: scale(0.95);
+            }}
         </style>
     </head>
     <body>
@@ -488,9 +520,9 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
 
             EVALUACIÓN DE NIVEL DE DIFICULTAD:
             Asigna obligatoriamente uno de estos tres niveles en el campo "nivel_dificultad" basándote en la complejidad técnica de la receta:
-            1. "Nivel Facil: pisito de estudiante" (recetas sencillas, sin técnicas complejas, pocos ingredientes, rápida ejecución).
-            2. "Nivel Intermedio: cuñao avanzado" (requiere cierta soltura en cocina, tiempos de cocción combinados, sofritos elaborados o técnicas moderadas).
-            3. "Nivel Chef: pura precisión" (técnicas exigentes, control estricto de temperaturas, emulsiones delicadas, limpieza compleja o múltiples procesos paralelos).
+            1. "Superviviente Básico" (recetas sencillas, sin técnicas complejas, pocos ingredientes, rápida ejecución).
+            2. "Cocinero Cualificado" (requiere cierta soltura en cocina, tiempos de cocción combinados, sofritos elaborados o técnicas moderadas).
+            3. "Doctor Chef" (técnicas exigentes, control estricto de temperaturas, emulsiones delicadas, limpieza compleja o múltiples procesos paralelos).
 
             REGLAS ESTRUCTURALES Y JSON:
             1. UNIDADES: Abreviadas (g, kg, ml, l, ºC, min). Escribir "cucharada" y "cucharadita" completas. Evita términos ambiguos ("al gusto").
@@ -511,7 +543,7 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
             {{
               "nombre_receta": "String",
               "origen_receta": "String",
-              "nivel_dificultad": "Nivel Facil: pisito de estudiante",
+              "nivel_dificultad": "Superviviente Básico",
               "ingredientes": ["400 g de harina"],
               "utensilios_menaje": ["Cuchillo", "Sartén"],
               "pasos_previos": ["Cortar vegetales"],
@@ -604,7 +636,7 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
                     datos.get("texto_voz", ""),
                     datos.get("maridaje", {}),
                     comensales_objetivo,
-                    datos.get("nivel_dificultad", "Nivel Intermedio: cuñao avanzado")
+                    datos.get("nivel_dificultad", "Cocinero Cualificado") # Fallback en caso de error
                 )
                 
                 st.success("¡Diagrama optimizado generado con éxito!")
@@ -617,7 +649,7 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
                     mime="text/html"
                 )
                 
-                components.html(html_final, height=1200, scrolling=True)
+                components.html(html_final, height=1250, scrolling=True)
             else:
                 st.error("No se pudo obtener una respuesta válida del modelo Gemini. Verifica que tu clave de API sea correcta, tenga créditos activos y que el prompt no rebase los límites de contenido.")
                 
