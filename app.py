@@ -107,7 +107,7 @@ API_KEY_INPUT = st.sidebar.text_input(
 
 modelo_seleccionado = st.sidebar.selectbox(
     "Modelo Gemini:",
-    options=["gemini-2.5-flash", "gemini-2.0-flash", "gemini-3.6-flash"],
+    options=["gemini-2.5-flash", "gemini-2.0-flash"],
     index=0
 )
 
@@ -384,10 +384,8 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
             body {{ background-color: #36393F; color: #E2E8F0; font-family: 'Inter', sans-serif; padding: 12px; margin: 0; }}
             .container-hub {{ max-width: 900px; margin: auto; }}
             .widget-box {{ background-color: #2C2F33; border-radius: 6px; padding: 16px; text-align: center; margin-bottom: 16px; }}
-            
             .btn-control {{ background: {COLOR_VERDE_ING}; color: #1E1E1E; border: none; padding: 10px 16px; font-size: 12px; font-weight: 900; border-radius: 4px; cursor: pointer; margin: 4px; font-family: 'Montserrat', sans-serif; text-transform: uppercase; transition: filter 0.2s; }}
             .btn-control:hover {{ filter: brightness(0.9); }}
-            
             .btn-store {{
                 background-color: {COLOR_VERDE_ING};
                 color: #1E1E1E;
@@ -403,9 +401,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
                 transition: transform 0.1s, filter 0.2s;
             }}
             .btn-store:hover {{ filter: brightness(0.9); }}
-            .btn-store:active {{
-                transform: scale(0.95);
-            }}
+            .btn-store:active {{ transform: scale(0.95); }}
         </style>
     </head>
     <body>
@@ -563,40 +559,92 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
               "recomendaciones": ["Punto crítico de cocción"],
               "texto_voz": "Resumen narrado del proceso",
               "maridaje": {{
-                "vinos": [
-                  "Vino 1", "Vino 2", "Vino 3"
-                ],
-                "cervezas": [
-                  "Cerveza 1", "Cerveza 2", "Cerveza 3"
-                ]
+                "vinos": ["Vino 1", "Vino 2", "Vino 3"],
+                "cervezas": ["Cerveza 1", "Cerveza 2", "Cerveza 3"]
               }}
             }}
             """
 
-            with st.spinner("🧠 Diseñando el flujo culinario..."):
-                response = client.models.generate_content(
-                    model=modelo_seleccionado,
-                    contents=f"{prompt_sistema}\n\nRECETA A PROCESAR:\n{contenido_ia}",
-                )
+            contents_payload = [prompt_sistema]
+            if archivo_multimodal:
+                contents_payload.append(types.Part.from_bytes(data=archivo_multimodal, mime_type=tipo_multimodal))
+                contents_payload.append(f"Procesa la receta adjunta ajustada a {comensales_objetivo} personas.")
+            else:
+                contents_payload.append(f"Receta:\n{contenido_ia}")
 
-                texto_json = response.text.replace("```json", "").replace("```", "").strip()
-                datos = json.loads(texto_json)
+            modelos_a_probar = [modelo_seleccionado, "gemini-2.5-flash", "gemini-2.0-flash"]
+            modelos_a_probar = list(dict.fromkeys(modelos_a_probar))
+            
+            response = None
+            exito = False
+            
+            with st.spinner("⚡ Conectando con Gemini y generando el diagrama..."):
+                for mod in modelos_a_probar:
+                    intentos = 3
+                    for intento in range(intentos):
+                        try:
+                            response = client.models.generate_content(
+                                model=mod,
+                                contents=contents_payload,
+                                config=types.GenerateContentConfig(
+                                    response_mime_type="application/json",
+                                    temperature=0.2
+                                ),
+                            )
+                            if response and response.text:
+                                exito = True
+                                break
+                        except Exception as api_err:
+                            err_str = str(api_err)
+                            if "503" in err_str or "UNAVAILABLE" in err_str or "429" in err_str:
+                                time.sleep((intento + 1) * 2)
+                                continue
+                            if intento == intentos - 1:
+                                break
+                    if exito:
+                        break
+
+            if response and exito:
+                texto_respuesta = response.text.strip()
+                if texto_respuesta.startswith("```json"):
+                    texto_respuesta = texto_respuesta[7:]
+                elif texto_respuesta.startswith("```"):
+                    texto_respuesta = texto_respuesta[3:]
+                if texto_respuesta.endswith("```"):
+                    texto_respuesta = texto_respuesta[:-3]
+                
+                datos = json.loads(texto_respuesta.strip())
+                origen_final = url_origen_detectada if url_origen_detectada else datos.get("origen_receta", "Texto introducido por el usuario")
 
                 html_final = generar_html_dashboard(
-                    nombre_receta=datos.get("nombre_receta", "Receta procesada"),
-                    origen_receta=url_origen_detectada if url_origen_detectada else "Texto / Archivo Local",
-                    ingredientes=datos.get("ingredientes", []),
-                    utensilios_menaje=datos.get("utensilios_menaje", []),
-                    pasos_previos=datos.get("pasos_previos", []),
-                    bloques_proceso=datos.get("bloques_proceso", []),
-                    recomendaciones=datos.get("recomendaciones", []),
-                    texto_voz=datos.get("texto_voz", ""),
-                    maridaje=datos.get("maridaje", {}),
-                    comensales=comensales_objetivo,
-                    nivel_dificultad=datos.get("nivel_dificultad", "N/A")
+                    datos.get("nombre_receta", "Receta Culinaria"),
+                    origen_final,
+                    datos.get("ingredientes", []),
+                    datos.get("utensilios_menaje", []),
+                    datos.get("pasos_previos", []),
+                    datos.get("bloques_proceso", []),
+                    datos.get("recomendaciones", []),
+                    datos.get("texto_voz", ""),
+                    datos.get("maridaje", {}),
+                    comensales_objetivo,
+                    datos.get("nivel_dificultad", "Cocinero Cualificado")
                 )
-
-                components.html(html_final, height=1200, scrolling=True)
-
+                
+                st.success("¡Diagrama optimizado generado con éxito!")
+                
+                nombre_archivo = f"diagrama_{datos.get('nombre_receta', 'receta').lower().replace(' ', '_')}.html"
+                st.download_button(
+                    label="💾 Descargar Diagrama en HTML",
+                    data=html_final,
+                    file_name=nombre_archivo,
+                    mime="text/html"
+                )
+                
+                components.html(html_final, height=1250, scrolling=True)
+            else:
+                st.error("No se pudo obtener una respuesta válida del modelo debido a saturación temporal (503). Por favor, vuelve a pulsar el botón en unos segundos.")
+                
+        except APIError as e:
+            st.error(f"Error de la API de Gemini: {e}")
         except Exception as e:
-            st.error(f"❌ Ocurrió un error al procesar la receta: {e}")
+            st.error(f"Error inesperado al procesar los datos: {e}")
