@@ -238,7 +238,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
     <div style="background-color: #2C2F33; border-left: 6px solid {COLOR_VERDE_ING}; border-radius: 6px; padding: 16px; margin-bottom: 16px;">
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4F545C; padding-bottom: 8px; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
             <h3 style="color: {COLOR_VERDE_ING}; margin: 0; font-size: clamp(14px, 2.5vw, 16px); font-weight: 700; font-family: 'Montserrat', sans-serif;">🛒 1. Ingredientes ({comensales} pax)</h3>
-            <button class="btn-store" style="background-color: {COLOR_VERDE_ING}; color: #1E1E1E;" onclick="alert('Redirigiendo a la tienda de ingredientes...')">🛒 DELICATESSEN COURMET</button>
+            <button class="btn-store" style="background-color: {COLOR_VERDE_ING}; color: #1E1E1E;" onclick="alert('Redirigiendo a la tienda de ingredientes...')">🛒 DELICATESSEN GOURMET</button>
         </div>
         <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;">
     """
