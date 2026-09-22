@@ -60,11 +60,12 @@ st.markdown("""
         box-shadow: none !important;
     }
 
+    /* Botones de Streamlit unificados en Verde */
     .stButton > button {
-        background: #EF4444 !important;
-        color: #FFFFFF !important;
+        background: #00FF66 !important;
+        color: #1E1E1E !important;
         font-family: 'Montserrat', sans-serif !important;
-        font-weight: 700 !important;
+        font-weight: 900 !important;
         font-size: 15px !important;
         border: none !important;
         border-radius: 6px !important;
@@ -75,7 +76,7 @@ st.markdown("""
         transition: background 0.2s ease !important;
     }
     .stButton > button:hover {
-        background: #DC2626 !important;
+        background: #00CC52 !important;
     }
 
     .streamlit-expanderHeader {
@@ -129,7 +130,7 @@ st.sidebar.markdown("""
 """)
 
 # Encabezado Principal
-st.markdown("<h1 style='text-align: center; color: #FFFFFF; font-family: Montserrat, sans-serif; font-weight: 900; letter-spacing: 2px; margin-bottom: 0; font-size: clamp(20px, 4vw, 32px);'>FACEFOODCHEF <span style='font-size: clamp(10px, 2vw, 14px); background: #EF4444; color: #FFF; padding: 4px 10px; border-radius: 4px; vertical-align: middle; letter-spacing: 1px;'>MOTOR DE DIAGRAMAS</span></h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: #FFFFFF; font-family: Montserrat, sans-serif; font-weight: 900; letter-spacing: 2px; margin-bottom: 0; font-size: clamp(20px, 4vw, 32px);'>FACEFOODCHEF <span style='font-size: clamp(10px, 2vw, 14px); background: #00FF66; color: #1E1E1E; padding: 4px 10px; border-radius: 4px; vertical-align: middle; letter-spacing: 1px;'>MOTOR DE DIAGRAMAS</span></h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; color: #E2E8F0; font-size: clamp(13px, 2vw, 15px); margin-bottom: 30px; font-family: Inter, sans-serif;'>Convierte recetas textuales en diagramas de flujo de producción culinaria</p>", unsafe_allow_html=True)
 
 # Entrada de receta
@@ -249,7 +250,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
     <div style="background-color: #2C2F33; border-left: 6px solid {COLOR_VERDE_ING}; border-radius: 6px; padding: 16px; margin-bottom: 16px;">
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4F545C; padding-bottom: 8px; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
             <h3 style="color: {COLOR_VERDE_ING}; margin: 0; font-size: clamp(14px, 2.5vw, 16px); font-weight: 700; font-family: 'Montserrat', sans-serif;">🛠️ 2. Utensilios y Menaje</h3>
-            <button class="btn-store" style="background-color: #A8B2C1; color: #1E1E1E;" onclick="alert('Redirigiendo a la tienda de menaje...')">🍳 PUCHEROS STORE</button>
+            <button class="btn-store" style="background-color: {COLOR_VERDE_ING}; color: #1E1E1E;" onclick="alert('Redirigiendo a la tienda de menaje...')">🍳 PUCHEROS STORE</button>
         </div>
         <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;">
     """
@@ -299,7 +300,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
                     <div style="font-size: clamp(11px, 2vw, 13px); color: #E2E8F0; margin-bottom: 10px; font-family: 'JetBrains Mono', monospace;">🛠️ <b>Utensilios:</b> {utensilios_rama}</div>
                     <div style="display: flex; justify-content: space-between; align-items: center; background: #36393F; padding: 8px 12px; border-radius: 4px; flex-wrap: wrap; gap: 6px;">
                         <div style="font-size: clamp(12px, 2vw, 14px); color: #FFB300; font-family: 'JetBrains Mono', monospace; font-weight: 600;">⏱️ <span id="{timer_id}">{tiempo}</span> | 🌡️ {temp}</div>
-                        <button onclick="iniciarTemporizador('{timer_id}', {dur_rama})" style="background-color: #EF4444; color: #FFF; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 700; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">⏳ Iniciar</button>
+                        <button onclick="iniciarTemporizador('{timer_id}', {dur_rama})" style="background-color: {COLOR_VERDE_ING}; color: #1E1E1E; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 900; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">⏳ Iniciar</button>
                     </div>
                 </div>
                 """
@@ -317,7 +318,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
                 <div style="font-size: clamp(11px, 2vw, 13px); color: #E2E8F0; margin-bottom: 10px; font-family: 'JetBrains Mono', monospace;">🛠️ <b>Utensilios:</b> {utensilios_str}</div>
                 <div style="display: flex; justify-content: space-between; align-items: center; background: #36393F; padding: 8px 12px; border-radius: 4px; flex-wrap: wrap; gap: 6px;">
                     <div style="font-size: clamp(12px, 2vw, 14px); color: #FFB300; font-family: 'JetBrains Mono', monospace; font-weight: 600;">⏱️ <span id="{timer_id}">{bloque.get('tiempo')}</span> | 🌡️ {bloque.get('temperatura')}</div>
-                    <button onclick="iniciarTemporizador('{timer_id}', {duracion_min})" style="background-color: #EF4444; color: #FFF; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 700; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">⏳ Iniciar</button>
+                    <button onclick="iniciarTemporizador('{timer_id}', {duracion_min})" style="background-color: {COLOR_VERDE_ING}; color: #1E1E1E; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 900; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">⏳ Iniciar</button>
                 </div>
             </div>
             """
@@ -336,7 +337,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
     <div style="background-color: #2C2F33; border-left: 6px solid {COLOR_DORADO_PLATO}; border-radius: 6px; padding: 16px; text-align: center; margin-top: 10px;">
         <span style="font-size: 11px; font-weight: 700; color: #2C2F33; background-color: {COLOR_DORADO_PLATO}; padding: 4px 10px; border-radius: 3px; font-family: 'Montserrat', sans-serif;">RESULTADO FINAL</span>
         <h3 style="color: {COLOR_DORADO_PLATO}; margin: 12px 0; font-weight: 900; font-family: 'Montserrat', sans-serif; font-size: clamp(15px, 2.8vw, 18px);">🍽️ PLATO LISTO PARA SERVIR</h3>
-        <button class="btn-store" style="background-color: {COLOR_DORADO_PLATO}; color: #1E1E1E;" onclick="alert('Enlace a técnicas de emplatado o equipo...')">✨ EMPLATADO</button>
+        <button class="btn-store" style="background-color: {COLOR_VERDE_ING}; color: #1E1E1E;" onclick="alert('Enlace a técnicas de emplatado o equipo...')">✨ EMPLATADO</button>
     </div>
     </div>
     """
@@ -359,7 +360,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
     <div style="background-color: #2C2F33; border-left: 6px solid {COLOR_VERDE_ING}; border-radius: 6px; padding: 16px; margin-top: 16px; margin-bottom: 16px;">
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4F545C; padding-bottom: 8px; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
             <h3 style="color: {COLOR_VERDE_ING}; margin: 0; font-size: clamp(14px, 2.5vw, 16px); font-weight: 700; font-family: 'Montserrat', sans-serif;">🍷 6. Maridaje</h3>
-            <button class="btn-store" style="background-color: #9333EA; color: #FFF;" onclick="alert('Redirigiendo a la bodega de líquidos...')">🍾 LIQUIDOS STORE</button>
+            <button class="btn-store" style="background-color: {COLOR_VERDE_ING}; color: #1E1E1E;" onclick="alert('Redirigiendo a la bodega de líquidos...')">🍾 LIQUIDOS STORE</button>
         </div>
         <div style="margin-top: 12px; color: #E2E8F0; font-size: clamp(13px, 2.2vw, 15px); line-height: 1.6; font-family: 'Inter', sans-serif;">
             <p style="margin-bottom: 4px; color: #FFFFFF;"><b>🍇 Vinos (Denominaciones de Origen):</b></p>
@@ -384,10 +385,12 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
             body {{ background-color: #36393F; color: #E2E8F0; font-family: 'Inter', sans-serif; padding: 12px; margin: 0; }}
             .container-hub {{ max-width: 900px; margin: auto; }}
             .widget-box {{ background-color: #2C2F33; border-radius: 6px; padding: 16px; text-align: center; margin-bottom: 16px; }}
-            .btn-control {{ background: #EF4444; color: #FFF; border: none; padding: 10px 16px; font-size: 12px; font-weight: 700; border-radius: 4px; cursor: pointer; margin: 4px; font-family: 'Montserrat', sans-serif; text-transform: uppercase; }}
-            .btn-stop {{ background: #4F545C; color: #FFF; }}
             
-            /* Clase específica para los botones de las Tiendas/Extras */
+            /* Todos los botones de control (voz y silencio) unificados al verde */
+            .btn-control {{ background: {COLOR_VERDE_ING}; color: #1E1E1E; border: none; padding: 10px 16px; font-size: 12px; font-weight: 900; border-radius: 4px; cursor: pointer; margin: 4px; font-family: 'Montserrat', sans-serif; text-transform: uppercase; transition: filter 0.2s; }}
+            .btn-control:hover {{ filter: brightness(0.9); }}
+            
+            /* Clase específica para los botones de las Tiendas/Extras unificada en verde */
             .btn-store {{
                 border: none;
                 padding: 8px 14px;
@@ -398,8 +401,9 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
                 font-family: 'Montserrat', sans-serif;
                 text-transform: uppercase;
                 box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-                transition: transform 0.1s;
+                transition: transform 0.1s, filter 0.2s;
             }}
+            .btn-store:hover {{ filter: brightness(0.9); }}
             .btn-store:active {{
                 transform: scale(0.95);
             }}
@@ -411,7 +415,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
             <div class="widget-box">
                 <p style="color: #E2E8F0; font-size: 12px; margin: 0 0 10px 0; font-weight: 700; font-family: 'Montserrat', sans-serif;">👨‍🍳 ASISTENTE AUDITIVO</p>
                 <button id="btnVoz" class="btn-control" onclick="reproducir(this)">🎧 Escuchar Pasos</button>
-                <button class="btn-control btn-stop" onclick="detener()">Silenciar</button>
+                <button class="btn-control" onclick="detener()">Silenciar</button>
             </div>
             {html_ing}
             {html_utensilios}
