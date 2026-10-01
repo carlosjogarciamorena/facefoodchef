@@ -105,9 +105,10 @@ API_KEY_INPUT = st.sidebar.text_input(
     help="Introduce tu clave de API de Google Gemini (Google AI Studio)."
 )
 
+# SE ACTUALIZAN LOS MODELOS DISPONIBLES AL 3.8-FLASH COMO RECOMIENDA LA API
 modelo_seleccionado = st.sidebar.selectbox(
     "Modelo Gemini:",
-    options=["gemini-2.5-flash", "gemini-2.0-flash"],
+    options=["gemini-3.8-flash", "gemini-3.6-flash", "gemini-2.5-flash"],
     index=0
 )
 
@@ -512,7 +513,7 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
     api_key_activa = API_KEY_INPUT.strip()
     
     if not api_key_activa:
-        st.error("⚠️️ Introduce tu clave de API de Google Gemini en el panel lateral.")
+        st.error("⚠️ Introduce tu clave de API de Google Gemini en el panel lateral.")
     elif not procesar_accion:
         st.warning("⚠️ Debes introducir un texto, URL o adjuntar un archivo con la receta.")
     else:
@@ -580,7 +581,8 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
             else:
                 contents_payload.append(f"Receta:\n{contenido_ia}")
 
-            modelos_a_probar = [modelo_seleccionado, "gemini-2.5-flash", "gemini-2.0-flash"]
+            # SE ACTUALIZAN LOS MODELOS PARA EVITAR EL ERROR 404
+            modelos_a_probar = [modelo_seleccionado, "gemini-3.8-flash", "gemini-3.6-flash"]
             modelos_a_probar = list(dict.fromkeys(modelos_a_probar))
             
             response = None
