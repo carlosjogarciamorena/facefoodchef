@@ -105,10 +105,9 @@ API_KEY_INPUT = st.sidebar.text_input(
     help="Introduce tu clave de API de Google Gemini (Google AI Studio)."
 )
 
-# SE ACTUALIZAN LOS MODELOS DISPONIBLES AL 3.8-FLASH COMO RECOMIENDA LA API
 modelo_seleccionado = st.sidebar.selectbox(
     "Modelo Gemini:",
-    options=["gemini-3.8-flash", "gemini-3.6-flash", "gemini-2.5-flash"],
+    options=["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash"],
     index=0
 )
 
@@ -581,17 +580,16 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
             else:
                 contents_payload.append(f"Receta:\n{contenido_ia}")
 
-            # SE ACTUALIZAN LOS MODELOS PARA EVITAR EL ERROR 404
-            modelos_a_probar = [modelo_seleccionado, "gemini-3.8-flash", "gemini-3.6-flash"]
+            modelos_a_probar = [modelo_seleccionado, "gemini-3.8-flash", "gemini-3.7-flash"]
             modelos_a_probar = list(dict.fromkeys(modelos_a_probar))
             
             response = None
             exito = False
             error_capturado = ""
             
-            with st.spinner("⚡ Conectando con Gemini y generando el diagrama..."):
+            with st.spinner("⚡ Conectando con Gemini y generando el diagrama (reintentando si hay alta demanda)..."):
                 for mod in modelos_a_probar:
-                    intentos = 2
+                    intentos = 3  # Aumentado a 3 intentos por modelo para superar picos de 503
                     for intento in range(intentos):
                         try:
                             response = client.models.generate_content(
@@ -609,10 +607,10 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
                             err_str = str(api_err)
                             error_capturado = err_str
                             if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
-                                # Romper inmediatamente el ciclo si se agota la cuota para evitar bloqueos largos
                                 break
                             if "503" in err_str or "UNAVAILABLE" in err_str:
-                                time.sleep(2)
+                                # Espera exponencial progresiva ante alta demanda (3s, 6s, 9s)
+                                time.sleep(3 * (intento + 1))
                                 continue
                             if intento == intentos - 1:
                                 break
@@ -658,7 +656,9 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
                 components.html(html_final, height=1250, scrolling=True)
             else:
                 if "429" in error_capturado or "RESOURCE_EXHAUSTED" in error_capturado:
-                    st.error("⚠️ **Límite de cuota gratuito alcanzado (Error 429).** Has superado las solicitudes permitidas por la API de Google por hoy. Por favor, espera unos segundos/minutos antes de volver a intentarlo o verifica tu plan en Google AI Studio.")
+                    st.error("⚠️ **Límite de cuota gratuito alcanzado (Error 429).** Has superado las solicitudes permitidas por la API de Google por hoy.")
+                elif "503" in error_capturado or "UNAVAILABLE" in error_capturado:
+                    st.error("⚠️ **Servidores con alta demanda (Error 503).** Google está experimentando tráfico elevado de forma temporal. Vuelve a pulsar el botón en unos segundos.")
                 else:
                     st.error(f"No se pudo obtener una respuesta válida del modelo: {error_capturado}")
                 
