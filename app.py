@@ -227,7 +227,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
         <h1 style="color: #FFFFFF; font-size: clamp(18px, 4vw, 24px); margin: 10px 0 8px 0; font-weight: 900; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">{nombre_receta}</h1>
         <div style="display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; margin-top: 10px; font-family: 'JetBrains Mono', monospace; font-size: clamp(12px, 2vw, 14px);">
             <span style="background-color: #36393F; padding: 6px 12px; border-radius: 4px; color: #E2E8F0;">👥 <b>Comensales:</b> {comensales} pax</span>
-            <span style="background-color: #36393F; padding: 6px 12px; border-radius: 4px; color: #FFB300;">⏱️ <b>Tiempo total:</b> {tiempo_total_min} min</span>
+            <span style="background-color: #36393F; padding: 6px 12px; border-radius: 4px; color: #FFB300;">⏱️️ <b>Tiempo total:</b> {tiempo_total_min} min</span>
             <span style="background-color: #36393F; padding: 6px 12px; border-radius: 4px; color: {color_nivel}; font-weight: 700;">🎯 <b>Nivel:</b> {nivel_dificultad}</span>
         </div>
     </div>
@@ -463,7 +463,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
                     if (segundosRestantes <= 0) {{
                         clearInterval(window[elementId + "_interval"]);
                         elemento.innerText = "¡FINALIZADO!";
-                        sonarAlerta();
+                        sonarAlertaMultiple();
                     }} else {{
                         segundosRestantes--;
                         const m = Math.floor(segundosRestantes / 60);
@@ -473,19 +473,38 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
                 }}, 1000);
             }}
 
-            function sonarAlerta() {{
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const freq = 880;
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.5);
+            function sonarAlertaMultiple() {{
+                // Emite 10 avisos acústicos consecutivos para asegurar que el cocinero lo escuche
+                let pitidosEmitidos = 0;
+                const totalPitidos = 10;
+                
+                const intervaloPitidos = setInterval(() => {{
+                    if (pitidosEmitidos >= totalPitidos) {{
+                        clearInterval(intervaloPitidos);
+                        return;
+                    }}
+                    emitirUnPitido();
+                    pitidosEmitidos++;
+                }}, 350); // Intervalo de 350ms entre pitido y pitido
+            }}
+
+            function emitirUnPitido() {{
+                try {{
+                    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    const freq = 880;
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.2);
+                }} catch (e) {{
+                    console.error("Error reproduciendo audio:", e);
+                }}
             }}
         </script>
     </body>
@@ -587,9 +606,9 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
             exito = False
             error_capturado = ""
             
-            with st.spinner("⚡ Conectando con Gemini y generando el diagrama (reintentando si hay alta demanda)..."):
+            with st.spinner("⚡ Conectando con Gemini y generando el diagrama..."):
                 for mod in modelos_a_probar:
-                    intentos = 3  # Aumentado a 3 intentos por modelo para superar picos de 503
+                    intentos = 3
                     for intento in range(intentos):
                         try:
                             response = client.models.generate_content(
@@ -609,7 +628,6 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
                             if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
                                 break
                             if "503" in err_str or "UNAVAILABLE" in err_str:
-                                # Espera exponencial progresiva ante alta demanda (3s, 6s, 9s)
                                 time.sleep(3 * (intento + 1))
                                 continue
                             if intento == intentos - 1:
@@ -658,7 +676,7 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
                 if "429" in error_capturado or "RESOURCE_EXHAUSTED" in error_capturado:
                     st.error("⚠️ **Límite de cuota gratuito alcanzado (Error 429).** Has superado las solicitudes permitidas por la API de Google por hoy.")
                 elif "503" in error_capturado or "UNAVAILABLE" in error_capturado:
-                    st.error("⚠️ **Servidores con alta demanda (Error 503).** Google está experimentando tráfico elevado de forma temporal. Vuelve a pulsar el botón en unos segundos.")
+                    st.error("⚠️ **Servidores con alta demanda (Error 503).** Google está experimentando tráfico elevado temporalmente. Vuelve a pulsar el botón en unos segundos.")
                 else:
                     st.error(f"No se pudo obtener una respuesta válida del modelo: {error_capturado}")
                 
