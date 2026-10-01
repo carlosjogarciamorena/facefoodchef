@@ -512,7 +512,7 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
     api_key_activa = API_KEY_INPUT.strip()
     
     if not api_key_activa:
-        st.error("⚠️ Introduce tu clave de API de Google Gemini en el panel lateral.")
+        st.error("⚠️️ Introduce tu clave de API de Google Gemini en el panel lateral.")
     elif not procesar_accion:
         st.warning("⚠️ Debes introducir un texto, URL o adjuntar un archivo con la receta.")
     else:
