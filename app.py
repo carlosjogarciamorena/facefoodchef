@@ -216,7 +216,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
         color_nivel = COLOR_VERDE_ING
     elif "CUALIFICADO" in nivel_dificultad_upper:
         color_nivel = COLOR_AMARILLO_ACC
-    elif "DOCTOR" in nivel_dificultad_upper:
+    elif "CHEF" in nivel_dificultad_upper:
         color_nivel = COLOR_ROJO_ALERTA
     else:
         color_nivel = "#E2E8F0"
