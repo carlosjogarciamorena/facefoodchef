@@ -254,4 +254,34 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
         <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;">
     """
     for ut in utensilios_menaje:
-        html_utensilios += f"<span style='background-color: #36393F; color: #E2E8F0; padding: 6px
+        html_utensilios += f"<span style='background-color: #36393F; color: #E2E8F0; padding: 6px 10px; border-radius: 4px; font-size: clamp(12px, 2vw, 14px); font-family: \"JetBrains Mono\", monospace;'>{ut}</span>"
+    html_utensilios += "</div></div>"
+
+    html_prev = """
+    <div style="background-color: #2C2F33; border-left: 6px solid #4F545C; border-radius: 6px; padding: 16px; margin-bottom: 20px;">
+        <h3 style="color: #FFFFFF; margin-top: 0; font-size: clamp(14px, 2.5vw, 16px); font-weight: 700; font-family: 'Montserrat', sans-serif; border-bottom: 1px solid #4F545C; padding-bottom: 8px;">🔪 3. Preparación Previa (Mise en Place)</h3>
+        <ul style='margin: 12px 0 0 0; padding-left: 18px; color: #E2E8F0; font-size: clamp(13px, 2.2vw, 15px); line-height: 1.6; font-family: "JetBrains Mono", monospace;'>
+    """
+    for prep in pasos_previos:
+        html_prev += f"<li style='margin-bottom: 6px;'>{prep}</li>"
+    html_prev += "</ul></div>"
+
+    html_diagrama = """
+    <div>
+        <h3 style="color: #FFFFFF; font-size: clamp(16px, 3vw, 18px); font-weight: 700; margin-bottom: 16px; font-family: 'Montserrat', sans-serif; border-bottom: 2px solid #EF4444; padding-bottom: 6px; display: inline-block;">4. Diagrama de Ejecución y Flujo</h3>
+    """
+
+    for i, bloque in enumerate(bloques_proceso):
+        tipo = bloque.get("tipo", "secuencial")
+        es_critico = bloque.get("es_critico", False)
+        duracion_min = bloque.get("duracion_minutos", 5)
+        utensilios = bloque.get("utensilios", [])
+        utensilios_str = ", ".join(utensilios) if utensilios else "N/A"
+
+        borde_color = COLOR_ROJO_ALERTA if es_critico else COLOR_AMARILLO_ACC
+
+        if tipo == "paralelo":
+            ramas = bloque.get("ramas", [])
+            html_diagrama += '<div style="display: flex; gap: 12px; margin-bottom: 14px; flex-wrap: wrap;">'
+            for idx, rama in enumerate(ramas):
+                nombre_rama = rama.get("nombre", f"Subproceso {idx+1}").
