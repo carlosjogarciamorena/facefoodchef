@@ -23,7 +23,7 @@ except ImportError:
     HAS_DOCX = False
 
 try:
-    from pptx import Presentation
+    import pptx
     HAS_PPTX = True
 except ImportError:
     HAS_PPTX = False
@@ -168,7 +168,7 @@ if archivo_subido:
         doc = docx.Document(BytesIO(archivo_subido.getvalue()))
         receta_texto_input = "\n".join([p.text for p in doc.paragraphs if p.text.strip()])
     elif ext == "pptx" and HAS_PPTX:
-        prs = Presentation(BytesIO(archivo_subido.getvalue()))
+        prs = pptx.Presentation(BytesIO(archivo_subido.getvalue()))
         receta_texto_input = "\n".join([p.text for slide in prs.slides for shape in slide.shapes if shape.has_text_frame for p in shape.text_frame.paragraphs])
     elif ext in ["pdf", "jpg", "jpeg", "png", "webp"]:
         archivo_multimodal = archivo_subido.getvalue()
@@ -400,7 +400,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
             .btn-silenciar {{ background: #4F545C; color: #FFFFFF; border: none; padding: 10px 16px; font-size: 12px; font-weight: 900; border-radius: 4px; cursor: pointer; margin: 4px; font-family: 'Montserrat', sans-serif; text-transform: uppercase; transition: filter 0.2s; }}
             .btn-silenciar:hover {{ filter: brightness(0.9); }}
             
-            .btn-step-audio {{ background: #FFB300; color: #1E1E1E; border: none; padding: 5px 10px; font-size: 10px; font-weight: 900; border-radius: 4px; cursor: pointer; font-family: 'Montserrat', sans-serif; text-transform: uppercase; transition: filter 0.2s; }}
+            .btn-step-audio {{ background: #FFB300; color: #1E1E1E; border: none; padding: 6px 12px; font-size: 11px; font-weight: 900; border-radius: 4px; cursor: pointer; font-family: 'Montserrat', sans-serif; text-transform: uppercase; transition: filter 0.2s; }}
             .btn-step-audio:hover {{ filter: brightness(0.9); }}
 
             .btn-iniciar {{ background: #EF4444; color: #FFFFFF; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 900; font-family: 'Montserrat', sans-serif; text-transform: uppercase; transition: filter 0.2s; }}
@@ -447,7 +447,7 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
             let currentUtterance = null;
 
             function reproducirResumen(btn) {{
-                if (!('speechSynthesis' in window)) return alert("Sintetizador no soportado.");
+                if (!('speechSynthesis' in window)) return alert("Sintetizador no soportado en este navegador.");
                 window.speechSynthesis.cancel();
                 currentUtterance = new SpeechSynthesisUtterance(textoResumenVoz);
                 currentUtterance.lang = 'es-ES';
@@ -459,16 +459,22 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
             }}
 
             function reproducirTexto(texto, btn) {{
-                if (!('speechSynthesis' in window)) return alert("Sintetizador no soportado.");
+                if (!('speechSynthesis' in window)) return alert("Sintetizador no soportado en este navegador.");
                 window.speechSynthesis.cancel();
-                currentUtterance = new SpeechSynthesisUtterance(texto);
-                currentUtterance.lang = 'es-ES';
-                currentUtterance.rate = 0.95;
-                const textoOriginal = btn.innerText;
-                btn.innerText = "🔊 REPRODUCIENDO...";
-                currentUtterance.onend = () => btn.innerText = textoOriginal;
-                currentUtterance.onerror = () => btn.innerText = textoOriginal;
-                window.speechSynthesis.speak(currentUtterance);
+                
+                // Forzar desbloqueo de síntesis de voz en contextos de IFrame
+                setTimeout(() => {{
+                    currentUtterance = new SpeechSynthesisUtterance(texto);
+                    currentUtterance.lang = 'es-ES';
+                    currentUtterance.rate = 0.95;
+                    const textoOriginal = btn.innerText;
+                    btn.innerText = "🔊 LEYENDO PASO...";
+                    
+                    currentUtterance.onend = () => btn.innerText = textoOriginal;
+                    currentUtterance.onerror = () => btn.innerText = textoOriginal;
+                    
+                    window.speechSynthesis.speak(currentUtterance);
+                }}, 50);
             }}
 
             function detener() {{
