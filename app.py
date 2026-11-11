@@ -28,14 +28,12 @@ try:
 except ImportError:
     HAS_PPTX = False
 
-# Configuración de página Streamlit
 st.set_page_config(
     page_title="FaceFoodChef.com - Motor de Diagramas Culinarios", 
     layout="wide", 
     page_icon="🍳"
 )
 
-# Estilos globales de Streamlit
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&family=Montserrat:wght@700;900&display=swap');
@@ -86,7 +84,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Panel Lateral
 st.sidebar.header("⚙️ Panel de Control")
 
 API_KEY_INPUT = st.sidebar.text_input(
@@ -120,11 +117,9 @@ st.sidebar.markdown("""
 - 🟡 **Dorado (`#FFD700`):** Plato Terminado
 """)
 
-# Encabezado Principal
 st.markdown("<h1 style='text-align: center; color: #FFFFFF; font-family: Montserrat, sans-serif; font-weight: 900; letter-spacing: 2px; margin-bottom: 0; font-size: clamp(20px, 4vw, 32px);'>FACEFOODCHEF <span style='font-size: clamp(10px, 2vw, 14px); background: #00FF66; color: #1E1E1E; padding: 4px 10px; border-radius: 4px; vertical-align: middle; letter-spacing: 1px;'>MOTOR DE DIAGRAMAS</span></h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; color: #E2E8F0; font-size: clamp(13px, 2vw, 15px); margin-bottom: 30px; font-family: Inter, sans-serif;'>Convierte recetas textuales en diagramas de flujo de producción culinaria con audio guiado</p>", unsafe_allow_html=True)
 
-# Entrada de receta
 st.subheader("📥 Entrada de Receta")
 entrada_principal = st.text_area(
     "Pega la URL de la receta o el texto completo:", 
@@ -141,95 +136,4 @@ archivo_multimodal = None
 tipo_multimodal = None
 
 if entrada_principal.strip():
-    texto_limpio = entrada_principal.strip()
-    if texto_limpio.startswith("http://") or texto_limpio.startswith("https://"):
-        if texto_limpio.count("http") > 1:
-            partes = texto_limpio.split("http")
-            url_origen_detectada = "http" + partes[-1]
-        else:
-            url_origen_detectada = texto_limpio
-    else:
-        receta_texto_input = texto_limpio
-
-if archivo_subido:
-    ext = archivo_subido.name.split('.')[-1].lower()
-    if ext == "txt":
-        receta_texto_input = archivo_subido.getvalue().decode("utf-8")
-    elif ext == "docx" and HAS_DOCX:
-        doc = docx.Document(BytesIO(archivo_subido.getvalue()))
-        receta_texto_input = "\n".join([p.text for p in doc.paragraphs if p.text.strip()])
-    elif ext == "pptx" and HAS_PPTX:
-        prs = pptx.Presentation(BytesIO(archivo_subido.getvalue()))
-        receta_texto_input = "\n".join([p.text for slide in prs.slides for shape in slide.shapes if shape.has_text_frame for p in shape.text_frame.paragraphs])
-    elif ext in ["pdf", "jpg", "jpeg", "png", "webp"]:
-        archivo_multimodal = archivo_subido.getvalue()
-        tipo_multimodal = "application/pdf" if ext == "pdf" else archivo_subido.type
-
-def extraer_texto_de_url(url):
-    url = url.strip()
-    try:
-        scraper = scrape_me(url)
-        texto = f"Receta de {url}:\nIngredientes: {', '.join(scraper.ingredients())}\nPasos:\n{'\n'.join(scraper.instructions())}"
-        return texto, url
-    except Exception:
-        try:
-            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
-            response = requests.get(url, headers=headers, timeout=10)
-            response.raise_for_status()
-            soup = BeautifulSoup(response.text, 'html.parser')
-            for element in soup(["script", "style", "nav", "footer", "header", "aside"]):
-                element.decompose()
-            return f"Contenido de {url}:\n{soup.get_text(separator='\n', strip=True)}", url
-        except Exception as e:
-            raise Exception(f"Error al procesar la URL (Comprueba que sea accesible o pega el texto directamente): {e}")
-
-def calcular_tiempo_total(bloques_proceso, minutos_prep=10):
-    total = minutos_prep
-    for b in bloques_proceso:
-        if b.get("tipo") == "paralelo":
-            max_rama = max([r.get("duracion_minutos", 5) for r in b.get("ramas", [{"duracion_minutos": 5}])], default=5)
-            total += max_rama
-        else:
-            total += b.get("duracion_minutos", 5)
-    return total
-
-def generar_html_dashboard(
-    nombre_receta, 
-    origen_receta, 
-    ingredientes, 
-    utensilios_menaje, 
-    pasos_previos, 
-    bloques_proceso, 
-    recomendaciones, 
-    texto_voz, 
-    maridaje, 
-    comensales, 
-    nivel_dificultad
-):
-    COLOR_VERDE_ING = "#00FF66"      
-    COLOR_AMARILLO_ACC = "#FFB300"   
-    COLOR_ROJO_ALERTA = "#EF4444"    
-    COLOR_DORADO_PLATO = "#FFD700"   
-
-    minutos_prep_est = len(pasos_previos) * 3 if pasos_previos else 10
-    tiempo_total_min = calcular_tiempo_total(bloques_proceso, minutos_prep_est)
-
-    nivel_dificultad_upper = nivel_dificultad.upper()
-    if "SUPERVIVIENTE" in nivel_dificultad_upper:
-        color_nivel = COLOR_VERDE_ING
-    elif "CUALIFICADO" in nivel_dificultad_upper:
-        color_nivel = COLOR_AMARILLO_ACC
-    elif "DOCTOR" in nivel_dificultad_upper:
-        color_nivel = COLOR_ROJO_ALERTA
-    else:
-        color_nivel = "#E2E8F0"
-
-    html_header = f"""
-    <div style="background-color: #2C2F33; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 20px; border-left: 6px solid {COLOR_DORADO_PLATO};">
-        <span style="font-size: 11px; font-weight: 700; color: #2C2F33; text-transform: uppercase; letter-spacing: 2px; background: {COLOR_DORADO_PLATO}; padding: 4px 12px; border-radius: 3px; display: inline-block; font-family: 'Montserrat', sans-serif;">Flujo Culinario Completo</span>
-        <h1 style="color: #FFFFFF; font-size: clamp(18px, 4vw, 24px); margin: 10px 0 8px 0; font-weight: 900; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">{nombre_receta}</h1>
-        <div style="display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; margin-top: 10px; font-family: 'JetBrains Mono', monospace; font-size: clamp(12px, 2vw, 14px);">
-            <span style="background-color: #36393F; padding: 6px 12px; border-radius: 4px; color: #E2E8F0;">👥 <b>Comensales:</b> {comensales} pax</span>
-            <span style="background-color: #36393F; padding: 6px 12px; border-radius: 4px; color: #FFB300;">⏱️ <b>Tiempo total:</b> {tiempo_total_min} min</span>
-            <span style="background-color: #36393F; padding: 6px 12px; border-radius: 4px; color: {color_nivel}; font-weight: 700;">🎯 <b>Nivel:</b> {nivel_dificultad}</span>
-        </div>
+    texto_limpio = entrada_principal.
