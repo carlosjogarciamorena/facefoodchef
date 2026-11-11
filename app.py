@@ -233,37 +233,3 @@ def generar_html_dashboard(
             <span style="background-color: #36393F; padding: 6px 12px; border-radius: 4px; color: #FFB300;">⏱️ <b>Tiempo total:</b> {tiempo_total_min} min</span>
             <span style="background-color: #36393F; padding: 6px 12px; border-radius: 4px; color: {color_nivel}; font-weight: 700;">🎯 <b>Nivel:</b> {nivel_dificultad}</span>
         </div>
-    </div>
-    """
-
-    ingredientes_html_items = "".join([f"<span style=\"background-color: #36393F; color: #E2E8F0; padding: 8px 12px; border-radius: 4px; font-size: clamp(12px, 2vw, 14px); font-family: 'JetBrains Mono', monospace;\">{ing}</span>" for ing in ingredientes])
-    html_ing = f"""
-    <div style="background-color: #2C2F33; border-left: 6px solid {COLOR_VERDE_ING}; border-radius: 6px; padding: 16px; margin-bottom: 16px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4F545C; padding-bottom: 8px; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
-            <h3 style="color: {COLOR_VERDE_ING}; margin: 0; font-size: clamp(14px, 2.5vw, 16px); font-weight: 700; font-family: 'Montserrat', sans-serif;">🛒 1. Ingredientes ({comensales} pax)</h3>
-            <button class="btn-store" style="background-color: {COLOR_VERDE_ING}; color: #1E1E1E;" onclick="alert('Redirigiendo a la tienda de ingredientes...')">🛒 DELICATESSEN GOURMET</button>
-        </div>
-        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;">{ingredientes_html_items}</div>
-    </div>
-    """
-
-    utensilios_html_items = "".join([f"<span style=\"background-color: #36393F; color: #E2E8F0; padding: 6px 10px; border-radius: 4px; font-size: clamp(12px, 2vw, 14px); font-family: 'JetBrains Mono', monospace;\">{ut}</span>" for ut in utensilios_menaje])
-    html_utensilios = f"""
-    <div style="background-color: #2C2F33; border-left: 6px solid {COLOR_VERDE_ING}; border-radius: 6px; padding: 16px; margin-bottom: 16px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4F545C; padding-bottom: 8px; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
-            <h3 style="color: {COLOR_VERDE_ING}; margin: 0; font-size: clamp(14px, 2.5vw, 16px); font-weight: 700; font-family: 'Montserrat', sans-serif;">🛠️ 2. Utensilios y Menaje</h3>
-            <button class="btn-store" style="background-color: {COLOR_VERDE_ING}; color: #1E1E1E;" onclick="alert('Redirigiendo a la tienda de menaje...')">🍳 PUCHEROS STORE</button>
-        </div>
-        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;">{utensilios_html_items}</div>
-    </div>
-    """
-
-    pasos_previos_html_items = "".join([f"<li style=\"margin-bottom: 6px;\">{prep}</li>" for prep in pasos_previos])
-    html_prev = f"""
-    <div style="background-color: #2C2F33; border-left: 6px solid #4F545C; border-radius: 6px; padding: 16px; margin-bottom: 20px;">
-        <h3 style="color: #FFFFFF; margin-top: 0; font-size: clamp(14px, 2.5vw, 16px); font-weight: 700; font-family: 'Montserrat', sans-serif; border-bottom: 1px solid #4F545C; padding-bottom: 8px;">🔪 3. Preparación Previa (Mise en Place)</h3>
-        <ul style="margin: 12px 0 0 0; padding-left: 18px; color: #E2E8F0; font-size: clamp(13px, 2.2vw, 15px); line-height: 1.6; font-family: 'JetBrains Mono', monospace;">{pasos_previos_html_items}</ul>
-    </div>
-    """
-
-    html_diagrama = '<div><h3 style="color: #FFFFFF; font
