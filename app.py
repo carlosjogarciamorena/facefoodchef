@@ -202,30 +202,4 @@ def calcular_tiempo_total(bloques_proceso, minutos_prep=10):
             total += b.get("duracion_minutos", 5)
     return total
 
-def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilios_menaje, pasos_previos, bloques_proceso, recomendaciones, texto_voz, maridaje, comensales, nivel_dificultad):
-    COLOR_VERDE_ING = "#00FF66"      
-    COLOR_AMARILLO_ACC = "#FFB300"   
-    COLOR_ROJO_ALERTA = "#EF4444"    
-    COLOR_DORADO_PLATO = "#FFD700"   
-
-    minutos_prep_est = len(pasos_previos) * 3 if pasos_previos else 10
-    tiempo_total_min = calcular_tiempo_total(bloques_proceso, minutos_prep_est)
-
-    nivel_dificultad_upper = nivel_dificultad.upper()
-    if "SUPERVIVIENTE" in nivel_dificultad_upper:
-        color_nivel = COLOR_VERDE_ING
-    elif "CUALIFICADO" in nivel_dificultad_upper:
-        color_nivel = COLOR_AMARILLO_ACC
-    elif "DOCTOR" in nivel_dificultad_upper:
-        color_nivel = COLOR_ROJO_ALERTA
-    else:
-        color_nivel = "#E2E8F0"
-
-    html_header = (
-        f"<div style=\"background-color: #2C2F33; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 20px; border-left: 6px solid {COLOR_DORADO_PLATO};\">"
-        f"<span style=\"font-size: 11px; font-weight: 700; color: #2C2F33; text-transform: uppercase; letter-spacing: 2px; background: {COLOR_DORADO_PLATO}; padding: 4px 12px; border-radius: 3px; display: inline-block; font-family: 'Montserrat', sans-serif;\">Flujo Culinario Completo</span>"
-        f"<h1 style=\"color: #FFFFFF; font-size: clamp(18px, 4vw, 24px); margin: 10px 0 8px 0; font-weight: 900; font-family: 'Montserrat', sans-serif; text-transform: uppercase;\">{nombre_receta}</h1>"
-        f"<div style=\"display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; margin-top: 10px; font-family: 'JetBrains Mono', monospace; font-size: clamp(12px, 2vw, 14px);\">"
-        f"<span style=\"background-color: #36393F; padding: 6px 12px; border-radius: 4px; color: #E2E8F0;\">👥 <b>Comensales:</b> {comensales} pax</span>"
-        f"<span style=\"background-color: #36393F; padding: 6px 12px; border-radius: 4px; color: #FFB300;\">⏱️ <b>Tiempo total:</b> {tiempo_total_min} min</span>"
-        f"<span style=\"background-color: #36393F; padding: 6px 12px; border-radius: 4px; color: {color_nivel}; font-weight: 700;\">🎯
+def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilios_menaje, pasos_previos, bloques_proceso, recomendaciones,
