@@ -221,5 +221,6 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
     else:
         color_nivel = "#E2E8F0"
 
-    html_header = (
-        f'<div style="background-color: #2C2F33; border-radius: 8px; padding: 20px; text-align: center; margin-bottom
+    html_header = f"""
+    <div style="background-color: #2C2F33; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 20px; border-left: 6px solid {COLOR_DORADO_PLATO};">
+        <span style="font-size: 11px; font-weight: 700; color: #2C2F33; text-transform: uppercase; letter-spacing: 2px; background: {COLOR_DORADO_PLATO}; padding: 4px 12px; border-radius: 3px; display: inline-block; font-family: 'Montserrat', sans-serif;">Flujo C
