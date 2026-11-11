@@ -297,4 +297,417 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
                 <div style="flex: 1; min-width: 260px; background-color: #2C2F33; border-left: 6px solid {COLOR_AMARILLO_ACC}; border-radius: 6px; padding: 16px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
                         <span style="font-size: 11px; font-weight: 700; color: #2C2F33; background-color: {COLOR_AMARILLO_ACC}; padding: 3px 8px; border-radius: 2px; text-transform: uppercase; font-family: 'JetBrains Mono', monospace;">⚙️ PARALELO: {nombre_rama}</span>
-                        <button class="btn-step-audio" onclick="reproducirTextoSeguro({json.dumps(texto_audio_rama)}, this)">📢 ESCU
+                        <button class="btn-step-audio" onclick="reproducirTextoSeguro({json.dumps(texto_audio_rama)}, this)">📢 ESCUCHAR PASO</button>
+                    </div>
+                    <div style="font-size: clamp(13px, 2.2vw, 15px); font-weight: 500; color: #FFFFFF; margin: 8px 0; line-height: 1.5; font-family: 'JetBrains Mono', monospace;">{accion}</div>
+                    <div style="font-size: clamp(11px, 2vw, 13px); color: #E2E8F0; margin-bottom: 10px; font-family: 'JetBrains Mono', monospace;">🛠️ <b>Utensilios:</b> {utensilios_rama}</div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: #36393F; padding: 8px 12px; border-radius: 4px; flex-wrap: wrap; gap: 6px;">
+                        <div style="font-size: clamp(12px, 2vw, 14px); color: #FFB300; font-family: 'JetBrains Mono', monospace; font-weight: 600;">⏱️ <span id="{timer_id}">{tiempo}</span> | 🌡️ {temp}</div>
+                        <button onclick="iniciarTemporizador('{timer_id}', {dur_rama})" class="btn-iniciar">⏳ INICIAR</button>
+                    </div>
+                </div>
+                """
+            html_diagrama += '</div>'
+        else:
+            timer_id = f"timer_seq_{i}"
+            etiqueta = "UNIÓN / CONVERGENCIA" if tipo == "convergencia" else f"PASO {i+1}"
+            accion_txt = bloque.get('accion')
+            tiempo_txt = bloque.get('tiempo')
+            temp_txt = bloque.get('temperatura')
+            texto_audio_paso = f"{etiqueta}. Acción: {accion_txt}. Utensilios: {utensilios_str}. Tiempo: {tiempo_txt}. Temperatura: {temp_txt}."
+            
+            html_diagrama += f"""
+            <div style="background-color: #2C2F33; border-left: 6px solid {borde_color}; border-radius: 6px; padding: 16px; margin-bottom: 14px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
+                    <span style="font-size: 11px; font-weight: 700; color: #2C2F33; background-color: {borde_color}; padding: 3px 8px; border-radius: 2px; text-transform: uppercase; font-family: 'JetBrains Mono', monospace;">{etiqueta}</span>
+                    <button class="btn-step-audio" onclick="reproducirTextoSeguro({json.dumps(texto_audio_paso)}, this)">📢 ESCUCHAR PASO</button>
+                </div>
+                <div style="font-size: clamp(13px, 2.2vw, 15px); font-weight: 500; color: #FFFFFF; margin: 8px 0; line-height: 1.5; font-family: 'JetBrains Mono', monospace;">{accion_txt}</div>
+                <div style="font-size: clamp(11px, 2vw, 13px); color: #E2E8F0; margin-bottom: 10px; font-family: 'JetBrains Mono', monospace;">🛠️ <b>Utensilios:</b> {utensilios_str}</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; background: #36393F; padding: 8px 12px; border-radius: 4px; flex-wrap: wrap; gap: 6px;">
+                    <div style="font-size: clamp(12px, 2vw, 14px); color: #FFB300; font-family: 'JetBrains Mono', monospace; font-weight: 600;">⏱️ <span id="{timer_id}">{tiempo_txt}</span> | 🌡️ {temp_txt}</div>
+                    <button onclick="iniciarTemporizador('{timer_id}', {duracion_min})" class="btn-iniciar">⏳ INICIAR</button>
+                </div>
+            </div>
+            """
+            
+        if i < len(bloques_proceso) - 1:
+            html_diagrama += f"""
+            <div style="text-align: center; margin: 4px 0 10px 0;">
+                <span style="color: {COLOR_AMARILLO_ACC}; font-size: 18px; font-weight: bold;">↓</span>
+            </div>
+            """
+
+    html_diagrama += f"""
+    <div style="text-align: center; margin: 4px 0 10px 0;">
+        <span style="color: {COLOR_DORADO_PLATO}; font-size: 18px; font-weight: bold;">↓</span>
+    </div>
+    <div style="background-color: #2C2F33; border-left: 6px solid {COLOR_DORADO_PLATO}; border-radius: 6px; padding: 16px; text-align: center; margin-top: 10px;">
+        <span style="font-size: 11px; font-weight: 700; color: #2C2F33; background-color: {COLOR_DORADO_PLATO}; padding: 4px 10px; border-radius: 3px; font-family: 'Montserrat', sans-serif;">RESULTADO FINAL</span>
+        <h3 style="color: {COLOR_DORADO_PLATO}; margin: 12px 0; font-weight: 900; font-family: 'Montserrat', sans-serif; font-size: clamp(15px, 2.8vw, 18px);">🍽️ PLATO LISTO PARA SERVIR</h3>
+        <button class="btn-store" style="background-color: {COLOR_VERDE_ING}; color: #1E1E1E;" onclick="alert('Enlace a técnicas de emplatado o equipo...')">✨ EMPLATADO</button>
+    </div>
+    </div>
+    """
+
+    html_recom = f"""
+    <div style="background-color: #2C2F33; border-left: 6px solid {COLOR_ROJO_ALERTA}; border-radius: 6px; padding: 16px; margin-top: 20px; margin-bottom: 16px;">
+        <h3 style="color: {COLOR_ROJO_ALERTA}; margin-top: 0; font-size: clamp(14px, 2.5vw, 16px); font-weight: 700; font-family: 'Montserrat', sans-serif; border-bottom: 1px solid #4F545C; padding-bottom: 8px;">🚨 5. Puntos Críticos y Alertas del Chef</h3>
+        <ul style='margin: 12px 0 0 0; padding-left: 18px; color: #E2E8F0; font-size: clamp(13px, 2.2vw, 15px); line-height: 1.6; font-family: "JetBrains Mono", monospace;'>
+    """
+    for rec in recomendaciones:
+        html_recom += f"<li style='margin-bottom: 6px;'>{rec}</li>"
+    html_recom += "</ul></div>"
+
+    vinos_lista = maridaje.get('vinos', [])
+    cervezas_lista = maridaje.get('cervezas', [])
+    vinos_html = "".join([f"<li style='margin-bottom: 4px;'>{v}</li>" for v in vinos_lista]) if vinos_lista else "<li>Sin opciones disponibles.</li>"
+    cervezas_html = "".join([f"<li style='margin-bottom: 4px;'>{c}</li>" for c in cervezas_lista]) if cervezas_lista else "<li>Sin opciones disponibles.</li>"
+
+    html_maridaje = f"""
+    <div style="background-color: #2C2F33; border-left: 6px solid {COLOR_VERDE_ING}; border-radius: 6px; padding: 16px; margin-top: 16px; margin-bottom: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4F545C; padding-bottom: 8px; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+            <h3 style="color: {COLOR_VERDE_ING}; margin: 0; font-size: clamp(14px, 2.5vw, 16px); font-weight: 700; font-family: 'Montserrat', sans-serif;">🍷 6. Maridaje</h3>
+            <button class="btn-store" style="background-color: {COLOR_VERDE_ING}; color: #1E1E1E;" onclick="alert('Redirigiendo a la bodega de líquidos...')">🍾 LIQUIDOS STORE</button>
+        </div>
+        <div style="margin-top: 12px; color: #E2E8F0; font-size: clamp(13px, 2.2vw, 15px); line-height: 1.6; font-family: 'JetBrains Mono', monospace;">
+            <p style="margin-bottom: 4px; color: #FFFFFF;"><b>🍇 Vinos (Denominaciones de Origen):</b></p>
+            <ul style="margin: 0 0 10px 0; padding-left: 18px;">{vinos_html}</ul>
+            <p style="margin-bottom: 4px; color: #FFFFFF;"><b>🍺 Cervezas:</b></p>
+            <ul style="margin: 0; padding-left: 18px;">{cervezas_html}</ul>
+        </div>
+    </div>
+    """
+
+    origen_html = f'<a href="{origen_receta}" target="_blank" style="color: #9AA0A6; text-decoration: underline;">{origen_receta}</a>' if origen_receta.startswith("http") else f'<span style="color: #9AA0A6;">{origen_receta}</span>'
+    texto_voz_seguro = json.dumps(texto_voz)
+
+    # Bloque de script y plantilla HTML totalmente aislado sin conflictos de f-string
+    script_y_estilos = f"""
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
+        <style>
+            body {{ background-color: #36393F; color: #E2E8F0; font-family: 'Inter', sans-serif; padding: 12px; margin: 0; }}
+            .container-hub {{ max-width: 900px; margin: auto; }}
+            .widget-box {{ background-color: #2C2F33; border-radius: 6px; padding: 16px; text-align: center; margin-bottom: 16px; }}
+            
+            .btn-escuchar {{ background: #EF4444; color: #FFFFFF; border: none; padding: 10px 16px; font-size: 12px; font-weight: 900; border-radius: 4px; cursor: pointer; margin: 4px; font-family: 'Montserrat', sans-serif; text-transform: uppercase; transition: filter 0.2s; }}
+            .btn-escuchar:hover {{ filter: brightness(0.9); }}
+            
+            .btn-silenciar {{ background: #4F545C; color: #FFFFFF; border: none; padding: 10px 16px; font-size: 12px; font-weight: 900; border-radius: 4px; cursor: pointer; margin: 4px; font-family: 'Montserrat', sans-serif; text-transform: uppercase; transition: filter 0.2s; }}
+            .btn-silenciar:hover {{ filter: brightness(0.9); }}
+            
+            .btn-step-audio {{ background: #FFB300; color: #1E1E1E; border: none; padding: 6px 12px; font-size: 11px; font-weight: 900; border-radius: 4px; cursor: pointer; font-family: 'Montserrat', sans-serif; text-transform: uppercase; transition: filter 0.2s; }}
+            .btn-step-audio:hover {{ filter: brightness(0.9); }}
+
+            .btn-iniciar {{ background: #EF4444; color: #FFFFFF; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 900; font-family: 'Montserrat', sans-serif; text-transform: uppercase; transition: filter 0.2s; }}
+            .btn-iniciar:hover {{ filter: brightness(0.9); }}
+
+            .btn-store {{
+                background-color: {COLOR_VERDE_ING};
+                color: #1E1E1E;
+                border: none;
+                padding: 8px 14px;
+                font-size: 11px;
+                font-weight: 900;
+                border-radius: 4px;
+                cursor: pointer;
+                font-family: 'Montserrat', sans-serif;
+                text-transform: uppercase;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                transition: transform 0.1s, filter 0.2s;
+            }}
+            .btn-store:hover {{ filter: brightness(0.9); }}
+            .btn-store:active {{ transform: scale(0.95); }}
+        </style>
+    </head>
+    <body>
+        <div class="container-hub">
+            {html_header}
+            <div class="widget-box">
+                <p style="color: #E2E8F0; font-size: 12px; margin: 0 0 10px 0; font-weight: 700; font-family: 'Montserrat', sans-serif;">👨‍🍳 ASISTENTE AUDITIVO GENERAL</p>
+                <button id="btnVoz" class="btn-escuchar" onclick="reproducirTextoSeguro({texto_voz_seguro}, this)">🎧 Escuchar Resumen de la Receta</button>
+                <button class="btn-silenciar" onclick="detenerTodo()">OIDO COCINA (silenciar)</button>
+            </div>
+            {html_ing}
+            {html_utensilios}
+            {html_prev}
+            {html_diagrama}
+            {html_recom}
+            {html_maridaje}
+            <div style="text-align: center; color: #9AA0A6; font-size: 11px; margin-top: 24px; border-top: 1px solid #4F545C; padding-top: 14px; font-family: 'Inter', sans-serif; word-break: break-all;">
+                FaceFoodChef.com | Origen: {origen_html}
+            </div>
+        </div>
+        <script>
+            window.globalUtterance = null;
+
+            function reproducirTextoSeguro(texto, btn) {{
+                if (!('speechSynthesis' in window)) {{
+                    alert("Tu navegador no soporta síntesis de voz.");
+                    return;
+                }}
+                window.speechSynthesis.cancel();
+
+                window.globalUtterance = new SpeechSynthesisUtterance(texto);
+                window.globalUtterance.lang = 'es-ES';
+                window.globalUtterance.rate = 0.95;
+                window.globalUtterance.pitch = 1.0;
+
+                const textoOriginal = btn.innerText;
+                btn.innerText = "🔊 REPRODUCIENDO...";
+
+                window.globalUtterance.onend = function() {{
+                    btn.innerText = textoOriginal;
+                }};
+
+                window.globalUtterance.onerror = function(e) {{
+                    console.error("Error en síntesis de voz:", e);
+                    btn.innerText = textoOriginal;
+                }};
+
+                window.speechSynthesis.speak(window.globalUtterance);
+            }}
+
+            function detenerTodo() {{
+                if ('speechSynthesis' in window) {{
+                    window.speechSynthesis.cancel();
+                    const btn = document.getElementById('btnVoz');
+                    if (btn) btn.innerText = "🎧 Escuchar Resumen de la Receta";
+                }}
+            }}
+
+            function iniciarTemporizador(elementId, minutos) {{
+                const elemento = document.getElementById(elementId);
+                let segundosRestantes = minutos * 60;
+                if (window[elementId + "_interval"]) clearInterval(window[elementId + "_interval"]);
+
+                window[elementId + "_interval"] = setInterval(() => {{
+                    if (segundosRestantes <= 0) {{
+                        clearInterval(window[elementId + "_interval"]);
+                        elemento.innerText = "¡FINALIZADO!";
+                        sonarAlertaMultiple();
+                    }} else {{
+                        segundosRestantes--;
+                        const m = Math.floor(segundosRestantes / 60);
+                        const s = segundosRestantes % 60;
+                        elemento.innerText = m + "m " + (s < 10 ? "0" : "") + s + "s";
+                    }}
+                }}, 1000);
+            }}
+
+            function sonarAlertaMultiple() {{
+                let pitidosEmitidos = 0;
+                const totalPitidos = 10;
+                
+                const intervaloPitidos = setInterval(() => {{
+                    if (pitidosEmitidos >= totalPitidos) {{
+                        clearInterval(intervaloPitidos);
+                        return;
+                    }}
+                    emitirUnPitido();
+                    pitidosEmitidos++;
+                }}, 350);
+            }}
+
+            function emitirUnPitido() {{
+                try {{
+                    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    const freq = 880;
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.2);
+                }} catch (e) {{
+                    console.error("Error reproduciendo audio:", e);
+                }}
+            }}
+        </script>
+    </body>
+    </html>
+    """
+    return script_y_estilos
+
+procesar_accion = False
+contenido_ia = None
+
+if url_origen_detectada:
+    try:
+        with st.spinner("🌐 Extrayendo datos de la URL..."):
+            contenido_ia, url_origen_detectada = extraer_texto_de_url(url_origen_detectada)
+            procesar_accion = True
+    except Exception as e:
+        st.error(f"{e}")
+elif receta_texto_input:
+    contenido_ia = receta_texto_input
+    procesar_accion = True
+elif archivo_multimodal:
+    procesar_accion = True
+
+if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
+    api_key_activa = API_KEY_INPUT.strip()
+    
+    if not api_key_activa:
+        st.error("⚠️ Introduce tu clave de API de Google Gemini en el panel lateral.")
+    elif not procesar_accion:
+        st.warning("⚠️ Debes introducir un texto, URL o adjuntar un archivo con la receta.")
+    else:
+        try:
+            client = genai.Client(api_key=api_key_activa)
+            
+            prompt_sistema = f"""
+            Eres un experto programador de flujos culinarios y maestro chef. 
+            Transforma la receta dada en una estructura JSON optimizada para generar un diagrama de flujo paso a paso.
+
+            Recalcula las cantidades exactamente para {comensales_objetivo} COMENSALES.
+
+            EVALUACIÓN DE NIVEL DE DIFICULTAD:
+            Asigna obligatoriamente uno de estos tres niveles en el campo "nivel_dificultad" basándote en la complejidad técnica de la receta:
+            1. "Superviviente Básico" (recetas sencillas, sin técnicas complejas, pocos ingredientes, rápida ejecución).
+            2. "Cocinero Cualificado" (requiere cierta soltura en cocina, tiempos de cocción combinados, sofritos elaborados o técnicas moderadas).
+            3. "Doctor Chef" (técnicas exigentes, control estricto de temperaturas, emulsiones delicadas, limpieza compleja o múltiples procesos paralelos).
+
+            REGLAS ESTRUCTURALES Y JSON:
+            1. UNIDADES: Abreviadas (g, kg, ml, l, ºC, min). Escribir "cucharada" y "cucharadita" completas. Evita términos ambiguos ("al gusto").
+            2. MODULARIZACIÓN:
+               - Separa la lista de "utensilios_menaje".
+               - Separa la lista de "pasos_previos" (Mise en place).
+            3. BLOQUES DE PROCESO:
+               - "tipo": "secuencial", "paralelo" o "convergencia".
+               - "es_critico": booleano (true si requiere especial precaución técnica o de seguridad).
+               - "duracion_minutos": número entero con los minutos estimados de ese bloque.
+            4. MARIDAJE:
+               - Evalúa todas las Denominaciones de Origen (sin restricción geográfica).
+               - Genera EXACTAMENTE 3 propuestas de vinos indicando tipo o Denominación de Origen idónea.
+               - Genera EXACTAMENTE 3 propuestas de cervezas acordes al plato.
+            5. Devuelve EXCLUSIVAMENTE un objeto JSON válido que cumpla estrictamente con la estructura solicitada, sin bloques de texto adicionales fuera del JSON.
+
+            JSON Schema esperado:
+            {{
+              "nombre_receta": "String",
+              "origen_receta": "String",
+              "nivel_dificultad": "Superviviente Básico",
+              "ingredientes": ["400 g de harina"],
+              "utensilios_menaje": ["Cuchillo", "Sartén"],
+              "pasos_previos": ["Cortar vegetales"],
+              "bloques_proceso": [
+                {{"tipo": "secuencial", "es_critico": false, "accion": "Descripción del paso", "utensilios": ["Sartén"], "tiempo": "5 min", "duracion_minutos": 5, "temperatura": "180 ºC"}},
+                {{
+                  "tipo": "paralelo",
+                  "es_critico": false,
+                  "ramas": [
+                    {{"nombre": "Salsa", "accion": "Reducir el líquido", "utensilios": ["Cazo"], "tiempo": "10 min", "duracion_minutos": 10, "temperatura": "90 ºC"}}
+                  ]
+                }}
+              ],
+              "recomendaciones": ["Punto crítico de cocción"],
+              "texto_voz": "Resumen narrado del proceso",
+              "maridaje": {{
+                "vinos": ["Vino 1", "Vino 2", "Vino 3"],
+                "cervezas": ["Cerveza 1", "Cerveza 2", "Cerveza 3"]
+              }}
+            }}
+            """
+
+            contents_payload = [prompt_sistema]
+            if archivo_multimodal:
+                contents_payload.append(types.Part.from_bytes(data=archivo_multimodal, mime_type=tipo_multimodal))
+                contents_payload.append(f"Procesa la receta adjunta ajustada a {comensales_objetivo} personas.")
+            else:
+                contents_payload.append(f"Receta:\n{contenido_ia}")
+
+            modelos_a_probar = [modelo_seleccionado, "gemini-3.8-flash", "gemini-3.7-flash"]
+            modelos_a_probar = list(dict.fromkeys(modelos_a_probar))
+            
+            response = None
+            exito = False
+            error_capturado = ""
+            
+            with st.spinner("⚡ Conectando con Gemini y generando el diagrama..."):
+                for mod in modelos_a_probar:
+                    intentos = 3
+                    for intento in range(intentos):
+                        try:
+                            response = client.models.generate_content(
+                                model=mod,
+                                contents=contents_payload,
+                                config=types.GenerateContentConfig(
+                                    response_mime_type="application/json",
+                                    temperature=0.2
+                                ),
+                            )
+                            if response and response.text:
+                                exito = True
+                                break
+                        except Exception as api_err:
+                            err_str = str(api_err)
+                            error_capturado = err_str
+                            if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
+                                break
+                            if "503" in err_str or "UNAVAILABLE" in err_str:
+                                time.sleep(3 * (intento + 1))
+                                continue
+                            if intento == intentos - 1:
+                                break
+                    if exito:
+                        break
+
+            if response and exito:
+                texto_respuesta = response.text.strip()
+                if texto_respuesta.startswith("```json"):
+                    texto_respuesta = texto_respuesta[7:]
+                elif texto_respuesta.startswith("```"):
+                    texto_respuesta = texto_respuesta[3:]
+                if texto_respuesta.endswith("```"):
+                    texto_respuesta = texto_respuesta[:-3]
+                
+                datos = json.loads(texto_respuesta.strip())
+                origen_final = url_origen_detectada if url_origen_detectada else datos.get("origen_receta", "Texto introducido por el usuario")
+
+                html_final = generar_html_dashboard(
+                    datos.get("nombre_receta", "Receta Culinaria"),
+                    origen_final,
+                    datos.get("ingredientes", []),
+                    datos.get("utensilios_menaje", []),
+                    datos.get("pasos_previos", []),
+                    datos.get("bloques_proceso", []),
+                    datos.get("recomendaciones", []),
+                    datos.get("texto_voz", ""),
+                    datos.get("maridaje", {}),
+                    comensales_objetivo,
+                    datos.get("nivel_dificultad", "Cocinero Cualificado")
+                )
+                
+                st.success("¡Diagrama optimizado generado con éxito!")
+                
+                nombre_archivo = f"diagrama_{datos.get('nombre_receta', 'receta').lower().replace(' ', '_')}.html"
+                st.download_button(
+                    label="💾 Descargar Diagrama en HTML",
+                    data=html_final,
+                    file_name=nombre_archivo,
+                    mime="text/html"
+                )
+                
+                components.html(html_final, height=1250, scrolling=True)
+            else:
+                if "429" in error_capturado or "RESOURCE_EXHAUSTED" in error_capturado:
+                    st.error("⚠️ **Límite de cuota gratuito alcanzado (Error 429).** Has superado las solicitudes permitidas por la API de Google por hoy.")
+                elif "503" in error_capturado or "UNAVAILABLE" in error_capturado:
+                    st.error("⚠️ **Servidores con alta demanda (Error 503).** Google está experimentando tráfico elevado temporalmente. Vuelve a pulsar el botón en unos segundos.")
+                else:
+                    st.error(f"No se pudo obtener una respuesta válida del modelo: {error_capturado}")
+                
+        except APIError as e:
+            st.error(f"Error de la API de Gemini: {e}")
+        except Exception as e:
+            st.error(f"Error inesperado al procesar los datos: {e}")
