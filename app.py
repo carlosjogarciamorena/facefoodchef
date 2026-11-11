@@ -202,4 +202,112 @@ def calcular_tiempo_total(bloques_proceso, minutos_prep=10):
             total += b.get("duracion_minutos", 5)
     return total
 
-def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilios_menaje, pasos_previos, bloques_proceso, recomendaciones,
+def generar_html_dashboard(
+    nombre_receta, 
+    origen_receta, 
+    ingredientes, 
+    utensilios_menaje, 
+    pasos_previos, 
+    bloques_proceso, 
+    recomendaciones, 
+    texto_voz, 
+    maridaje, 
+    comensales, 
+    nivel_dificultad
+):
+    COLOR_VERDE_ING = "#00FF66"      
+    COLOR_AMARILLO_ACC = "#FFB300"   
+    COLOR_ROJO_ALERTA = "#EF4444"    
+    COLOR_DORADO_PLATO = "#FFD700"   
+
+    minutos_prep_est = len(pasos_previos) * 3 if pasos_previos else 10
+    tiempo_total_min = calcular_tiempo_total(bloques_proceso, minutos_prep_est)
+
+    nivel_dificultad_upper = nivel_dificultad.upper()
+    if "SUPERVIVIENTE" in nivel_dificultad_upper:
+        color_nivel = COLOR_VERDE_ING
+    elif "CUALIFICADO" in nivel_dificultad_upper:
+        color_nivel = COLOR_AMARILLO_ACC
+    elif "DOCTOR" in nivel_dificultad_upper:
+        color_nivel = COLOR_ROJO_ALERTA
+    else:
+        color_nivel = "#E2E8F0"
+
+    html_header = (
+        f"<div style=\"background-color: #2C2F33; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 20px; border-left: 6px solid {COLOR_DORADO_PLATO};\">"
+        f"<span style=\"font-size: 11px; font-weight: 700; color: #2C2F33; text-transform: uppercase; letter-spacing: 2px; background: {COLOR_DORADO_PLATO}; padding: 4px 12px; border-radius: 3px; display: inline-block; font-family: 'Montserrat', sans-serif;\">Flujo Culinario Completo</span>"
+        f"<h1 style=\"color: #FFFFFF; font-size: clamp(18px, 4vw, 24px); margin: 10px 0 8px 0; font-weight: 900; font-family: 'Montserrat', sans-serif; text-transform: uppercase;\">{nombre_receta}</h1>"
+        f"<div style=\"display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; margin-top: 10px; font-family: 'JetBrains Mono', monospace; font-size: clamp(12px, 2vw, 14px);\">"
+        f"<span style=\"background-color: #36393F; padding: 6px 12px; border-radius: 4px; color: #E2E8F0;\">👥 <b>Comensales:</b> {comensales} pax</span>"
+        f"<span style=\"background-color: #36393F; padding: 6px 12px; border-radius: 4px; color: #FFB300;\">⏱️ <b>Tiempo total:</b> {tiempo_total_min} min</span>"
+        f"<span style=\"background-color: #36393F; padding: 6px 12px; border-radius: 4px; color: {color_nivel}; font-weight: 700;\">🎯 <b>Nivel:</b> {nivel_dificultad}</span>"
+        f"</div></div>"
+    )
+
+    ingredientes_html_items = "".join([f"<span style=\"background-color: #36393F; color: #E2E8F0; padding: 8px 12px; border-radius: 4px; font-size: clamp(12px, 2vw, 14px); font-family: 'JetBrains Mono', monospace;\">{ing}</span>" for ing in ingredientes])
+    html_ing = (
+        f"<div style=\"background-color: #2C2F33; border-left: 6px solid {COLOR_VERDE_ING}; border-radius: 6px; padding: 16px; margin-bottom: 16px;\">"
+        f"<div style=\"display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4F545C; padding-bottom: 8px; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;\">"
+        f"<h3 style=\"color: {COLOR_VERDE_ING}; margin: 0; font-size: clamp(14px, 2.5vw, 16px); font-weight: 700; font-family: 'Montserrat', sans-serif;\">🛒 1. Ingredientes ({comensales} pax)</h3>"
+        f"<button class=\"btn-store\" style=\"background-color: {COLOR_VERDE_ING}; color: #1E1E1E;\" onclick=\"alert('Redirigiendo a la tienda de ingredientes...')\">🛒 DELICATESSEN GOURMET</button>"
+        f"</div>"
+        f"<div style=\"display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;\">{ingredientes_html_items}</div>"
+        f"</div>"
+    )
+
+    utensilios_html_items = "".join([f"<span style=\"background-color: #36393F; color: #E2E8F0; padding: 6px 10px; border-radius: 4px; font-size: clamp(12px, 2vw, 14px); font-family: 'JetBrains Mono', monospace;\">{ut}</span>" for ut in utensilios_menaje])
+    html_utensilios = (
+        f"<div style=\"background-color: #2C2F33; border-left: 6px solid {COLOR_VERDE_ING}; border-radius: 6px; padding: 16px; margin-bottom: 16px;\">"
+        f"<div style=\"display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4F545C; padding-bottom: 8px; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;\">"
+        f"<h3 style=\"color: {COLOR_VERDE_ING}; margin: 0; font-size: clamp(14px, 2.5vw, 16px); font-weight: 700; font-family: 'Montserrat', sans-serif;\">🛠️ 2. Utensilios y Menaje</h3>"
+        f"<button class=\"btn-store\" style=\"background-color: {COLOR_VERDE_ING}; color: #1E1E1E;\" onclick=\"alert('Redirigiendo a la tienda de menaje...')\">🍳 PUCHEROS STORE</button>"
+        f"</div>"
+        f"<div style=\"display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;\">{utensilios_html_items}</div>"
+        f"</div>"
+    )
+
+    pasos_previos_html_items = "".join([f"<li style=\"margin-bottom: 6px;\">{prep}</li>" for prep in pasos_previos])
+    html_prev = (
+        f"<div style=\"background-color: #2C2F33; border-left: 6px solid #4F545C; border-radius: 6px; padding: 16px; margin-bottom: 20px;\">"
+        f"<h3 style=\"color: #FFFFFF; margin-top: 0; font-size: clamp(14px, 2.5vw, 16px); font-weight: 700; font-family: 'Montserrat', sans-serif; border-bottom: 1px solid #4F545C; padding-bottom: 8px;\">🔪 3. Preparación Previa (Mise en Place)</h3>"
+        f"<ul style=\"margin: 12px 0 0 0; padding-left: 18px; color: #E2E8F0; font-size: clamp(13px, 2.2vw, 15px); line-height: 1.6; font-family: 'JetBrains Mono', monospace;\">{pasos_previos_html_items}</ul>"
+        f"</div>"
+    )
+
+    html_diagrama = (
+        "<div>"
+        "<h3 style=\"color: #FFFFFF; font-size: clamp(16px, 3vw, 18px); font-weight: 700; margin-bottom: 16px; font-family: 'Montserrat', sans-serif; border-bottom: 2px solid #EF4444; padding-bottom: 6px; display: inline-block;\">4. Diagrama de Ejecución y Flujo</h3>"
+    )
+
+    for i, bloque in enumerate(bloques_proceso):
+        tipo = bloque.get("tipo", "secuencial")
+        es_critico = bloque.get("es_critico", False)
+        duracion_min = bloque.get("duracion_minutos", 5)
+        utensilios = bloque.get("utensilios", [])
+        utensilios_str = ", ".join(utensilios) if utensilios else "N/A"
+
+        borde_color = COLOR_ROJO_ALERTA if es_critico else COLOR_AMARILLO_ACC
+
+        if tipo == "paralelo":
+            ramas = bloque.get("ramas", [])
+            html_diagrama += "<div style=\"display: flex; gap: 12px; margin-bottom: 14px; flex-wrap: wrap;\">"
+            for idx, rama in enumerate(ramas):
+                nombre_rama = rama.get("nombre", f"Subproceso {idx+1}").upper()
+                accion = rama.get("accion", "")
+                tiempo = rama.get("tiempo", "")
+                temp = rama.get("temperatura", "")
+                utensilios_rama = ", ".join(rama.get("utensilios", []))
+                dur_rama = rama.get("duracion_minutos", 5)
+                timer_id = f"timer_par_{i}_{idx}"
+                texto_audio_rama = f"Subproceso paralelo {nombre_rama}. Acción: {accion}. Utensilios necesarios: {utensilios_rama}. Tiempo estimado: {tiempo}. Temperatura: {temp}."
+                
+                html_diagrama += (
+                    f"<div style=\"flex: 1; min-width: 260px; background-color: #2C2F33; border-left: 6px solid {COLOR_AMARILLO_ACC}; border-radius: 6px; padding: 16px;\">"
+                    f"<div style=\"display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;\">"
+                    f"<span style=\"font-size: 11px; font-weight: 700; color: #2C2F33; background-color: {COLOR_AMARILLO_ACC}; padding: 3px 8px; border-radius: 2px; text-transform: uppercase; font-family: 'JetBrains Mono', monospace;\">⚙️ PARALELO: {nombre_rama}</span>"
+                    f"<button class=\"btn-step-audio\" onclick='reproducirVozDirecta({json.dumps(texto_audio_rama)}, this)'>📢 ESCUCHAR PASO</button>"
+                    f"</div>"
+                    f"<div style=\"font-size: clamp(13px, 2.2vw, 15px); font-weight: 500; color: #FFFFFF; margin: 8px 0; line-height: 1.5; font-family: 'JetBrains Mono', monospace;\">{accion}</div>"
+                    f"<div style=\"font-size: clamp(11px, 2vw, 13px); color: #E2E8F0; margin-bottom: 10px; font-family: 'JetBrains Mono', monospace;\">🛠️ <b>Utensilios:</b> {utensilios_rama}</div>"
+                    f"<div style=\"display: flex; justify-content: space-between; align-items: center; background: #36393F; padding: 8px 12px; border-radius: 4px; flex-wrap: wrap; gap: 6px;\">"
+                    f"<div style=\"font-size: clamp(12px, 2vw, 14px); color: #FFB300; font-family
