@@ -224,43 +224,4 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
     html_header = f"""
     <div style="background-color: #2C2F33; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 20px; border-left: 6px solid {COLOR_DORADO_PLATO};">
         <span style="font-size: 11px; font-weight: 700; color: #2C2F33; text-transform: uppercase; letter-spacing: 2px; background: {COLOR_DORADO_PLATO}; padding: 4px 12px; border-radius: 3px; display: inline-block; font-family: 'Montserrat', sans-serif;">Flujo Culinario Completo</span>
-        <h1 style="color: #FFFFFF; font-size: clamp(18px, 4vw, 24px); margin: 10px 0 8px 0; font-weight: 900; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">{nombre_receta}</h1>
-        <div style="display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; margin-top: 10px; font-family: 'JetBrains Mono', monospace; font-size: clamp(12px, 2vw, 14px);">
-            <span style="background-color: #36393F; padding: 6px 12px; border-radius: 4px; color: #E2E8F0;">👥 <b>Comensales:</b> {comensales} pax</span>
-            <span style="background-color: #36393F; padding: 6px 12px; border-radius: 4px; color: #FFB300;">⏱️ <b>Tiempo total:</b> {tiempo_total_min} min</span>
-            <span style="background-color: #36393F; padding: 6px 12px; border-radius: 4px; color: {color_nivel}; font-weight: 700;">🎯 <b>Nivel:</b> {nivel_dificultad}</span>
-        </div>
-    </div>
-    """
-
-    html_ing = f"""
-    <div style="background-color: #2C2F33; border-left: 6px solid {COLOR_VERDE_ING}; border-radius: 6px; padding: 16px; margin-bottom: 16px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4F545C; padding-bottom: 8px; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
-            <h3 style="color: {COLOR_VERDE_ING}; margin: 0; font-size: clamp(14px, 2.5vw, 16px); font-weight: 700; font-family: 'Montserrat', sans-serif;">🛒 1. Ingredientes ({comensales} pax)</h3>
-            <button class="btn-store" style="background-color: {COLOR_VERDE_ING}; color: #1E1E1E;" onclick="alert('Redirigiendo a la tienda de ingredientes...')">🛒 DELICATESSEN GOURMET</button>
-        </div>
-        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;">
-    """
-    for ing in ingredientes:
-        html_ing += f"<span style='background-color: #36393F; color: #E2E8F0; padding: 8px 12px; border-radius: 4px; font-size: clamp(12px, 2vw, 14px); font-family: \"JetBrains Mono\", monospace;'>{ing}</span>"
-    html_ing += "</div></div>"
-
-    html_utensilios = f"""
-    <div style="background-color: #2C2F33; border-left: 6px solid {COLOR_VERDE_ING}; border-radius: 6px; padding: 16px; margin-bottom: 16px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4F545C; padding-bottom: 8px; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
-            <h3 style="color: {COLOR_VERDE_ING}; margin: 0; font-size: clamp(14px, 2.5vw, 16px); font-weight: 700; font-family: 'Montserrat', sans-serif;">🛠️ 2. Utensilios y Menaje</h3>
-            <button class="btn-store" style="background-color: {COLOR_VERDE_ING}; color: #1E1E1E;" onclick="alert('Redirigiendo a la tienda de menaje...')">🍳 PUCHEROS STORE</button>
-        </div>
-        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;">
-    """
-    for ut in utensilios_menaje:
-        html_utensilios += f"<span style='background-color: #36393F; color: #E2E8F0; padding: 6px 10px; border-radius: 4px; font-size: clamp(12px, 2vw, 14px); font-family: \"JetBrains Mono\", monospace;'>{ut}</span>"
-    html_utensilios += "</div></div>"
-
-    html_prev = """
-    <div style="background-color: #2C2F33; border-left: 6px solid #4F545C; border-radius: 6px; padding: 16px; margin-bottom: 20px;">
-        <h3 style="color: #FFFFFF; margin-top: 0; font-size: clamp(14px, 2.5vw, 16px); font-weight: 700; font-family: 'Montserrat', sans-serif; border-bottom: 1px solid #4F545C; padding-bottom: 8px;">🔪 3. Preparación Previa (Mise en Place)</h3>
-        <ul style='margin: 12px 0 0 0; padding-left: 18px; color: #E2E8F0; font-size: clamp(13px, 2.2vw, 15px); line-height: 1.6; font-family: "JetBrains Mono", monospace;'>
-    """
-    for prep in pasos_previos:
-        html_prev += f"<li style
+        <h1 style="color: #FFFFFF; font-size: clamp(18px, 4vw, 24px); margin: 10px 0 8px 0; font-weight: 900; font-family: 'Montserrat', sans-serif; text-transform: uppercase;">{nombre_receta
