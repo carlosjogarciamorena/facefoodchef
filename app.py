@@ -9,7 +9,6 @@ from recipe_scrapers import scrape_me
 from google import genai
 from google.genai import types
 from google.genai.errors import APIError
-from html_renderer import generar_html_dashboard
 
 try:
     from dotenv import load_dotenv
@@ -29,28 +28,39 @@ try:
 except ImportError:
     HAS_PPTX = False
 
+# Configuración de página Streamlit
 st.set_page_config(
     page_title="FaceFoodChef.com - Motor de Diagramas Culinarios", 
     layout="wide", 
     page_icon="🍳"
 )
 
+# Estilos globales optimizados para Móviles, Tablets y Escritorio
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&family=Montserrat:wght@700;900&display=swap');
+
     .stApp, .block-container, [data-testid="stSidebar"] {
         background-color: #36393F !important;
         color: #E2E8F0 !important;
         font-family: 'Inter', sans-serif !important;
     }
     header, footer { visibility: hidden; }
+    
     .stTextArea textarea, .stTextInput input, .stSelectbox select, .stNumberInput input {
         background-color: #2C2F33 !important;
         color: #E2E8F0 !important;
         border: 1px solid #4F545C !important;
         border-radius: 6px !important;
         font-size: 15px !important;
+        font-family: 'Inter', sans-serif !important;
     }
+    .stTextArea textarea:focus, .stTextInput input:focus, .stNumberInput input:focus {
+        border-color: #FFB300 !important;
+        box-shadow: none !important;
+    }
+
+    /* Botones principales de Streamlit */
     .stButton > button {
         background: #00FF66 !important;
         color: #1E1E1E !important;
@@ -63,25 +73,73 @@ st.markdown("""
         width: 100%;
         text-transform: uppercase;
         letter-spacing: 1px;
+        transition: background 0.2s ease !important;
     }
-    .stButton > button:hover { background: #00CC52 !important; }
-    h1, h2, h3, h4, h5, h6 { font-family: 'Montserrat', sans-serif !important; color: #FFFFFF !important; text-transform: uppercase; }
+    .stButton > button:hover {
+        background: #00CC52 !important;
+    }
+
+    .streamlit-expanderHeader {
+        background-color: #2C2F33 !important;
+        color: #E2E8F0 !important;
+        border-radius: 6px !important;
+        border: 1px solid #4F545C !important;
+        font-family: 'Montserrat', sans-serif !important;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        font-family: 'Montserrat', sans-serif !important;
+        color: #FFFFFF !important;
+        text-transform: uppercase;
+    }
     </style>
 """, unsafe_allow_html=True)
 
+# Panel Lateral
 st.sidebar.header("⚙️ Panel de Control")
+
 API_KEY_INPUT = st.sidebar.text_input(
     "🔑 Clave de API Gemini:",
     type="password",
-    value=st.secrets.get("GEMINI_API_KEY", "") if "GEMINI_API_KEY" in st.secrets else ""
+    value=st.secrets.get("GEMINI_API_KEY", "") if "GEMINI_API_KEY" in st.secrets else "",
+    help="Introduce tu clave de API de Google Gemini (Google AI Studio)."
 )
-modelo_seleccionado = st.sidebar.selectbox("Modelo Gemini:", options=["gemini-2.5-flash", "gemini-2.5-pro"], index=0)
-comensales_objetivo = st.sidebar.number_input("👥 Comensales:", min_value=1, max_value=100, value=4, step=1)
 
-st.markdown("<h1 style='text-align: center; color: #FFFFFF; font-weight: 900;'>FACEFOODCHEF <span style='font-size: 14px; background: #00FF66; color: #1E1E1E; padding: 4px 10px; border-radius: 4px;'>MOTOR DE DIAGRAMAS</span></h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #E2E8F0; margin-bottom: 30px;'>Convierte recetas textuales en diagramas de flujo de producción culinaria con audio guiado</p>", unsafe_allow_html=True)
+modelo_seleccionado = st.sidebar.selectbox(
+    "Modelo Gemini:",
+    options=["gemini-2.5-flash", "gemini-2.5-pro", "gemini-3.8-flash"],
+    index=0
+)
 
-entrada_principal = st.text_area("Pega la URL de la receta o el texto completo:", height=130)
+comensales_objetivo = st.sidebar.number_input(
+    "👥 Número de comensales:",
+    min_value=1,
+    max_value=100,
+    value=4,
+    step=1,
+    help="El sistema recalculará los ingredientes para este número de personas."
+)
+
+st.sidebar.markdown("---")
+st.sidebar.markdown("""
+### 🎨 Código de Bloques:
+- 🟢 **Verde Neón (`#00FF66`):** Ingredientes / Utensilios / Maridaje
+- 🟡 **Amarillo (`#FFB300`):** Acciones / Procesado
+- 🔴 **Rojo FaceFoodChef (`#EF4444`):** Alertas / Puntos Críticos
+- 🟡 **Dorado (`#FFD700`):** Plato Terminado
+""")
+
+# Encabezado Principal
+st.markdown("<h1 style='text-align: center; color: #FFFFFF; font-family: Montserrat, sans-serif; font-weight: 900; letter-spacing: 2px; margin-bottom: 0; font-size: clamp(20px, 4vw, 32px);'>FACEFOODCHEF <span style='font-size: clamp(10px, 2vw, 14px); background: #00FF66; color: #1E1E1E; padding: 4px 10px; border-radius: 4px; vertical-align: middle; letter-spacing: 1px;'>MOTOR DE DIAGRAMAS</span></h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #E2E8F0; font-size: clamp(13px, 2vw, 15px); margin-bottom: 30px; font-family: Inter, sans-serif;'>Convierte recetas textuales en diagramas de flujo de producción culinaria con audio guiado</p>", unsafe_allow_html=True)
+
+# Entrada de receta
+st.subheader("📥 Entrada de Receta")
+entrada_principal = st.text_area(
+    "Pega la URL de la receta o el texto completo:", 
+    height=130, 
+    placeholder="https://www.ejemplo.com/receta\nO pega directamente el texto de la receta aquí..."
+)
 
 with st.expander("📁 Adjuntar archivo (PDF, Word, PPT o Imagen)"):
     archivo_subido = st.file_uploader("Subir documento:", type=["pdf", "docx", "pptx", "txt", "jpg", "jpeg", "png", "webp"])
@@ -94,8 +152,11 @@ tipo_multimodal = None
 if entrada_principal.strip():
     texto_limpio = entrada_principal.strip()
     if texto_limpio.startswith("http://") or texto_limpio.startswith("https://"):
-        url_origen_detectada = texto_limpio.split("http")[-1]
-        url_origen_detectada = "http" + url_origen_detectada if not url_origen_detectada.startswith("http") else url_origen_detectada
+        if texto_limpio.count("http") > 1:
+            partes = texto_limpio.split("http")
+            url_origen_detectada = "http" + partes[-1]
+        else:
+            url_origen_detectada = texto_limpio
     else:
         receta_texto_input = texto_limpio
 
@@ -117,61 +178,88 @@ def extraer_texto_de_url(url):
     url = url.strip()
     try:
         scraper = scrape_me(url)
-        return f"Receta de {url}:\nIngredientes: {', '.join(scraper.ingredients())}\nPasos:\n{'\n'.join(scraper.instructions())}", url
+        texto = f"Receta de {url}:\nIngredientes: {', '.join(scraper.ingredients())}\nPasos:\n{'\n'.join(scraper.instructions())}"
+        return texto, url
     except Exception:
-        headers = {'User-Agent': 'Mozilla/5.0'}
-        response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status()
-        soup = BeautifulSoup(response.text, 'html.parser')
-        for element in soup(["script", "style", "nav", "footer", "header", "aside"]):
-            element.decompose()
-        return f"Contenido de {url}:\n{soup.get_text(separator='\n', strip=True)}", url
-
-procesar_accion = bool(url_origen_detectada or receta_texto_input or archivo_multimodal)
-contenido_ia = url_origen_detectada if url_origen_detectada else receta_texto_input
-
-if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
-    if not API_KEY_INPUT.strip():
-        st.error("⚠️ Introduce tu clave de API de Gemini.")
-    elif not procesar_accion:
-        st.warning("⚠️ Debes introducir un texto, URL o archivo.")
-    else:
         try:
-            client = genai.Client(api_key=API_KEY_INPUT.strip())
-            prompt_sistema = f"""
-            Eres maestro chef y experto en flujos culinarios. Transforma la receta en un JSON estricto recalculado para {comensales_objetivo} comensales.
-            Nivel de dificultad: "Superviviente Básico", "Cocinero Cualificado" o "Doctor Chef".
-            Estructura JSON exacta requerida:
-            {{
-              "nombre_receta": "String",
-              "origen_receta": "String",
-              "nivel_dificultad": "Cocinero Cualificado",
-              "ingredientes": ["400 g de harina"],
-              "utensilios_menaje": ["Cuchillo"],
-              "pasos_previos": ["Cortar verduras"],
-              "bloques_proceso": [
-                {{"tipo": "secuencial", "es_critico": false, "accion": "Paso 1", "utensilios": ["Sartén"], "tiempo": "5 min", "duracion_minutos": 5, "temperatura": "180 ºC"}}
-              ],
-              "recomendaciones": ["Alerta importante"],
-              "texto_voz": "Resumen narrado",
-              "maridaje": {{"vinos": ["Vino A"], "cervezas": ["Cerveza A"]}}
-            }}
-            """
-            contents_payload = [prompt_sistema, f"Receta:\n{contenido_ia}"]
-            if archivo_multimodal:
-                contents_payload = [prompt_sistema, types.Part.from_bytes(data=archivo_multimodal, mime_type=tipo_multimodal)]
-
-            response = client.models.generate_content(
-                model=modelo_seleccionado,
-                contents=contents_payload,
-                config=types.GenerateContentConfig(response_mime_type="application/json", temperature=0.2)
-            )
-            
-            datos = json.loads(response.text.strip())
-            html_final = generar_html_dashboard(datos, comensales_objetivo)
-            
-            st.success("¡Diagrama generado con éxito!")
-            st.download_button("💾 Descargar HTML", data=html_final, file_name="diagrama.html", mime="text/html")
-            components.html(html_final, height=1250, scrolling=True)
+            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+            response = requests.get(url, headers=headers, timeout=10)
+            response.raise_for_status()
+            soup = BeautifulSoup(response.text, 'html.parser')
+            for element in soup(["script", "style", "nav", "footer", "header", "aside"]):
+                element.decompose()
+            return f"Contenido de {url}:\n{soup.get_text(separator='\n', strip=True)}", url
         except Exception as e:
-            st.error(f"Error al generar: {e}")
+            raise Exception(f"Error al procesar la URL (Comprueba que sea accesible o pega el texto directamente): {e}")
+
+def calcular_tiempo_total(bloques_proceso, minutos_prep=10):
+    total = minutos_prep
+    for b in bloques_proceso:
+        if b.get("tipo") == "paralelo":
+            max_rama = max([r.get("duracion_minutos", 5) for r in b.get("ramas", [{"duracion_minutos": 5}])], default=5)
+            total += max_rama
+        else:
+            total += b.get("duracion_minutos", 5)
+    return total
+
+def generar_html_dashboard(
+    nombre_receta, 
+    origen_receta, 
+    ingredientes, 
+    utensilios_menaje, 
+    pasos_previos, 
+    bloques_proceso, 
+    recomendaciones, 
+    texto_voz, 
+    maridaje, 
+    comensales, 
+    nivel_dificultad
+):
+    COLOR_VERDE_ING = "#00FF66"      
+    COLOR_AMARILLO_ACC = "#FFB300"   
+    COLOR_ROJO_ALERTA = "#EF4444"    
+    COLOR_DORADO_PLATO = "#FFD700"   
+
+    minutos_prep_est = len(pasos_previos) * 3 if pasos_previos else 10
+    tiempo_total_min = calcular_tiempo_total(bloques_proceso, minutos_prep_est)
+
+    nivel_dificultad_upper = nivel_dificultad.upper()
+    if "SUPERVIVIENTE" in nivel_dificultad_upper:
+        color_nivel = COLOR_VERDE_ING
+    elif "CUALIFICADO" in nivel_dificultad_upper:
+        color_nivel = COLOR_AMARILLO_ACC
+    elif "DOCTOR" in nivel_dificultad_upper:
+        color_nivel = COLOR_ROJO_ALERTA
+    else:
+        color_nivel = "#E2E8F0"
+
+    html_header = (
+        f"<div style=\"background-color: #2C2F33; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 20px; border-left: 6px solid {COLOR_DORADO_PLATO};\">"
+        f"<span style=\"font-size: 11px; font-weight: 700; color: #2C2F33; text-transform: uppercase; letter-spacing: 2px; background: {COLOR_DORADO_PLATO}; padding: 4px 12px; border-radius: 3px; display: inline-block; font-family: 'Montserrat', sans-serif;\">Flujo Culinario Completo</span>"
+        f"<h1 style=\"color: #FFFFFF; font-size: clamp(18px, 4vw, 24px); margin: 10px 0 8px 0; font-weight: 900; font-family: 'Montserrat', sans-serif; text-transform: uppercase;\">{nombre_receta}</h1>"
+        f"<div style=\"display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; margin-top: 10px; font-family: 'JetBrains Mono', monospace; font-size: clamp(12px, 2vw, 14px);\">"
+        f"<span style=\"background-color: #36393F; padding: 6px 12px; border-radius: 4px; color: #E2E8F0;\">👥 <b>Comensales:</b> {comensales} pax</span>"
+        f"<span style=\"background-color: #36393F; padding: 6px 12px; border-radius: 4px; color: #FFB300;\">⏱️ <b>Tiempo total:</b> {tiempo_total_min} min</span>"
+        f"<span style=\"background-color: #36393F; padding: 6px 12px; border-radius: 4px; color: {color_nivel}; font-weight: 700;\">🎯 <b>Nivel:</b> {nivel_dificultad}</span>"
+        f"</div></div>"
+    )
+
+    ingredientes_html_items = "".join([f"<span style=\"background-color: #36393F; color: #E2E8F0; padding: 8px 12px; border-radius: 4px; font-size: clamp(12px, 2vw, 14px); font-family: 'JetBrains Mono', monospace;\">{ing}</span>" for ing in ingredientes])
+    html_ing = (
+        f"<div style=\"background-color: #2C2F33; border-left: 6px solid {COLOR_VERDE_ING}; border-radius: 6px; padding: 16px; margin-bottom: 16px;\">"
+        f"<div style=\"display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4F545C; padding-bottom: 8px; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;\">"
+        f"<h3 style=\"color: {COLOR_VERDE_ING}; margin: 0; font-size: clamp(14px, 2.5vw, 16px); font-weight: 700; font-family: 'Montserrat', sans-serif;\">🛒 1. Ingredientes ({comensales} pax)</h3>"
+        f"<button class=\"btn-store\" style=\"background-color: {COLOR_VERDE_ING}; color: #1E1E1E;\" onclick=\"alert('Redirigiendo a la tienda de ingredientes...')\">🛒 DELICATESSEN GOURMET</button>"
+        f"</div>"
+        f"<div style=\"display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;\">{ingredientes_html_items}</div>"
+        f"</div>"
+    )
+
+    utensilios_html_items = "".join([f"<span style=\"background-color: #36393F; color: #E2E8F0; padding: 6px 10px; border-radius: 4px; font-size: clamp(12px, 2vw, 14px); font-family: 'JetBrains Mono', monospace;\">{ut}</span>" for ut in utensilios_menaje])
+    html_utensilios = (
+        f"<div style=\"background-color: #2C2F33; border-left: 6px solid {COLOR_VERDE_ING}; border-radius: 6px; padding: 16px; margin-bottom: 16px;\">"
+        f"<div style=\"display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4F545C; padding-bottom: 8px; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;\">"
+        f"<h3 style=\"color: {COLOR_VERDE_ING}; margin: 0; font-size: clamp(14px, 2.5vw, 16px); font-weight: 700; font-family: 'Montserrat', sans-serif;\">🛠️ 2. Utensilios y Menaje</h3>"
+        f"<button class=\"btn-store\" style=\"background-color: {COLOR_VERDE_ING}; color: #1E1E1E;\" onclick=\"alert('Redirigiendo a la tienda de menaje...')\">🍳 PUCHEROS STORE</button>"
+        f"</div>"
+        f"<div style=\"display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;\
