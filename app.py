@@ -284,4 +284,17 @@ def generar_html_dashboard(nombre_receta, origen_receta, ingredientes, utensilio
             ramas = bloque.get("ramas", [])
             html_diagrama += '<div style="display: flex; gap: 12px; margin-bottom: 14px; flex-wrap: wrap;">'
             for idx, rama in enumerate(ramas):
-                nombre_rama = rama.get("nombre", f"Subproceso {idx+1}").
+                nombre_rama = rama.get("nombre", f"Subproceso {idx+1}").upper()
+                accion = rama.get("accion", "")
+                tiempo = rama.get("tiempo", "")
+                temp = rama.get("temperatura", "")
+                utensilios_rama = ", ".join(rama.get("utensilios", []))
+                dur_rama = rama.get("duracion_minutos", 5)
+                timer_id = f"timer_par_{i}_{idx}"
+                texto_audio_rama = f"Subproceso paralelo {nombre_rama}. Acción: {accion}. Utensilios necesarios: {utensilios_rama}. Tiempo estimado: {tiempo}. Temperatura: {temp}."
+                
+                html_diagrama += f"""
+                <div style="flex: 1; min-width: 260px; background-color: #2C2F33; border-left: 6px solid {COLOR_AMARILLO_ACC}; border-radius: 6px; padding: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
+                        <span style="font-size: 11px; font-weight: 700; color: #2C2F33; background-color: {COLOR_AMARILLO_ACC}; padding: 3px 8px; border-radius: 2px; text-transform: uppercase; font-family: 'JetBrains Mono', monospace;">⚙️ PARALELO: {nombre_rama}</span>
+                        <button class="btn-step-audio" onclick="reproducirTextoSeguro({json.dumps(texto_audio_rama)}, this)">📢 ESCU
