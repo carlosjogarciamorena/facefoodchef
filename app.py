@@ -89,23 +89,4 @@ st.sidebar.header("⚙️ Panel de Control")
 API_KEY_INPUT = st.sidebar.text_input(
     "🔑 Clave de API Gemini:",
     type="password",
-    value=st.secrets.get("GEMINI_API_KEY", "") if "GEMINI_API_KEY" in st.secrets else "",
-    help="Introduce tu clave de API de Google Gemini (Google AI Studio)."
-)
-
-modelo_seleccionado = st.sidebar.selectbox(
-    "Modelo Gemini:",
-    options=["gemini-2.5-flash", "gemini-2.5-pro", "gemini-3.8-flash"],
-    index=0
-)
-
-comensales_objetivo = st.sidebar.number_input(
-    "👥 Número de comensales:",
-    min_value=1,
-    max_value=100,
-    value=4,
-    step=1,
-    help="El sistema recalculará los ingredientes para este número de personas."
-)
-
-st
+    value=st.secrets.get("
