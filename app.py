@@ -93,7 +93,6 @@ API_KEY_INPUT = st.sidebar.text_input(
     help="Introduce tu clave de API de Google Gemini (Google AI Studio)."
 )
 
-# Modelos actualizados y estables para evitar errores 404
 modelo_seleccionado = st.sidebar.selectbox(
     "Modelo Gemini:",
     options=["gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-pro"],
@@ -114,18 +113,4 @@ st.sidebar.markdown("""
 ### 🎨 Código de Bloques:
 - 🟢 **Verde Neón (`#00FF66`):** Ingredientes / Utensilios / Maridaje
 - 🟡 **Amarillo (`#FFB300`):** Acciones / Procesado
-- 🔴 **Rojo FaceFoodChef (`#EF4444`):** Alertas / Puntos Críticos
-- 🟡 **Dorado (`#FFD700`):** Plato Terminado
-""")
-
-st.markdown("<h1 style='text-align: center; color: #FFFFFF; font-family: Montserrat, sans-serif; font-weight: 900; letter-spacing: 2px; margin-bottom: 0; font-size: clamp(20px, 4vw, 32px);'>FACEFOODCHEF <span style='font-size: clamp(10px, 2vw, 14px); background: #00FF66; color: #1E1E1E; padding: 4px 10px; border-radius: 4px; vertical-align: middle; letter-spacing: 1px;'>MOTOR DE DIAGRAMAS</span></h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #E2E8F0; font-size: clamp(13px, 2vw, 15px); margin-bottom: 30px; font-family: Inter, sans-serif;'>Convierte recetas textuales en diagramas de flujo de producción culinaria con audio guiado</p>", unsafe_allow_html=True)
-
-st.subheader("📥 Entrada de Receta")
-entrada_principal = st.text_area(
-    "Pega la URL de la receta o el texto completo:", 
-    height=130, 
-    placeholder="https://www.ejemplo.com/receta\nO pega directamente el texto de la receta aquí..."
-)
-
-with st.expander("📁 Adjuntar archivo (PDF, Word, PPT o Imagen)"):
+- 🔴 **Rojo FaceFoodChef (`#EF4444`):
