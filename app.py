@@ -59,7 +59,7 @@ API_KEY_INPUT = st.sidebar.text_input(
 
 modelo_seleccionado = st.sidebar.selectbox(
     "Modelo Gemini:",
-    options=["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"],
+    options=["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash"],
     index=0
 )
 
@@ -512,7 +512,16 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
             else:
                 contents_payload.append(f"Receta:\n{contenido_ia}")
 
-            modelos_a_probar = [modelo_seleccionado, "gemini-2.0-flash", "gemini-1.5-flash"]
+            # AUTO-DESCUBRIMIENTO DE MODELOS DISPONIBLES EN TU CUENTA
+            modelos_a_probar = [modelo_seleccionado, "gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"]
+            try:
+                for m in client.models.list():
+                    nombre_limpio = m.name.replace("models/", "")
+                    if nombre_limpio not in modelos_a_probar and "gemini" in nombre_limpio.lower():
+                        modelos_a_probar.append(nombre_limpio)
+            except Exception:
+                pass
+            
             modelos_a_probar = list(dict.fromkeys(modelos_a_probar))
             
             response = None
@@ -521,7 +530,7 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
             
             with st.spinner("⚡ Conectando con Gemini y generando el diagrama..."):
                 for mod in modelos_a_probar:
-                    intentos = 3
+                    intentos = 2
                     for intento in range(intentos):
                         try:
                             response = client.models.generate_content(
@@ -541,7 +550,7 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
                             if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
                                 break
                             if "503" in err_str or "UNAVAILABLE" in err_str or "404" in err_str:
-                                break
+                                break # Salta al siguiente modelo si da 404 o no está disponible
                             if intento == intentos - 1:
                                 break
                     if exito:
@@ -586,13 +595,11 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
                 components.html(html_final, height=1250, scrolling=True)
             else:
                 if "429" in error_capturado or "RESOURCE_EXHAUSTED" in error_capturado:
-                    st.error("⚠️ **Límite de cuota gratuito alcanzado (Error 429).** Has superado las solicitudes permitidas por la API de Google por hoy.")
+                    st.error("⚠️ **Límite de cuota gratuito alcanzado (Error 429).** Has superado temporalmente las solicitudes permitidas por la API.")
                 elif "503" in error_capturado or "UNAVAILABLE" in error_capturado:
-                    st.error("⚠️ **Servidores con alta demanda (Error 503).** Google está experimentando tráfico elevado temporalmente. Vuelve a pulsar el botón en unos segundos.")
-                elif "404" in error_capturado:
-                    st.error("⚠️ **Error 404 (Modelo no encontrado).** El modelo seleccionado no está disponible en tu cuenta. Selecciona 'gemini-2.0-flash' en el panel lateral.")
+                    st.error("⚠️ **Servidores con alta demanda (Error 503).** Vuelve a pulsar el botón en unos segundos.")
                 else:
-                    st.error(f"No se pudo obtener una respuesta válida del modelo: {error_capturado}")
+                    st.error(f"No se pudo conectar con ningún modelo de Gemini disponible. Detalle del error: {error_capturado}")
                 
         except APIError as e:
             st.error(f"Error de la API de Gemini: {e}")
