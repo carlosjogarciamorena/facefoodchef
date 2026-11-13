@@ -59,7 +59,7 @@ API_KEY_INPUT = st.sidebar.text_input(
 
 modelo_seleccionado = st.sidebar.selectbox(
     "Modelo Gemini:",
-    options=["gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-pro"],
+    options=["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"],
     index=0
 )
 
@@ -512,7 +512,7 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
             else:
                 contents_payload.append(f"Receta:\n{contenido_ia}")
 
-            modelos_a_probar = [modelo_seleccionado, "gemini-2.5-flash", "gemini-1.5-flash"]
+            modelos_a_probar = [modelo_seleccionado, "gemini-2.0-flash", "gemini-1.5-flash"]
             modelos_a_probar = list(dict.fromkeys(modelos_a_probar))
             
             response = None
@@ -590,7 +590,7 @@ if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
                 elif "503" in error_capturado or "UNAVAILABLE" in error_capturado:
                     st.error("⚠️ **Servidores con alta demanda (Error 503).** Google está experimentando tráfico elevado temporalmente. Vuelve a pulsar el botón en unos segundos.")
                 elif "404" in error_capturado:
-                    st.error("⚠️ **Error 404 (Modelo no encontrado).** El modelo seleccionado no está disponible en tu cuenta. Selecciona 'gemini-2.5-flash' en el panel lateral.")
+                    st.error("⚠️ **Error 404 (Modelo no encontrado).** El modelo seleccionado no está disponible en tu cuenta. Selecciona 'gemini-2.0-flash' en el panel lateral.")
                 else:
                     st.error(f"No se pudo obtener una respuesta válida del modelo: {error_capturado}")
                 
