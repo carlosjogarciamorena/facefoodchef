@@ -472,6 +472,7 @@ def generar_html_diagrama(datos: dict, origen_receta: str, comensales: int) -> s
 
 <script>
   let ultimoTextoPaso = '';
+  let audioPausado = false;
 
   function normalizarLocucion(texto) {{
     if (!texto) return '';
@@ -481,31 +482,42 @@ def generar_html_diagrama(datos: dict, origen_receta: str, comensales: int) -> s
       .replace(/\\bD\\.?\\s*O\\.?\\b/gi, 'denominacion de origen');
   }}
 
-  function hablar(texto) {{
-    if (!('speechSynthesis' in window)) return;
+  function lanzarLocucion(textoNormalizado) {{
+    if (!('speechSynthesis' in window) || !textoNormalizado) return;
     window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(normalizarLocucion(texto));
+    const u = new SpeechSynthesisUtterance(textoNormalizado);
     u.lang = 'es-ES';
     u.rate = 0.95;
-    window.speechSynthesis.speak(u);
+    window.setTimeout(() => {{
+      try {{
+        window.speechSynthesis.speak(u);
+      }} catch (e) {{}}
+    }}, 60);
+  }}
+
+  function hablar(texto) {{
+    if (!('speechSynthesis' in window)) return;
+    const norm = normalizarLocucion(texto);
+    ultimoTextoPaso = norm;
+    audioPausado = false;
+    lanzarLocucion(norm);
   }}
 
   function reproducirPaso(texto) {{
     if (!('speechSynthesis' in window)) return;
     ultimoTextoPaso = normalizarLocucion(texto);
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(ultimoTextoPaso);
-    u.lang = 'es-ES';
-    u.rate = 0.95;
-    window.speechSynthesis.speak(u);
+    audioPausado = false;
+    lanzarLocucion(ultimoTextoPaso);
   }}
 
   function pausarPaso() {{
     if (!('speechSynthesis' in window)) return;
-    if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {{
-      window.speechSynthesis.pause();
-    }} else if (window.speechSynthesis.paused) {{
-      window.speechSynthesis.resume();
+    if (!audioPausado) {{
+      audioPausado = true;
+      window.speechSynthesis.cancel();
+    }} else if (ultimoTextoPaso) {{
+      audioPausado = false;
+      lanzarLocucion(ultimoTextoPaso);
     }}
   }}
 
@@ -513,14 +525,13 @@ def generar_html_diagrama(datos: dict, origen_receta: str, comensales: int) -> s
     if (!('speechSynthesis' in window)) return;
     const objetivo = normalizarLocucion(texto || ultimoTextoPaso);
     if (!objetivo) return;
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(objetivo);
-    u.lang = 'es-ES';
-    u.rate = 0.95;
-    window.speechSynthesis.speak(u);
+    ultimoTextoPaso = objetivo;
+    audioPausado = false;
+    lanzarLocucion(objetivo);
   }}
 
   function silenciar() {{
+    audioPausado = false;
     if ('speechSynthesis' in window) window.speechSynthesis.cancel();
   }}
 
