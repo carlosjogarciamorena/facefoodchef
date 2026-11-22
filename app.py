@@ -285,6 +285,10 @@ def generar_html_diagrama(datos: dict, origen_receta: str, comensales: int) -> s
     saludables_items = "".join([f"<li>{s}</li>" for s in maridaje.get("bebidas_saludables", [])]) or "<li>Sin propuestas</li>"
 
     resumen_voz_json = json.dumps(texto_voz)
+    btn_store_style = (
+        "background:#00FF66; color:#1E1E1E; border:none; padding:7px 12px; border-radius:4px; "
+        "cursor:pointer; font-size:11px; font-weight:900; font-family:'Montserrat', sans-serif; text-transform:uppercase;"
+    )
 
     return f"""<!DOCTYPE html>
 <html lang="es">
@@ -296,7 +300,8 @@ def generar_html_diagrama(datos: dict, origen_receta: str, comensales: int) -> s
   body {{ background:#36393F; color:#E2E8F0; font-family:'Inter', sans-serif; margin:0; padding:12px; }}
   .wrap {{ max-width:920px; margin:auto; }}
   .card {{ background:#2C2F33; border-radius:6px; padding:16px; margin-bottom:16px; }}
-  h3 {{ margin:0 0 12px 0; font-family:'Montserrat', sans-serif; font-size:15px; text-transform:uppercase; }}
+  .card-head {{ display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; border-bottom:1px solid #4F545C; padding-bottom:8px; margin-bottom:12px; }}
+  h3 {{ margin:0; font-family:'Montserrat', sans-serif; font-size:15px; text-transform:uppercase; }}
 </style>
 </head>
 <body>
@@ -316,17 +321,25 @@ def generar_html_diagrama(datos: dict, origen_receta: str, comensales: int) -> s
   </div>
 
   <div class="card" style="border-left:6px solid #00FF66;">
-    <h3 style="color:#00FF66;">1. Ingredientes Exactos ({comensales} pax)</h3>
+    <div class="card-head">
+      <h3 style="color:#00FF66;">1. Ingredientes Exactos ({comensales} pax)</h3>
+      <button style="{btn_store_style}" onclick="alert('Redirigiendo a Delicatessen Gourmet...')">🛒 DELICATESSEN GOURMET</button>
+    </div>
     <div style="display:flex; flex-wrap:wrap; gap:8px;">{ing_chips}</div>
   </div>
 
   <div class="card" style="border-left:6px solid #00FF66;">
-    <h3 style="color:#00FF66;">2. Utensilios y Menaje</h3>
+    <div class="card-head">
+      <h3 style="color:#00FF66;">2. Utensilios y Menaje</h3>
+      <button style="{btn_store_style}" onclick="alert('Redirigiendo a Pucheros Store...')">🍳 PUCHEROS STORE</button>
+    </div>
     <div style="display:flex; flex-wrap:wrap; gap:8px;">{ut_chips}</div>
   </div>
 
   <div class="card" style="border-left:6px solid #4F545C;">
-    <h3 style="color:#FFFFFF;">3. Preparación Previa (Mise en Place)</h3>
+    <div class="card-head">
+      <h3 style="color:#FFFFFF;">3. Preparación Previa (Mise en Place)</h3>
+    </div>
     <ul style="margin:0; padding-left:18px; font-family:'JetBrains Mono', monospace; font-size:13px; line-height:1.6;">{prep_items}</ul>
   </div>
 
@@ -336,17 +349,23 @@ def generar_html_diagrama(datos: dict, origen_receta: str, comensales: int) -> s
     <div style="text-align:center; color:#FFD700; font-size:20px; font-weight:900; margin:6px 0;">↓</div>
     <div class="card" style="border-left:6px solid #FFD700; text-align:center;">
       <span style="background:#FFD700; color:#1E1E1E; padding:3px 10px; border-radius:3px; font-size:11px; font-weight:900;">FIN DEL FLUJO</span>
-      <h3 style="color:#FFD700; margin-top:10px; font-size:17px;">🍽️ PLATO TERMINADO Y LISTO PARA EMPLATAR</h3>
+      <h3 style="color:#FFD700; margin:10px 0 12px 0; font-size:17px;">🍽️ PLATO TERMINADO Y LISTO PARA SERVIR</h3>
+      <button style="{btn_store_style}" onclick="alert('Abriendo guía y menaje de emplatado...')">✨ EMPLATADO</button>
     </div>
   </div>
 
   <div class="card" style="border-left:6px solid #EF4444;">
-    <h3 style="color:#EF4444;">5. Puntos Críticos y Alertas</h3>
+    <div class="card-head">
+      <h3 style="color:#EF4444;">5. Puntos Críticos y Alertas</h3>
+    </div>
     <ul style="margin:0; padding-left:18px; font-family:'JetBrains Mono', monospace; font-size:13px; line-height:1.6;">{recom_items}</ul>
   </div>
 
   <div class="card" style="border-left:6px solid #00FF66;">
-    <h3 style="color:#00FF66;">6. Sommelier y Maridaje</h3>
+    <div class="card-head">
+      <h3 style="color:#00FF66;">6. Sommelier y Maridaje</h3>
+      <button style="{btn_store_style}" onclick="alert('Redirigiendo a Líquidos Store...')">🍾 LIQUIDOS STORE</button>
+    </div>
     <p style="margin:6px 0 4px 0; font-weight:700;">🍇 Vinos (Denominaciones de Origen):</p>
     <ul style="margin:0 0 10px 0; padding-left:18px; font-family:'JetBrains Mono', monospace; font-size:13px;">{vinos_items}</ul>
     <p style="margin:6px 0 4px 0; font-weight:700;">🍺 Cervezas:</p>
