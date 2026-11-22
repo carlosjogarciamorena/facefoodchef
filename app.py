@@ -214,6 +214,26 @@ def render_controles_audio_paso(texto_locucion: str, label_escuchar: str) -> str
     )
 
 
+def extraer_maridaje_texto_voz(maridaje: dict) -> str:
+    partes = ["Sommelier y maridaje."]
+    secciones = [
+        ("Vinos", maridaje.get("vinos", [])),
+        ("Cervezas", maridaje.get("cervezas", [])),
+        ("Bebidas saludables sin alcohol", maridaje.get("bebidas_saludables", [])),
+    ]
+    for nombre_sec, lista in secciones:
+        if lista:
+            partes.append(f"{nombre_sec}:")
+            for item in lista:
+                if isinstance(item, dict):
+                    t = item.get("titulo", "")
+                    d = item.get("descripcion", "")
+                    partes.append(f"{t}. {d}".strip())
+                else:
+                    partes.append(str(item))
+    return " ".join(partes)
+
+
 def formatear_lista_bebidas_html(items: list, color_titulo_bebida: str) -> str:
     if not items:
         return "<li style='color:#94A3B8;'>Sin propuestas</li>"
@@ -328,9 +348,14 @@ def generar_html_diagrama(datos: dict, origen_receta: str, comensales: int) -> s
             bloques_html.append("<div style='text-align:center; color:#FFB300; font-size:20px; font-weight:900; margin:4px 0 8px 0;'>↓</div>")
 
     recom_items = "".join([f"<li style='margin-bottom:6px;'>{r}</li>" for r in recomendaciones])
+    texto_voz_alertas = "Puntos críticos y alertas. " + ". ".join(recomendaciones) if recomendaciones else "Sin puntos críticos registrados."
+    controles_audio_alertas = render_controles_audio_paso(texto_voz_alertas, "🔊 ESCUCHAR ALERTAS")
+
     vinos_items = formatear_lista_bebidas_html(maridaje.get("vinos", []), "#FBBF24")
     cervezas_items = formatear_lista_bebidas_html(maridaje.get("cervezas", []), "#FB923C")
     saludables_items = formatear_lista_bebidas_html(maridaje.get("bebidas_saludables", []), "#00FF66")
+    texto_voz_maridaje = extraer_maridaje_texto_voz(maridaje)
+    controles_audio_maridaje = render_controles_audio_paso(texto_voz_maridaje, "🔊 ESCUCHAR MARIDAJE")
 
     resumen_voz_json = json.dumps(preparar_texto_voz(texto_voz))
     btn_store_style = (
@@ -415,6 +440,7 @@ def generar_html_diagrama(datos: dict, origen_receta: str, comensales: int) -> s
   <div class="card" style="border-left:6px solid #EF4444;">
     <div class="card-head">
       <h3 style="color:#EF4444;">5. Puntos Críticos y Alertas</h3>
+      {controles_audio_alertas}
     </div>
     <ul style="margin:0; padding-left:18px; font-family:'JetBrains Mono', monospace; font-size:13px; line-height:1.6;">{recom_items}</ul>
   </div>
@@ -422,7 +448,10 @@ def generar_html_diagrama(datos: dict, origen_receta: str, comensales: int) -> s
   <div class="card" style="border-left:6px solid #00FF66;">
     <div class="card-head">
       <h3 style="color:#00FF66;">6. Sommelier y Maridaje</h3>
-      <button style="{btn_store_style}" onclick="alert('Redirigiendo a Líquidos Store...')">🍾 LIQUIDOS STORE</button>
+      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+        {controles_audio_maridaje}
+        <button style="{btn_store_style}" onclick="alert('Redirigiendo a Líquidos Store...')">🍾 LIQUIDOS STORE</button>
+      </div>
     </div>
     <div style="display:inline-block; margin:10px 0 8px 0; padding:5px 12px; border-radius:4px; background:#36393F; border-left:4px solid #FBBF24; color:#FBBF24; font-family:'Montserrat', sans-serif; font-size:13px; font-weight:900; text-transform:uppercase;">🍇 Vinos (Denominaciones de Origen):</div>
     <ul style="margin:0 0 12px 0; padding-left:18px; font-family:'JetBrains Mono', monospace; font-size:13px; line-height:1.6;">{vinos_items}</ul>
