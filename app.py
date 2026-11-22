@@ -29,8 +29,8 @@ except ImportError:
     HAS_PPTX = False
 
 st.set_page_config(
-    page_title="FaceFoodChef.com - Motor de Diagramas Culinarios", 
-    layout="wide", 
+    page_title="FaceFoodChef.com - Motor de Diagramas Culinarios",
+    layout="wide",
     page_icon="🍳"
 )
 
@@ -69,7 +69,7 @@ comensales_objetivo = st.sidebar.number_input(
     max_value=100,
     value=4,
     step=1,
-    help="El sistema recalculará los ingredientes para este número de personas."
+    help="El sistema recalculará los ingredientes con cantidades exactas para este número de personas."
 )
 
 st.sidebar.markdown("---")
@@ -84,8 +84,8 @@ st.markdown("<p style='text-align: center; color: #E2E8F0; font-size: clamp(13px
 
 st.subheader("📥 Entrada de Receta")
 entrada_principal = st.text_area(
-    "Pega la URL de la receta o el texto completo:", 
-    height=130, 
+    "Pega la URL de la receta o el texto completo:",
+    height=130,
     placeholder="https://www.ejemplo.com/receta\nO pega directamente el texto de la receta aquí..."
 )
 
@@ -151,22 +151,22 @@ def calcular_tiempo_total(bloques_proceso, minutos_prep=10):
     return total
 
 def generar_html_dashboard(
-    nombre_receta, 
-    origen_receta, 
-    ingredientes, 
-    utensilios_menaje, 
-    pasos_previos, 
-    bloques_proceso, 
-    recomendaciones, 
-    texto_voz, 
-    maridaje, 
-    comensales, 
+    nombre_receta,
+    origen_receta,
+    ingredientes,
+    utensilios_menaje,
+    pasos_previos,
+    bloques_proceso,
+    recomendaciones,
+    texto_voz,
+    maridaje,
+    comensales,
     nivel_dificultad
 ):
-    COLOR_VERDE_ING = "#00FF66"      
-    COLOR_AMARILLO_ACC = "#FFB300"   
-    COLOR_ROJO_ALERTA = "#EF4444"    
-    COLOR_DORADO_PLATO = "#FFD700"   
+    COLOR_VERDE_ING = "#00FF66"
+    COLOR_AMARILLO_ACC = "#FFB300"
+    COLOR_ROJO_ALERTA = "#EF4444"
+    COLOR_DORADO_PLATO = "#FFD700"
 
     minutos_prep_est = len(pasos_previos) * 3 if pasos_previos else 10
     tiempo_total_min = calcular_tiempo_total(bloques_proceso, minutos_prep_est)
@@ -196,7 +196,7 @@ def generar_html_dashboard(
     html_ing = (
         f'<div style="background-color: #2C2F33; border-left: 6px solid {COLOR_VERDE_ING}; border-radius: 6px; padding: 16px; margin-bottom: 16px;">'
         f'<div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4F545C; padding-bottom: 8px; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">'
-        f'<h3 style="color: {COLOR_VERDE_ING}; margin: 0; font-size: clamp(14px, 2.5vw, 16px); font-weight: 700; font-family: \'Montserrat\', sans-serif;">🛒 1. Ingredientes ({comensales} pax)</h3>'
+        f'<h3 style="color: {COLOR_VERDE_ING}; margin: 0; font-size: clamp(14px, 2.5vw, 16px); font-weight: 700; font-family: \'Montserrat\', sans-serif;">🛒 1. Ingredientes Exactos ({comensales} pax)</h3>'
         f'<button class="btn-store" style="background-color: {COLOR_VERDE_ING}; color: #1E1E1E;" onclick="alert(\'Redirigiendo a la tienda de ingredientes...\')">🛒 DELICATESSEN GOURMET</button>'
         f'</div>'
         f'<div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;">{ingredientes_html_items}</div>'
@@ -248,7 +248,7 @@ def generar_html_dashboard(
                 dur_rama = rama.get("duracion_minutos", 5)
                 timer_id = f"timer_par_{i}_{idx}"
                 texto_audio_rama = f"Subproceso paralelo {nombre_rama}. Acción: {accion}. Utensilios necesarios: {utensilios_rama}. Tiempo estimado: {tiempo}. Temperatura: {temp}."
-                
+
                 html_diagrama += (
                     f'<div style="flex: 1; min-width: 260px; background-color: #2C2F33; border-left: 6px solid {COLOR_AMARILLO_ACC}; border-radius: 6px; padding: 16px;">'
                     f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">'
@@ -270,7 +270,7 @@ def generar_html_dashboard(
             tiempo_txt = bloque.get('tiempo')
             temp_txt = bloque.get('temperatura')
             texto_audio_paso = f"{etiqueta}. Acción: {accion_txt}. Utensilios: {utensilios_str}. Tiempo: {tiempo_txt}. Temperatura: {temp_txt}."
-            
+
             html_diagrama += (
                 f'<div style="background-color: #2C2F33; border-left: 6px solid {borde_color}; border-radius: 6px; padding: 16px; margin-bottom: 14px;">'
                 f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">'
@@ -284,7 +284,7 @@ def generar_html_dashboard(
                 f'<button onclick="iniciarTemporizador(\'{timer_id}\', {duracion_min})" class="btn-iniciar">⏳ INICIAR</button>'
                 f'</div></div>'
             )
-            
+
         if i < len(bloques_proceso) - 1:
             html_diagrama += '<div style="text-align: center; margin: 4px 0 10px 0;"><span style="color: #FFB300; font-size: 18px; font-weight: bold;">↓</span></div>'
 
@@ -307,20 +307,24 @@ def generar_html_dashboard(
 
     vinos_lista = maridaje.get('vinos', [])
     cervezas_lista = maridaje.get('cervezas', [])
+    saludables_lista = maridaje.get('bebidas_saludables', [])
     vinos_html = "".join([f'<li style="margin-bottom: 4px;">{v}</li>' for v in vinos_lista]) if vinos_lista else "<li>Sin opciones disponibles.</li>"
     cervezas_html = "".join([f'<li style="margin-bottom: 4px;">{c}</li>' for c in cervezas_lista]) if cervezas_lista else "<li>Sin opciones disponibles.</li>"
+    saludables_html = "".join([f'<li style="margin-bottom: 4px;">{s}</li>' for s in saludables_lista]) if saludables_lista else "<li>Sin opciones disponibles.</li>"
 
     html_maridaje = (
         f'<div style="background-color: #2C2F33; border-left: 6px solid {COLOR_VERDE_ING}; border-radius: 6px; padding: 16px; margin-top: 16px; margin-bottom: 16px;">'
         f'<div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4F545C; padding-bottom: 8px; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">'
-        f'<h3 style="color: {COLOR_VERDE_ING}; margin: 0; font-size: clamp(14px, 2.5vw, 16px); font-weight: 700; font-family: \'Montserrat\', sans-serif;">🍷 6. Maridaje</h3>'
+        f'<h3 style="color: {COLOR_VERDE_ING}; margin: 0; font-size: clamp(14px, 2.5vw, 16px); font-weight: 700; font-family: \'Montserrat\', sans-serif;">🍷 6. Sommelier y Maridaje</h3>'
         f'<button class="btn-store" style="background-color: {COLOR_VERDE_ING}; color: #1E1E1E;" onclick="alert(\'Redirigiendo a la bodega de líquidos...\')">🍾 LIQUIDOS STORE</button>'
         f'</div>'
         f'<div style="margin-top: 12px; color: #E2E8F0; font-size: clamp(13px, 2.2vw, 15px); line-height: 1.6; font-family: \'JetBrains Mono\', monospace;">'
         f'<p style="margin-bottom: 4px; color: #FFFFFF;"><b>🍇 Vinos (Denominaciones de Origen):</b></p>'
         f'<ul style="margin: 0 0 10px 0; padding-left: 18px;">{vinos_html}</ul>'
         f'<p style="margin-bottom: 4px; color: #FFFFFF;"><b>🍺 Cervezas:</b></p>'
-        f'<ul style="margin: 0; padding-left: 18px;">{cervezas_html}</ul>'
+        f'<ul style="margin: 0 0 10px 0; padding-left: 18px;">{cervezas_html}</ul>'
+        f'<p style="margin-bottom: 4px; color: {COLOR_VERDE_ING};"><b>🌿 Bebidas Saludables (Sin Alcohol):</b></p>'
+        f'<ul style="margin: 0; padding-left: 18px;">{saludables_html}</ul>'
         f'</div></div>'
     )
 
@@ -341,267 +345,4 @@ def generar_html_dashboard(
         ".btn-escuchar { background: #EF4444; color: #FFFFFF; border: none; padding: 10px 16px; font-size: 12px; font-weight: 900; border-radius: 4px; cursor: pointer; margin: 4px; font-family: 'Montserrat', sans-serif; text-transform: uppercase; }"
         ".btn-silenciar { background: #4F545C; color: #FFFFFF; border: none; padding: 10px 16px; font-size: 12px; font-weight: 900; border-radius: 4px; cursor: pointer; margin: 4px; font-family: 'Montserrat', sans-serif; text-transform: uppercase; }"
         ".btn-step-audio { background: #FFB300; color: #1E1E1E; border: none; padding: 6px 12px; font-size: 11px; font-weight: 900; border-radius: 4px; cursor: pointer; font-family: 'Montserrat', sans-serif; text-transform: uppercase; }"
-        ".btn-iniciar { background: #EF4444; color: #FFFFFF; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 900; border-radius: 4px; cursor: pointer; font-family: 'Montserrat', sans-serif; text-transform: uppercase; }"
-        f".btn-store {{ background-color: {COLOR_VERDE_ING}; color: #1E1E1E; border: none; padding: 8px 14px; font-size: 11px; font-weight: 900; border-radius: 4px; cursor: pointer; font-family: 'Montserrat', sans-serif; text-transform: uppercase; }}"
-        "</style>"
-        "</head>"
-        "<body>"
-        "<div class=\"container-hub\">"
-        f"{html_header}"
-        "<div class=\"widget-box\">"
-        "<p style=\"color: #E2E8F0; font-size: 12px; margin: 0 0 10px 0; font-weight: 700; font-family: 'Montserrat', sans-serif;\">👨‍🍳 ASISTENTE AUDITIVO GENERAL</p>"
-        f"<button id=\"btnVoz\" class=\"btn-escuchar\" onclick='reproducirVozDirecta({texto_voz_seguro}, this)'>🎧 Escuchar Resumen de la Receta</button>"
-        "<button class=\"btn-silenciar\" onclick=\"detenerTodo()\">OIDO COCINA (silenciar)</button>"
-        "</div>"
-        f"{html_ing}"
-        f"{html_utensilios}"
-        f"{html_prev}"
-        f"{html_diagrama}"
-        f"{html_recom}"
-        f"{html_maridaje}"
-        "<div style=\"text-align: center; color: #9AA0A6; font-size: 11px; margin-top: 24px; border-top: 1px solid #4F545C; padding-top: 14px; font-family: 'Inter', sans-serif; word-break: break-all;\">"
-        f"FaceFoodChef.com | Origen: {origen_html}"
-        "</div>"
-        "</div>"
-        "<script>"
-        "window.activeUtterance = null;"
-        "function reproducirVozDirecta(texto, btn) {"
-        "  if (!('speechSynthesis' in window)) { alert('Tu navegador no soporta síntesis de voz.'); return; }"
-        "  window.speechSynthesis.cancel();"
-        "  window.activeUtterance = new SpeechSynthesisUtterance(texto);"
-        "  window.activeUtterance.lang = 'es-ES';"
-        "  window.activeUtterance.rate = 0.95;"
-        "  const textoOriginal = btn.innerText;"
-        "  btn.innerText = '🔊 REPRODUCIENDO...';"
-        "  window.activeUtterance.onend = function() { btn.innerText = textoOriginal; };"
-        "  window.activeUtterance.onerror = function() { btn.innerText = textoOriginal; };"
-        "  window.setTimeout(() => { window.speechSynthesis.speak(window.activeUtterance); }, 50);"
-        "}"
-        "function detenerTodo() {"
-        "  if ('speechSynthesis' in window) {"
-        "    window.speechSynthesis.cancel();"
-        "    const btn = document.getElementById('btnVoz');"
-        "    if (btn) btn.innerText = '🎧 Escuchar Resumen de la Receta';"
-        "  }"
-        "}"
-        "function iniciarTemporizador(elementId, minutos) {"
-        "  const elemento = document.getElementById(elementId);"
-        "  let segundosRestantes = minutos * 60;"
-        "  if (window[elementId + '_interval']) clearInterval(window[elementId + '_interval']);"
-        "  window[elementId + '_interval'] = setInterval(() => {"
-        "    if (segundosRestantes <= 0) {"
-        "      clearInterval(window[elementId + '_interval']);"
-        "      elemento.innerText = '¡FINALIZADO!';"
-        "      sonarAlertaMultiple();"
-        "    } else {"
-        "      segundosRestantes--;"
-        "      const m = Math.floor(segundosRestantes / 60);"
-        "      const s = segundosRestantes % 60;"
-        "      elemento.innerText = m + 'm ' + (s < 10 ? '0' : '') + s + 's';"
-        "    }"
-        "  }, 1000);"
-        "}"
-        "function sonarAlertaMultiple() {"
-        "  let pitidosEmitidos = 0;"
-        "  const intervaloPitidos = setInterval(() => {"
-        "    if (pitidosEmitidos >= 10) { clearInterval(intervaloPitidos); return; }"
-        "    try {"
-        "      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();"
-        "      const osc = audioCtx.createOscillator();"
-        "      const gain = audioCtx.createGain();"
-        "      osc.frequency.setValueAtTime(880, audioCtx.currentTime);"
-        "      gain.gain.setValueAtTime(0.3, audioCtx.currentTime);"
-        "      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);"
-        "      osc.connect(gain); gain.connect(audioCtx.destination);"
-        "      osc.start(); osc.stop(audioCtx.currentTime + 0.2);"
-        "    } catch (e) {}"
-        "    pitidosEmitidos++;"
-        "  }, 350);"
-        "}"
-        "</script>"
-        "</body>"
-        "</html>"
-    )
-    return script_y_estilos
-
-procesar_accion = False
-contenido_ia = None
-
-if url_origen_detectada:
-    try:
-        with st.spinner("🌐 Extrayendo datos de la URL..."):
-            contenido_ia, url_origen_detectada = extraer_texto_de_url(url_origen_detectada)
-            procesar_accion = True
-    except Exception as e:
-        st.error(f"{e}")
-elif receta_texto_input:
-    contenido_ia = receta_texto_input
-    procesar_accion = True
-elif archivo_multimodal:
-    procesar_accion = True
-
-if st.button("🚀 GENERAR DIAGRAMA DE FLUJO CULINARIO"):
-    api_key_activa = API_KEY_INPUT.strip()
-    
-    if not api_key_activa:
-        st.error("⚠️ Introduce tu clave de API de Google Gemini en el panel lateral.")
-    elif not procesar_accion:
-        st.warning("⚠️ Debes introducir un texto, URL o adjuntar un archivo con la receta.")
-    else:
-        try:
-            client = genai.Client(api_key=api_key_activa)
-            
-            prompt_sistema = f"""
-            Eres un experto programador de flujos culinarios y maestro chef. 
-            Transforma la receta dada en una estructura JSON optimizada para generar un diagrama de flujo paso a paso.
-
-            Recalcula las cantidades exactamente para {comensales_objetivo} COMENSALES.
-
-            EVALUACIÓN DE NIVEL DE DIFICULTAD:
-            Asigna obligatoriamente uno de estos tres niveles en el campo "nivel_dificultad" basándote en la complejidad técnica de la receta:
-            1. "Superviviente Básico" (recetas sencillas, sin técnicas complejas, pocos ingredientes, rápida ejecución).
-            2. "Cocinero Cualificado" (requiere cierta soltura en cocina, tiempos de cocción combinados, sofritos elaborados o técnicas moderadas).
-            3. "Doctor Chef" (técnicas exigentes, control estricto de temperaturas, emulsiones delicadas, limpieza compleja o múltiples procesos paralelos).
-
-            REGLAS ESTRUCTURALES Y JSON:
-            1. UNIDADES: Abreviadas (g, kg, ml, l, ºC, min). Escribir "cucharada" y "cucharadita" completas. Evita términos ambiguos ("al gusto").
-            2. MODULARIZACIÓN:
-               - Separa la lista de "utensilios_menaje".
-               - Separa la lista de "pasos_previos" (Mise en place).
-            3. BLOQUES DE PROCESO:
-               - "tipo": "secuencial", "paralelo" o "convergencia".
-               - "es_critico": booleano (true si requiere especial precaución técnica o de seguridad).
-               - "duracion_minutos": número entero con los minutos estimados de ese bloque.
-            4. MARIDAJE:
-               - Evalúa todas las Denominaciones de Origen (sin restricción geográfica).
-               - Genera EXACTAMENTE 3 propuestas de vinos indicando tipo o Denominación de Origen idónea.
-               - Genera EXACTAMENTE 3 propuestas de cervezas acordes al plato.
-            5. Devuelve EXCLUSIVAMENTE un objeto JSON válido que cumpla estrictamente con la estructura solicitada, sin bloques de texto adicionales fuera del JSON.
-
-            JSON Schema esperado:
-            {{
-              "nombre_receta": "String",
-              "origen_receta": "String",
-              "nivel_dificultad": "Superviviente Básico",
-              "ingredientes": ["400 g de harina"],
-              "utensilios_menaje": ["Cuchillo", "Sartén"],
-              "pasos_previos": ["Cortar vegetales"],
-              "bloques_proceso": [
-                {{"tipo": "secuencial", "es_critico": false, "accion": "Descripción del paso", "utensilios": ["Sartén"], "tiempo": "5 min", "duracion_minutos": 5, "temperatura": "180 ºC"}},
-                {{
-                  "tipo": "paralelo",
-                  "es_critico": false,
-                  "ramas": [
-                    {{"nombre": "Salsa", "accion": "Reducir el líquido", "utensilios": ["Cazo"], "tiempo": "10 min", "duracion_minutos": 10, "temperatura": "90 ºC"}}
-                  ]
-                }}
-              ],
-              "recomendaciones": ["Punto crítico de cocción"],
-              "texto_voz": "Resumen narrado del proceso",
-              "maridaje": {{
-                "vinos": ["Vino 1", "Vino 2", "Vino 3"],
-                "cervezas": ["Cerveza 1", "Cerveza 2", "Cerveza 3"]
-              }}
-            }}
-            """
-
-            contents_payload = [prompt_sistema]
-            if archivo_multimodal:
-                contents_payload.append(types.Part.from_bytes(data=archivo_multimodal, mime_type=tipo_multimodal))
-                contents_payload.append(f"Procesa la receta adjunta ajustada a {comensales_objetivo} personas.")
-            else:
-                contents_payload.append(f"Receta:\n{contenido_ia}")
-
-            # AUTO-DESCUBRIMIENTO DE MODELOS DISPONIBLES EN TU CUENTA
-            modelos_a_probar = [modelo_seleccionado, "gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"]
-            try:
-                for m in client.models.list():
-                    nombre_limpio = m.name.replace("models/", "")
-                    if nombre_limpio not in modelos_a_probar and "gemini" in nombre_limpio.lower():
-                        modelos_a_probar.append(nombre_limpio)
-            except Exception:
-                pass
-            
-            modelos_a_probar = list(dict.fromkeys(modelos_a_probar))
-            
-            response = None
-            exito = False
-            error_capturado = ""
-            
-            with st.spinner("⚡ Conectando con Gemini y generando el diagrama..."):
-                for mod in modelos_a_probar:
-                    intentos = 2
-                    for intento in range(intentos):
-                        try:
-                            response = client.models.generate_content(
-                                model=mod,
-                                contents=contents_payload,
-                                config=types.GenerateContentConfig(
-                                    response_mime_type="application/json",
-                                    temperature=0.2
-                                ),
-                            )
-                            if response and response.text:
-                                exito = True
-                                break
-                        except Exception as api_err:
-                            err_str = str(api_err)
-                            error_capturado = err_str
-                            if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
-                                break
-                            if "503" in err_str or "UNAVAILABLE" in err_str or "404" in err_str:
-                                break # Salta al siguiente modelo si da 404 o no está disponible
-                            if intento == intentos - 1:
-                                break
-                    if exito:
-                        break
-
-            if response and exito:
-                texto_respuesta = response.text.strip()
-                if texto_respuesta.startswith("```json"):
-                    texto_respuesta = texto_respuesta[7:]
-                elif texto_respuesta.startswith("```"):
-                    texto_respuesta = texto_respuesta[3:]
-                if texto_respuesta.endswith("```"):
-                    texto_respuesta = texto_respuesta[:-3]
-                
-                datos = json.loads(texto_respuesta.strip())
-                origen_final = url_origen_detectada if url_origen_detectada else datos.get("origen_receta", "Texto introducido por el usuario")
-
-                html_final = generar_html_dashboard(
-                    datos.get("nombre_receta", "Receta Culinaria"),
-                    origen_final,
-                    datos.get("ingredientes", []),
-                    datos.get("utensilios_menaje", []),
-                    datos.get("pasos_previos", []),
-                    datos.get("bloques_proceso", []),
-                    datos.get("recomendaciones", []),
-                    datos.get("texto_voz", ""),
-                    datos.get("maridaje", {}),
-                    comensales_objetivo,
-                    datos.get("nivel_dificultad", "Cocinero Cualificado")
-                )
-                
-                st.success("¡Diagrama optimizado generado con éxito!")
-                
-                nombre_archivo = f"diagrama_{datos.get('nombre_receta', 'receta').lower().replace(' ', '_')}.html"
-                st.download_button(
-                    label="💾 Descargar Diagrama en HTML",
-                    data=html_final,
-                    file_name=nombre_archivo,
-                    mime="text/html"
-                )
-                
-                components.html(html_final, height=1250, scrolling=True)
-            else:
-                if "429" in error_capturado or "RESOURCE_EXHAUSTED" in error_capturado:
-                    st.error("⚠️ **Límite de cuota gratuito alcanzado (Error 429).** Has superado temporalmente las solicitudes permitidas por la API.")
-                elif "503" in error_capturado or "UNAVAILABLE" in error_capturado:
-                    st.error("⚠️ **Servidores con alta demanda (Error 503).** Vuelve a pulsar el botón en unos segundos.")
-                else:
-                    st.error(f"No se pudo conectar con ningún modelo de Gemini disponible. Detalle del error: {error_capturado}")
-                
-        except APIError as e:
-            st.error(f"Error de la API de Gemini: {e}")
-        except Exception as e:
-            st.error(f"Error inesperado al procesar los datos: {e}")
+        ".btn-iniciar { background: #EF4444; color: #FFFFFF; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 900; font-family: 'Montserrat',
