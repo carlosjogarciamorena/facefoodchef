@@ -209,7 +209,7 @@ def render_controles_audio_paso(texto_locucion: str, label_escuchar: str) -> str
     return (
         "<div style='display:flex; align-items:center; gap:6px; flex-wrap:wrap;'>"
         f"<button class='btn-audio-paso' onclick='reproducirPaso({audio_json})'>{label_escuchar}</button>"
-        "<button class='btn-audio-ctrl' onclick='pausarPaso()' title='Pausar o reanudar'>⏸️ PAUSA</button>"
+        "<button class='btn-audio-ctrl btn-pausa-toggle' onclick='pausarPaso()' title='Pausar o reanudar'>⏸️ PAUSA</button>"
         f"<button class='btn-audio-ctrl' onclick='rebobinarPaso({audio_json})' title='Rebobinar desde el inicio'>⏪ REBOBINAR</button>"
         "</div>"
     )
@@ -471,8 +471,11 @@ def generar_html_diagrama(datos: dict, origen_receta: str, comensales: int) -> s
 </div>
 
 <script>
-  let ultimoTextoPaso = '';
+  let frasesActivas = [];
+  let indiceFraseActual = 0;
   let audioPausado = false;
+  let sesionHablaId = 0;
+  let resumeFallbackTimer = null;
 
   function normalizarLocucion(texto) {{
     if (!texto) return '';
@@ -482,57 +485,155 @@ def generar_html_diagrama(datos: dict, origen_receta: str, comensales: int) -> s
       .replace(/\\bD\\.?\\s*O\\.?\\b/gi, 'denominacion de origen');
   }}
 
-  function lanzarLocucion(textoNormalizado) {{
-    if (!('speechSynthesis' in window) || !textoNormalizado) return;
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(textoNormalizado);
+  function dividirEnFragmentos(textoNormalizado) {{
+    const limpio = String(textoNormalizado || '').trim();
+    if (!limpio) return [];
+    const trozos = limpio
+      .split(/(?<=[.!?।;:])\\s+/)
+      .map(s => s.trim())
+      .filter(Boolean);
+    if (trozos.length <= 1 && limpio.length > 160) {{
+      const partes = [];
+      for (let i = 0; i < limpio.length; i += 150) {{
+        partes.push(limpio.slice(i, i + 150));
+      }}
+      return partes;
+    }}
+    return trozos.length > 0 ? trozos : [limpio];
+  }}
+
+  function actualizarEtiquetasPausa() {{
+    const btns = document.querySelectorAll('.btn-pausa-toggle');
+    btns.forEach(btn => {{
+      btn.innerText = audioPausado ? '▶️ REANUDAR' : '⏸️ PAUSA';
+    }});
+  }}
+
+  function limpiarTimersAudio() {{
+    if (resumeFallbackTimer) {{
+      window.clearTimeout(resumeFallbackTimer);
+      resumeFallbackTimer = null;
+    }}
+  }}
+
+  function hablarDesdeIndice(idx, sesionId) {{
+    if (!('speechSynthesis' in window)) return;
+    if (sesionId !== sesionHablaId || audioPausado) return;
+    if (idx >= frasesActivas.length) {{
+      indiceFraseActual = 0;
+      return;
+    }}
+    indiceFraseActual = idx;
+    const u = new SpeechSynthesisUtterance(frasesActivas[idx]);
     u.lang = 'es-ES';
     u.rate = 0.95;
+
+    u.onend = () => {{
+      if (sesionId !== sesionHablaId || audioPausado) return;
+      if (indiceFraseActual + 1 < frasesActivas.length) {{
+        hablarDesdeIndice(indiceFraseActual + 1, sesionId);
+      }} else {{
+        indiceFraseActual = 0;
+      }}
+    }};
+
+    u.onerror = () => {{
+      if (sesionId !== sesionHablaId || audioPausado) return;
+      if (indiceFraseActual + 1 < frasesActivas.length) {{
+        hablarDesdeIndice(indiceFraseActual + 1, sesionId);
+      }}
+    }};
+
+    window.speechSynthesis.speak(u);
+  }}
+
+  function iniciarLocucionCompleta(texto) {{
+    if (!('speechSynthesis' in window)) return;
+    limpiarTimersAudio();
+    sesionHablaId++;
+    const miSesion = sesionHablaId;
+    audioPausado = false;
+    actualizarEtiquetasPausa();
+    frasesActivas = dividirEnFragmentos(normalizarLocucion(texto));
+    indiceFraseActual = 0;
+
+    window.speechSynthesis.cancel();
     window.setTimeout(() => {{
-      try {{
-        window.speechSynthesis.speak(u);
-      }} catch (e) {{}}
-    }}, 60);
+      if (miSesion === sesionHablaId && !audioPausado) {{
+        hablarDesdeIndice(0, miSesion);
+      }}
+    }}, 50);
   }}
 
   function hablar(texto) {{
-    if (!('speechSynthesis' in window)) return;
-    const norm = normalizarLocucion(texto);
-    ultimoTextoPaso = norm;
-    audioPausado = false;
-    lanzarLocucion(norm);
+    iniciarLocucionCompleta(texto);
   }}
 
   function reproducirPaso(texto) {{
-    if (!('speechSynthesis' in window)) return;
-    ultimoTextoPaso = normalizarLocucion(texto);
-    audioPausado = false;
-    lanzarLocucion(ultimoTextoPaso);
+    iniciarLocucionCompleta(texto);
   }}
 
   function pausarPaso() {{
-    if (!('speechSynthesis' in window)) return;
+    if (!('speechSynthesis' in window) || frasesActivas.length === 0) return;
+    limpiarTimersAudio();
+
     if (!audioPausado) {{
       audioPausado = true;
-      window.speechSynthesis.cancel();
-    }} else if (ultimoTextoPaso) {{
+      actualizarEtiquetasPausa();
+      try {{
+        window.speechSynthesis.pause();
+      }} catch (e) {{}}
+      // En móviles/tablets pause() a veces corta la cola; cancelamos sin perder indiceFraseActual
+      resumeFallbackTimer = window.setTimeout(() => {{
+        if (audioPausado && window.speechSynthesis.speaking) {{
+          try {{ window.speechSynthesis.cancel(); }} catch (e) {{}}
+        }}
+      }}, 120);
+    }} else {{
       audioPausado = false;
-      lanzarLocucion(ultimoTextoPaso);
+      actualizarEtiquetasPausa();
+      sesionHablaId++;
+      const miSesion = sesionHablaId;
+
+      try {{
+        if (window.speechSynthesis.paused && window.speechSynthesis.speaking) {{
+          window.speechSynthesis.resume();
+          // Si el móvil no reanuda realmente tras 250ms, continuamos desde indiceFraseActual
+          resumeFallbackTimer = window.setTimeout(() => {{
+            if (!audioPausado && miSesion === sesionHablaId && !window.speechSynthesis.speaking) {{
+              hablarDesdeIndice(indiceFraseActual, miSesion);
+            }}
+          }}, 250);
+          return;
+        }}
+      }} catch (e) {{}}
+
+      try {{ window.speechSynthesis.cancel(); }} catch (e) {{}}
+      window.setTimeout(() => {{
+        if (!audioPausado && miSesion === sesionHablaId) {{
+          hablarDesdeIndice(indiceFraseActual, miSesion);
+        }}
+      }}, 60);
     }}
   }}
 
   function rebobinarPaso(texto) {{
-    if (!('speechSynthesis' in window)) return;
-    const objetivo = normalizarLocucion(texto || ultimoTextoPaso);
-    if (!objetivo) return;
-    ultimoTextoPaso = objetivo;
-    audioPausado = false;
-    lanzarLocucion(objetivo);
+    if (texto) {{
+      iniciarLocucionCompleta(texto);
+    }} else if (frasesActivas.length > 0) {{
+      iniciarLocucionCompleta(frasesActivas.join(' '));
+    }}
   }}
 
   function silenciar() {{
+    limpiarTimersAudio();
+    sesionHablaId++;
     audioPausado = false;
-    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    indiceFraseActual = 0;
+    actualizarEtiquetasPausa();
+    if ('speechSynthesis' in window) {{
+      try {{ window.speechSynthesis.cancel(); }} catch (e) {{}}
+    }}
   }}
 
   function iniciarTimer(id, minutos) {{
