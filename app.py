@@ -471,11 +471,12 @@ def generar_html_diagrama(datos: dict, origen_receta: str, comensales: int) -> s
 </div>
 
 <script>
-  let frasesActivas = [];
-  let indiceFraseActual = 0;
+  let fragmentosActivos = [];
+  let indiceFragmentoActual = 0;
+  let offsetCaracterEnFragmento = 0;
   let audioPausado = false;
   let sesionHablaId = 0;
-  let resumeFallbackTimer = null;
+  let fallbackResumeTimer = null;
 
   function normalizarLocucion(texto) {{
     if (!texto) return '';
@@ -485,21 +486,26 @@ def generar_html_diagrama(datos: dict, origen_receta: str, comensales: int) -> s
       .replace(/\\bD\\.?\\s*O\\.?\\b/gi, 'denominacion de origen');
   }}
 
-  function dividirEnFragmentos(textoNormalizado) {{
+  function dividirEnMicroFragmentos(textoNormalizado) {{
     const limpio = String(textoNormalizado || '').trim();
     if (!limpio) return [];
-    const trozos = limpio
-      .split(/(?<=[.!?।;:])\\s+/)
+    const clausulas = limpio
+      .split(/(?<=[.!?।;:,])\\s+/)
       .map(s => s.trim())
       .filter(Boolean);
-    if (trozos.length <= 1 && limpio.length > 160) {{
-      const partes = [];
-      for (let i = 0; i < limpio.length; i += 150) {{
-        partes.push(limpio.slice(i, i + 150));
+
+    const resultado = [];
+    for (const clausula of clausulas) {{
+      const palabras = clausula.split(/\\s+/).filter(Boolean);
+      if (palabras.length <= 7) {{
+        resultado.push(clausula);
+      }} else {{
+        for (let i = 0; i < palabras.length; i += 6) {{
+          resultado.push(palabras.slice(i, i + 6).join(' '));
+        }}
       }}
-      return partes;
     }}
-    return trozos.length > 0 ? trozos : [limpio];
+    return resultado.length > 0 ? resultado : [limpio];
   }}
 
   function actualizarEtiquetasPausa() {{
@@ -510,37 +516,56 @@ def generar_html_diagrama(datos: dict, origen_receta: str, comensales: int) -> s
   }}
 
   function limpiarTimersAudio() {{
-    if (resumeFallbackTimer) {{
-      window.clearTimeout(resumeFallbackTimer);
-      resumeFallbackTimer = null;
+    if (fallbackResumeTimer) {{
+      window.clearTimeout(fallbackResumeTimer);
+      fallbackResumeTimer = null;
     }}
   }}
 
-  function hablarDesdeIndice(idx, sesionId) {{
+  function hablarDesdePosicion(idx, charOffset, sesionId) {{
     if (!('speechSynthesis' in window)) return;
     if (sesionId !== sesionHablaId || audioPausado) return;
-    if (idx >= frasesActivas.length) {{
-      indiceFraseActual = 0;
+    if (idx >= fragmentosActivos.length) {{
+      indiceFragmentoActual = 0;
+      offsetCaracterEnFragmento = 0;
       return;
     }}
-    indiceFraseActual = idx;
-    const u = new SpeechSynthesisUtterance(frasesActivas[idx]);
+
+    indiceFragmentoActual = idx;
+    const fragmentoOriginal = fragmentosActivos[idx];
+    const safeOffset = Math.max(0, Math.min(charOffset || 0, fragmentoOriginal.length));
+    let textoAhablar = fragmentoOriginal.slice(safeOffset).trim();
+    if (!textoAhablar) {{
+      textoAhablar = fragmentoOriginal;
+    }}
+
+    let ultimoCharIndex = safeOffset;
+    const u = new SpeechSynthesisUtterance(textoAhablar);
     u.lang = 'es-ES';
     u.rate = 0.95;
 
+    u.onboundary = (event) => {{
+      if (typeof event.charIndex === 'number') {{
+        ultimoCharIndex = safeOffset + event.charIndex;
+        offsetCaracterEnFragmento = ultimoCharIndex;
+      }}
+    }};
+
     u.onend = () => {{
       if (sesionId !== sesionHablaId || audioPausado) return;
-      if (indiceFraseActual + 1 < frasesActivas.length) {{
-        hablarDesdeIndice(indiceFraseActual + 1, sesionId);
+      offsetCaracterEnFragmento = 0;
+      if (indiceFragmentoActual + 1 < fragmentosActivos.length) {{
+        hablarDesdePosicion(indiceFragmentoActual + 1, 0, sesionId);
       }} else {{
-        indiceFraseActual = 0;
+        indiceFragmentoActual = 0;
       }}
     }};
 
     u.onerror = () => {{
       if (sesionId !== sesionHablaId || audioPausado) return;
-      if (indiceFraseActual + 1 < frasesActivas.length) {{
-        hablarDesdeIndice(indiceFraseActual + 1, sesionId);
+      offsetCaracterEnFragmento = 0;
+      if (indiceFragmentoActual + 1 < fragmentosActivos.length) {{
+        hablarDesdePosicion(indiceFragmentoActual + 1, 0, sesionId);
       }}
     }};
 
@@ -554,13 +579,14 @@ def generar_html_diagrama(datos: dict, origen_receta: str, comensales: int) -> s
     const miSesion = sesionHablaId;
     audioPausado = false;
     actualizarEtiquetasPausa();
-    frasesActivas = dividirEnFragmentos(normalizarLocucion(texto));
-    indiceFraseActual = 0;
+    fragmentosActivos = dividirEnMicroFragmentos(normalizarLocucion(texto));
+    indiceFragmentoActual = 0;
+    offsetCaracterEnFragmento = 0;
 
-    window.speechSynthesis.cancel();
+    try {{ window.speechSynthesis.cancel(); }} catch (e) {{}}
     window.setTimeout(() => {{
       if (miSesion === sesionHablaId && !audioPausado) {{
-        hablarDesdeIndice(0, miSesion);
+        hablarDesdePosicion(0, 0, miSesion);
       }}
     }}, 50);
   }}
@@ -574,7 +600,7 @@ def generar_html_diagrama(datos: dict, origen_receta: str, comensales: int) -> s
   }}
 
   function pausarPaso() {{
-    if (!('speechSynthesis' in window) || frasesActivas.length === 0) return;
+    if (!('speechSynthesis' in window) || fragmentosActivos.length === 0) return;
     limpiarTimersAudio();
 
     if (!audioPausado) {{
@@ -583,8 +609,7 @@ def generar_html_diagrama(datos: dict, origen_receta: str, comensales: int) -> s
       try {{
         window.speechSynthesis.pause();
       }} catch (e) {{}}
-      // En móviles/tablets pause() a veces corta la cola; cancelamos sin perder indiceFraseActual
-      resumeFallbackTimer = window.setTimeout(() => {{
+      fallbackResumeTimer = window.setTimeout(() => {{
         if (audioPausado && window.speechSynthesis.speaking) {{
           try {{ window.speechSynthesis.cancel(); }} catch (e) {{}}
         }}
@@ -598,12 +623,11 @@ def generar_html_diagrama(datos: dict, origen_receta: str, comensales: int) -> s
       try {{
         if (window.speechSynthesis.paused && window.speechSynthesis.speaking) {{
           window.speechSynthesis.resume();
-          // Si el móvil no reanuda realmente tras 250ms, continuamos desde indiceFraseActual
-          resumeFallbackTimer = window.setTimeout(() => {{
+          fallbackResumeTimer = window.setTimeout(() => {{
             if (!audioPausado && miSesion === sesionHablaId && !window.speechSynthesis.speaking) {{
-              hablarDesdeIndice(indiceFraseActual, miSesion);
+              hablarDesdePosicion(indiceFragmentoActual, offsetCaracterEnFragmento, miSesion);
             }}
-          }}, 250);
+          }}, 220);
           return;
         }}
       }} catch (e) {{}}
@@ -611,7 +635,7 @@ def generar_html_diagrama(datos: dict, origen_receta: str, comensales: int) -> s
       try {{ window.speechSynthesis.cancel(); }} catch (e) {{}}
       window.setTimeout(() => {{
         if (!audioPausado && miSesion === sesionHablaId) {{
-          hablarDesdeIndice(indiceFraseActual, miSesion);
+          hablarDesdePosicion(indiceFragmentoActual, offsetCaracterEnFragmento, miSesion);
         }}
       }}, 60);
     }}
@@ -620,8 +644,8 @@ def generar_html_diagrama(datos: dict, origen_receta: str, comensales: int) -> s
   function rebobinarPaso(texto) {{
     if (texto) {{
       iniciarLocucionCompleta(texto);
-    }} else if (frasesActivas.length > 0) {{
-      iniciarLocucionCompleta(frasesActivas.join(' '));
+    }} else if (fragmentosActivos.length > 0) {{
+      iniciarLocucionCompleta(fragmentosActivos.join(' '));
     }}
   }}
 
@@ -629,7 +653,8 @@ def generar_html_diagrama(datos: dict, origen_receta: str, comensales: int) -> s
     limpiarTimersAudio();
     sesionHablaId++;
     audioPausado = false;
-    indiceFraseActual = 0;
+    indiceFragmentoActual = 0;
+    offsetCaracterEnFragmento = 0;
     actualizarEtiquetasPausa();
     if ('speechSynthesis' in window) {{
       try {{ window.speechSynthesis.cancel(); }} catch (e) {{}}
