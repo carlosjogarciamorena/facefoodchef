@@ -360,8 +360,9 @@ def generar_html_diagrama(datos: dict, origen_receta: str, comensales: int) -> s
 
     resumen_voz_json = json.dumps(preparar_texto_voz(texto_voz))
     btn_store_style = (
-        "background:#00FF66; color:#1E1E1E; border:none; padding:7px 12px; border-radius:4px; "
-        "cursor:pointer; font-size:11px; font-weight:900; font-family:'Montserrat', sans-serif; text-transform:uppercase;"
+        "display:inline-block; background:#00FF66; color:#1E1E1E; text-decoration:none; "
+        "padding:7px 12px; border-radius:4px; cursor:pointer; font-size:11px; font-weight:900; "
+        "font-family:'Montserrat', sans-serif; text-transform:uppercase;"
     )
 
     return f"""<!DOCTYPE html>
@@ -406,7 +407,7 @@ def generar_html_diagrama(datos: dict, origen_receta: str, comensales: int) -> s
   <div class="card" style="border-left:6px solid #00FF66;">
     <div class="card-head">
       <h3 style="color:#00FF66;">1. Ingredientes Exactos ({comensales} pax)</h3>
-      <button style="{btn_store_style}" onclick="alert('Redirigiendo a Delicatessen Gourmet...')">🛒 DELICATESSEN GOURMET</button>
+      <a href="https://facefoodchef.com/tienda-del-chef/delicatessen-gourmet/" target="_blank" rel="noopener noreferrer" style="{btn_store_style}">🛒 DELICATESSEN GOURMET</a>
     </div>
     <div style="display:flex; flex-wrap:wrap; gap:8px;">{ing_chips}</div>
   </div>
@@ -414,7 +415,7 @@ def generar_html_diagrama(datos: dict, origen_receta: str, comensales: int) -> s
   <div class="card" style="border-left:6px solid #00FF66;">
     <div class="card-head">
       <h3 style="color:#00FF66;">2. Utensilios y Menaje</h3>
-      <button style="{btn_store_style}" onclick="alert('Redirigiendo a Pucheros Store...')">🍳 PUCHEROS STORE</button>
+      <a href="https://facefoodchef.com/tienda-del-chef/pucheros-store/" target="_blank" rel="noopener noreferrer" style="{btn_store_style}">🍳 PUCHEROS STORE</a>
     </div>
     <div style="display:flex; flex-wrap:wrap; gap:8px;">{ut_chips}</div>
   </div>
@@ -434,7 +435,7 @@ def generar_html_diagrama(datos: dict, origen_receta: str, comensales: int) -> s
     <div class="card" style="border-left:6px solid #FFD700; text-align:center;">
       <span style="background:#FFD700; color:#1E1E1E; padding:3px 10px; border-radius:3px; font-size:11px; font-weight:900;">FIN DEL FLUJO</span>
       <h3 style="color:#FFD700; margin:10px 0 12px 0; font-size:17px;">🍽️ PLATO TERMINADO Y LISTO PARA SERVIR</h3>
-      <button style="{btn_store_style}" onclick="alert('Abriendo guía y menaje de emplatado...')">✨ EMPLATADO</button>
+      <a href="https://facefoodchef.com/tienda-del-chef/emplatado/" target="_blank" rel="noopener noreferrer" style="{btn_store_style}">✨ EMPLATADO</a>
     </div>
   </div>
 
@@ -451,7 +452,7 @@ def generar_html_diagrama(datos: dict, origen_receta: str, comensales: int) -> s
       <h3 style="color:#00FF66;">6. Sommelier y Maridaje</h3>
       <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
         {controles_audio_maridaje}
-        <button style="{btn_store_style}" onclick="alert('Redirigiendo a Líquidos Store...')">🍾 LIQUIDOS STORE</button>
+        <a href="https://facefoodchef.com/tienda-del-chef/liquidos-store/" target="_blank" rel="noopener noreferrer" style="{btn_store_style}">🍾 LIQUIDOS STORE</a>
       </div>
     </div>
     <div style="display:inline-block; margin:10px 0 8px 0; padding:5px 12px; border-radius:4px; background:#36393F; border-left:4px solid #FBBF24; color:#FBBF24; font-family:'Montserrat', sans-serif; font-size:13px; font-weight:900; text-transform:uppercase;">🍇 Vinos (Denominaciones de Origen):</div>
