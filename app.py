@@ -1,4 +1,5 @@
 import json
+import re
 from io import BytesIO
 import requests
 from bs4 import BeautifulSoup
@@ -194,6 +195,25 @@ def calcular_tiempo_total(bloques_proceso: list, minutos_prep: int = 10) -> int:
     return total
 
 
+def preparar_texto_voz(texto: str) -> str:
+    if not texto:
+        return ""
+    resultado = re.sub(r"(\d+)\s*[º°]\s*[cC]\b", r"\1 grados centigrados", texto)
+    resultado = re.sub(r"\bmin\.?\b", "minutos", resultado, flags=re.IGNORECASE)
+    return resultado
+
+
+def render_controles_audio_paso(texto_locucion: str, label_escuchar: str) -> str:
+    audio_json = json.dumps(preparar_texto_voz(texto_locucion))
+    return (
+        "<div style='display:flex; align-items:center; gap:6px; flex-wrap:wrap;'>"
+        f"<button class='btn-audio-paso' onclick='reproducirPaso({audio_json})'>{label_escuchar}</button>"
+        "<button class='btn-audio-ctrl' onclick='pausarPaso()' title='Pausar o reanudar'>⏸️ PAUSA</button>"
+        f"<button class='btn-audio-ctrl' onclick='rebobinarPaso({audio_json})' title='Rebobinar desde el inicio'>⏪ REBOBINAR</button>"
+        "</div>"
+    )
+
+
 def formatear_lista_bebidas_html(items: list, color_titulo_bebida: str) -> str:
     if not items:
         return "<li style='color:#94A3B8;'>Sin propuestas</li>"
@@ -241,7 +261,7 @@ def generar_html_diagrama(datos: dict, origen_receta: str, comensales: int) -> s
     ])
     prep_items = "".join([f"<li style='margin-bottom:6px;'>{p}</li>" for p in pasos_previos])
     texto_voz_prep = "Preparación previa. " + ". ".join(pasos_previos) if pasos_previos else "Sin pasos de preparación previa."
-    prep_voz_json = json.dumps(texto_voz_prep)
+    controles_audio_prep = render_controles_audio_paso(texto_voz_prep, "🔊 ESCUCHAR PREP")
 
     bloques_html = []
     for idx, bloque in enumerate(bloques_proceso):
@@ -260,13 +280,14 @@ def generar_html_diagrama(datos: dict, origen_receta: str, comensales: int) -> s
                 r_temp = rama.get("temperatura", "Ambiente")
                 r_ut = ", ".join(rama.get("utensilios", [])) or "N/A"
                 timer_id = f"timer_par_{idx}_{r_idx}"
-                audio_txt = json.dumps(f"Bloque paralelo {r_nombre}. {r_accion}. Tiempo: {r_tiempo}. Temperatura: {r_temp}.")
+                audio_txt = f"Bloque paralelo {r_nombre}. {r_accion}. Tiempo: {r_tiempo}. Temperatura: {r_temp}."
+                controles_rama = render_controles_audio_paso(audio_txt, "🔊 ESCUCHAR PASO")
 
                 ramas_cards.append(
                     f"<div style='flex:1; min-width:250px; background:#2C2F33; border-left:6px solid #FFB300; border-radius:6px; padding:14px;'>"
                     f"<div style='display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;'>"
                     f"<span style='background:#FFB300; color:#1E1E1E; padding:3px 8px; border-radius:3px; font-size:11px; font-weight:800; font-family:\"JetBrains Mono\", monospace;'>PARALELO · {r_nombre}</span>"
-                    f"<button onclick='hablar({audio_txt})' style='background:#4F545C; color:#FFF; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:11px; font-weight:700;'>🔊 VOZ</button>"
+                    f"{controles_rama}"
                     f"</div>"
                     f"<p style='color:#FFFFFF; margin:10px 0; font-family:\"JetBrains Mono\", monospace; font-size:14px; line-height:1.5;'>{r_accion}</p>"
                     f"<div style='color:#CBD5E1; font-size:12px; margin-bottom:10px; font-family:\"JetBrains Mono\", monospace;'>🛠️ {r_ut}</div>"
@@ -286,13 +307,14 @@ def generar_html_diagrama(datos: dict, origen_receta: str, comensales: int) -> s
             temp = bloque.get("temperatura", "Ambiente")
             ut_str = ", ".join(bloque.get("utensilios", [])) or "N/A"
             timer_id = f"timer_seq_{idx}"
-            audio_txt = json.dumps(f"{etiqueta}. {accion}. Tiempo: {tiempo}. Temperatura: {temp}.")
+            audio_txt = f"{etiqueta}. {accion}. Tiempo: {tiempo}. Temperatura: {temp}."
+            controles_paso = render_controles_audio_paso(audio_txt, "🔊 ESCUCHAR PASO")
 
             bloques_html.append(
                 f"<div style='background:#2C2F33; border-left:6px solid {color_borde}; border-radius:6px; padding:14px; margin-bottom:10px;'>"
                 f"<div style='display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;'>"
                 f"<span style='background:{color_borde}; color:#1E1E1E; padding:3px 8px; border-radius:3px; font-size:11px; font-weight:800; font-family:\"JetBrains Mono\", monospace;'>{etiqueta}</span>"
-                f"<button onclick='hablar({audio_txt})' style='background:#4F545C; color:#FFF; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:11px; font-weight:700;'>🔊 VOZ</button>"
+                f"{controles_paso}"
                 f"</div>"
                 f"<p style='color:#FFFFFF; margin:10px 0; font-family:\"JetBrains Mono\", monospace; font-size:14px; line-height:1.5;'>{accion}</p>"
                 f"<div style='color:#CBD5E1; font-size:12px; margin-bottom:10px; font-family:\"JetBrains Mono\", monospace;'>🛠️ {ut_str}</div>"
@@ -310,7 +332,7 @@ def generar_html_diagrama(datos: dict, origen_receta: str, comensales: int) -> s
     cervezas_items = formatear_lista_bebidas_html(maridaje.get("cervezas", []), "#FB923C")
     saludables_items = formatear_lista_bebidas_html(maridaje.get("bebidas_saludables", []), "#00FF66")
 
-    resumen_voz_json = json.dumps(texto_voz)
+    resumen_voz_json = json.dumps(preparar_texto_voz(texto_voz))
     btn_store_style = (
         "background:#00FF66; color:#1E1E1E; border:none; padding:7px 12px; border-radius:4px; "
         "cursor:pointer; font-size:11px; font-weight:900; font-family:'Montserrat', sans-serif; text-transform:uppercase;"
@@ -328,6 +350,15 @@ def generar_html_diagrama(datos: dict, origen_receta: str, comensales: int) -> s
   .card {{ background:#2C2F33; border-radius:6px; padding:16px; margin-bottom:16px; }}
   .card-head {{ display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; border-bottom:1px solid #4F545C; padding-bottom:8px; margin-bottom:12px; }}
   h3 {{ margin:0; font-family:'Montserrat', sans-serif; font-size:15px; text-transform:uppercase; }}
+  .btn-audio-paso {{
+    background:#FFB300; color:#1E1E1E; border:none; padding:6px 12px; border-radius:4px;
+    cursor:pointer; font-size:11px; font-weight:900; font-family:'Montserrat', sans-serif; text-transform:uppercase;
+  }}
+  .btn-audio-ctrl {{
+    background:#4F545C; color:#FFFFFF; border:none; padding:6px 9px; border-radius:4px;
+    cursor:pointer; font-size:10px; font-weight:800; font-family:'Montserrat', sans-serif; text-transform:uppercase;
+  }}
+  .btn-audio-ctrl:hover {{ background:#686D76; }}
 </style>
 </head>
 <body>
@@ -365,7 +396,7 @@ def generar_html_diagrama(datos: dict, origen_receta: str, comensales: int) -> s
   <div class="card" style="border-left:6px solid #4F545C;">
     <div class="card-head">
       <h3 style="color:#FFFFFF;">3. Preparación Previa (Mise en Place)</h3>
-      <button onclick='hablar({prep_voz_json})' style="background:#FFB300; color:#1E1E1E; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:11px; font-weight:900; font-family:'Montserrat', sans-serif; text-transform:uppercase;">🔊 ESCUCHAR PREP</button>
+      {controles_audio_prep}
     </div>
     <ul style="margin:0; padding-left:18px; font-family:'JetBrains Mono', monospace; font-size:13px; line-height:1.6;">{prep_items}</ul>
   </div>
@@ -409,17 +440,58 @@ def generar_html_diagrama(datos: dict, origen_receta: str, comensales: int) -> s
 </div>
 
 <script>
+  let ultimoTextoPaso = '';
+
+  function normalizarLocucion(texto) {{
+    if (!texto) return '';
+    return String(texto)
+      .replace(/(\\d+)\\s*[º°]\\s*[cC]\\b/g, '$1 grados centigrados')
+      .replace(/\\bmin\\.?\\b/gi, 'minutos');
+  }}
+
   function hablar(texto) {{
     if (!('speechSynthesis' in window)) return;
     window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(texto);
+    const u = new SpeechSynthesisUtterance(normalizarLocucion(texto));
     u.lang = 'es-ES';
     u.rate = 0.95;
     window.speechSynthesis.speak(u);
   }}
+
+  function reproducirPaso(texto) {{
+    if (!('speechSynthesis' in window)) return;
+    ultimoTextoPaso = normalizarLocucion(texto);
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(ultimoTextoPaso);
+    u.lang = 'es-ES';
+    u.rate = 0.95;
+    window.speechSynthesis.speak(u);
+  }}
+
+  function pausarPaso() {{
+    if (!('speechSynthesis' in window)) return;
+    if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {{
+      window.speechSynthesis.pause();
+    }} else if (window.speechSynthesis.paused) {{
+      window.speechSynthesis.resume();
+    }}
+  }}
+
+  function rebobinarPaso(texto) {{
+    if (!('speechSynthesis' in window)) return;
+    const objetivo = normalizarLocucion(texto || ultimoTextoPaso);
+    if (!objetivo) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(objetivo);
+    u.lang = 'es-ES';
+    u.rate = 0.95;
+    window.speechSynthesis.speak(u);
+  }}
+
   function silenciar() {{
     if ('speechSynthesis' in window) window.speechSynthesis.cancel();
   }}
+
   function iniciarTimer(id, minutos) {{
     const el = document.getElementById(id);
     if (!el) return;
@@ -474,7 +546,7 @@ A partir del texto de la receta, genera un diagrama de bloques claro y ejecutabl
 Reglas obligatorias:
 1. CANTIDADES EXACTAS: Elimina medidas ambiguas o relativas como "cucharadita", "cucharada", "pizca", "chorrito" o "al gusto". Conviértelas en cantidades exactas en g, kg, ml, l, mg o unidades ajustadas a {comensales_objetivo} comensales (por ejemplo: "5 g de sal", "15 ml de aceite de oliva virgen extra").
 2. NIVEL DE DIFICULTAD: Usa exactamente uno de estos tres valores: "Superviviente Básico", "Cocinero Cualificado" o "Doctor Chef".
-3. BLOQUES DE PROCESO: Divide la elaboración en bloques ordenados ("tipo": "secuencial", "paralelo" o "convergencia"), indicando "es_critico" (booleano), "duracion_minutos" (entero), "tiempo" (texto con min), "temperatura" (con ºC o "Ambiente") y "utensilios" (lista).
+3. BLOQUES DE PROCESO: Divide la elaboración en bloques ordenados ("tipo": "secuencial", "paralelo" o "convergencia"), indicando "es_critico" (booleano), "duracion_minutos" (entero), "tiempo" (texto como "15 min"), "temperatura" (con "ºC" o "Ambiente") y "utensilios" (lista).
 4. SOMMELIER Y MARIDAJE:
    - Genera 3 propuestas en "vinos" (indicando tipo/Denominación de Origen y una descripción corta de 1 sola línea, unas 10-15 palabras).
    - Genera 3 propuestas en "cervezas" (indicando estilo/variedad y una descripción corta de 1 sola línea, unas 10-15 palabras).
