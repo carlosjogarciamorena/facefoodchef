@@ -280,14 +280,19 @@ def generar_html_diagrama(datos: dict, origen_receta: str, comensales: int) -> s
             bloques_html.append("<div style='text-align:center; color:#FFB300; font-size:20px; font-weight:900; margin:4px 0 8px 0;'>↓</div>")
 
     recom_items = "".join([f"<li style='margin-bottom:6px;'>{r}</li>" for r in recomendaciones])
-    vinos_items = "".join([f"<li>{v}</li>" for v in maridaje.get("vinos", [])]) or "<li>Sin propuestas</li>"
-    cervezas_items = "".join([f"<li>{c}</li>" for c in maridaje.get("cervezas", [])]) or "<li>Sin propuestas</li>"
-    saludables_items = "".join([f"<li>{s}</li>" for s in maridaje.get("bebidas_saludables", [])]) or "<li>Sin propuestas</li>"
+    vinos_items = "".join([f"<li style='margin-bottom:8px;'>{v}</li>" for v in maridaje.get("vinos", [])]) or "<li>Sin propuestas</li>"
+    cervezas_items = "".join([f"<li style='margin-bottom:8px;'>{c}</li>" for c in maridaje.get("cervezas", [])]) or "<li>Sin propuestas</li>"
+    saludables_items = "".join([f"<li style='margin-bottom:8px;'>{s}</li>" for s in maridaje.get("bebidas_saludables", [])]) or "<li>Sin propuestas</li>"
 
     resumen_voz_json = json.dumps(texto_voz)
     btn_store_style = (
         "background:#00FF66; color:#1E1E1E; border:none; padding:7px 12px; border-radius:4px; "
         "cursor:pointer; font-size:11px; font-weight:900; font-family:'Montserrat', sans-serif; text-transform:uppercase;"
+    )
+    categoria_destacada_style = (
+        "display:inline-block; margin:12px 0 8px 0; padding:5px 12px; border-radius:4px; "
+        "background:#36393F; border-left:4px solid #00FF66; color:#00FF66; "
+        "font-family:'Montserrat', sans-serif; font-size:13px; font-weight:900; letter-spacing:0.6px; text-transform:uppercase;"
     )
 
     return f"""<!DOCTYPE html>
@@ -366,12 +371,12 @@ def generar_html_diagrama(datos: dict, origen_receta: str, comensales: int) -> s
       <h3 style="color:#00FF66;">6. Sommelier y Maridaje</h3>
       <button style="{btn_store_style}" onclick="alert('Redirigiendo a Líquidos Store...')">🍾 LIQUIDOS STORE</button>
     </div>
-    <p style="margin:6px 0 4px 0; font-weight:700;">🍇 Vinos (Denominaciones de Origen):</p>
-    <ul style="margin:0 0 10px 0; padding-left:18px; font-family:'JetBrains Mono', monospace; font-size:13px;">{vinos_items}</ul>
-    <p style="margin:6px 0 4px 0; font-weight:700;">🍺 Cervezas:</p>
-    <ul style="margin:0 0 10px 0; padding-left:18px; font-family:'JetBrains Mono', monospace; font-size:13px;">{cervezas_items}</ul>
-    <p style="margin:6px 0 4px 0; font-weight:700; color:#00FF66;">🌿 Bebidas Saludables (Sin Alcohol):</p>
-    <ul style="margin:0; padding-left:18px; font-family:'JetBrains Mono', monospace; font-size:13px;">{saludables_items}</ul>
+    <div style="{categoria_destacada_style}">🍇 Vinos (Denominaciones de Origen):</div>
+    <ul style="margin:0 0 12px 0; padding-left:18px; font-family:'JetBrains Mono', monospace; font-size:13px; line-height:1.6;">{vinos_items}</ul>
+    <div style="{categoria_destacada_style}">🍺 Cervezas:</div>
+    <ul style="margin:0 0 12px 0; padding-left:18px; font-family:'JetBrains Mono', monospace; font-size:13px; line-height:1.6;">{cervezas_items}</ul>
+    <div style="{categoria_destacada_style}">🌿 Bebidas Saludables (Sin Alcohol):</div>
+    <ul style="margin:0; padding-left:18px; font-family:'JetBrains Mono', monospace; font-size:13px; line-height:1.6;">{saludables_items}</ul>
   </div>
 
   <div style="text-align:center; color:#9AA0A6; font-size:11px; padding:10px 0;">
@@ -439,14 +444,17 @@ if generar_clicked:
         st.warning("⚠️ Escribe o pega el texto de una receta, introduce una URL o sube un archivo.")
     else:
         prompt_sistema = f"""
-Eres un maestro chef e ingeniero de procesos culinarios.
+Eres un maestro chef, sommelier experto e ingeniero de procesos culinarios.
 Convierte la receta en un diagrama de bloques claro y ejecutable paso a paso para {comensales_objetivo} COMENSALES.
 
 Reglas obligatorias:
 1. CANTIDADES EXACTAS: Elimina medidas ambiguas o relativas como "cucharadita", "cucharada", "pizca", "chorrito" o "al gusto". Conviértelas en cantidades exactas en g, kg, ml, l, mg o unidades ajustadas a {comensales_objetivo} comensales (por ejemplo: "5 g de sal", "15 ml de aceite de oliva virgen extra").
 2. NIVEL DE DIFICULTAD: Usa exactamente uno de estos tres valores: "Superviviente Básico", "Cocinero Cualificado" o "Doctor Chef".
 3. BLOQUES DE PROCESO: Divide la elaboración en bloques ordenados ("tipo": "secuencial", "paralelo" o "convergencia"), indicando "es_critico" (booleano), "duracion_minutos" (entero), "tiempo" (texto con min), "temperatura" (con ºC o "Ambiente") y "utensilios" (lista).
-4. SOMMELIER Y MARIDAJE: Incluye exactamente 3 propuestas en "vinos" (con Denominación de Origen o tipo), 3 en "cervezas" y 3 en "bebidas_saludables" (sin alcohol: infusiones, aguas botánicas, kombuchas o zumos naturales sin azúcares añadidos).
+4. SOMMELIER Y MARIDAJE CON DESCRIPCIÓN AMPLIA:
+   - Genera 3 propuestas en "vinos" (indicando Denominación de Origen o tipo y una descripción amplia de 2-3 frases con perfil aromático, cuerpo, temperatura de servicio y por qué encaja con el plato).
+   - Genera 3 propuestas en "cervezas" (indicando estilo/variedad y una descripción amplia de 2-3 frases con matices de malta/lúpulo, textura, temperatura de servicio y armonía con la receta).
+   - Genera 3 propuestas en "bebidas_saludables" (sin alcohol: infusiones botánicas, aguas infusionadas, kombuchas o zumos naturales sin azúcares añadidos, cada una con una descripción amplia de 2-3 frases explicando ingredientes, perfil de sabor, temperatura de servicio y beneficio/maridaje con el plato).
 5. Responde ÚNICAMENTE con un JSON válido que siga esta estructura:
 {{
   "nombre_receta": "String",
@@ -468,16 +476,28 @@ Reglas obligatorias:
   "recomendaciones": ["Controlar la temperatura para que no se queme el aceite"],
   "texto_voz": "Resumen breve del proceso",
   "maridaje": {{
-    "vinos": ["Vino 1", "Vino 2", "Vino 3"],
-    "cervezas": ["Cerveza 1", "Cerveza 2", "Cerveza 3"],
-    "bebidas_saludables": ["Bebida 1", "Bebida 2", "Bebida 3"]
+    "vinos": [
+      "Nombre / D.O.: Descripción amplia de notas de cata, cuerpo, temperatura de servicio y armonía con el plato.",
+      "Nombre / D.O.: Descripción amplia...",
+      "Nombre / D.O.: Descripción amplia..."
+    ],
+    "cervezas": [
+      "Nombre / Estilo: Descripción amplia de sabor, cuerpo, temperatura de servicio y armonía con el plato.",
+      "Nombre / Estilo: Descripción amplia...",
+      "Nombre / Estilo: Descripción amplia..."
+    ],
+    "bebidas_saludables": [
+      "Nombre de bebida sin alcohol: Descripción amplia de botánicos/ingredientes, frescura, temperatura y armonía con el plato.",
+      "Nombre de bebida sin alcohol: Descripción amplia...",
+      "Nombre de bebida sin alcohol: Descripción amplia..."
+    ]
   }}
 }}
 """
         payload = [prompt_sistema]
         if archivo_multimodal:
             payload.append(types.Part.from_bytes(data=archivo_multimodal, mime_type=tipo_multimodal))
-            payload.append(f"Genera el diagrama para {comensales_objetivo} comensales con cantidades exactas.")
+            payload.append(f"Genera el diagrama para {comensales_objetivo} comensales con cantidades exactas y descripciones amplias de bebidas.")
         else:
             payload.append(f"Receta:\n{contenido_receta}")
 
@@ -544,4 +564,4 @@ if st.session_state.diagrama_html:
         file_name=st.session_state.nombre_archivo_html,
         mime="text/html"
     )
-    components.html(st.session_state.diagrama_html, height=1200, scrolling=True)
+    components.html(st.session_state.diagrama_html, height=1300, scrolling=True)
