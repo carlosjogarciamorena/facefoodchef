@@ -200,6 +200,7 @@ def preparar_texto_voz(texto: str) -> str:
         return ""
     resultado = re.sub(r"(\d+)\s*[º°]\s*[cC]\b", r"\1 grados centigrados", texto)
     resultado = re.sub(r"\bmin\.?\b", "minutos", resultado, flags=re.IGNORECASE)
+    resultado = re.sub(r"\bD\.?\s*O\.?\b", "denominacion de origen", resultado, flags=re.IGNORECASE)
     return resultado
 
 
@@ -217,7 +218,7 @@ def render_controles_audio_paso(texto_locucion: str, label_escuchar: str) -> str
 def extraer_maridaje_texto_voz(maridaje: dict) -> str:
     partes = ["Sommelier y maridaje."]
     secciones = [
-        ("Vinos", maridaje.get("vinos", [])),
+        ("Vinos de denominacion de origen", maridaje.get("vinos", [])),
         ("Cervezas", maridaje.get("cervezas", [])),
         ("Bebidas saludables sin alcohol", maridaje.get("bebidas_saludables", [])),
     ]
@@ -475,7 +476,8 @@ def generar_html_diagrama(datos: dict, origen_receta: str, comensales: int) -> s
     if (!texto) return '';
     return String(texto)
       .replace(/(\\d+)\\s*[º°]\\s*[cC]\\b/g, '$1 grados centigrados')
-      .replace(/\\bmin\\.?\\b/gi, 'minutos');
+      .replace(/\\bmin\\.?\\b/gi, 'minutos')
+      .replace(/\\bD\\.?\\s*O\\.?\\b/gi, 'denominacion de origen');
   }}
 
   function hablar(texto) {{
